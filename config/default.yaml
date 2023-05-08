@@ -1,0 +1,8 @@
+data:
+  dir: /Users/tim/CS_master/Computer_Vision_Project/siar_sample_data'
+
+model:
+  swin:
+    pretrained: ''
+    use_checkpoint: True
+  
