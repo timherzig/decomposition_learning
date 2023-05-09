@@ -25,10 +25,10 @@ class Model(LightningModule):
         return opt
     
     def training_step(self, batch, batch_idx):
+        # This is of course not final :)
         x, y = batch
 
-        
-
+        loss = 0
         self.log('train_loss', loss)
         return loss
     
