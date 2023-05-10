@@ -1,10 +1,10 @@
 import torch
 
 from torch import nn
-from lightning.pytorch import LightningModule
-from swin.swin_transformer import SwinTransformer3D
+# from lightning.pytorch import LightningModule
+from src.swin.swin_transformer import SwinTransformer3D
 
-class Model(LightningModule):
+class Model(SwinTransformer3D):
     '''
     '''
 
@@ -12,10 +12,7 @@ class Model(LightningModule):
         super().__init__()
         self.config = config
 
-        self.swin_encoder = SwinTransformer3D(
-            pretrained=config.model.swin.pretrained,
-            use_checkpoint=config.model.swin.use_checkpoint
-        )
+        self.swin_encoder = SwinTransformer3D()
 
     def forward(self, x):
         return

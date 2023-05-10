@@ -8,14 +8,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 import numpy as np
-from timm.models.layers import DropPath, trunc_normal_
 
 from mmcv.runner import load_checkpoint
 from mmaction.utils import get_root_logger
+from lightning.pytorch import LightningModule
+from timm.models.layers import DropPath, trunc_normal_
 
-from functools import reduce, lru_cache
 from operator import mul
 from einops import rearrange
+from functools import reduce, lru_cache
 
 
 class Mlp(nn.Module):
@@ -450,7 +451,7 @@ class PatchEmbed3D(nn.Module):
 
         return x
 
-class SwinTransformer3D(nn.Module):
+class SwinTransformer3D(LightningModule):
     """ Swin Transformer backbone.
         A PyTorch impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
           https://arxiv.org/pdf/2103.14030
