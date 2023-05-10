@@ -1,20 +1,20 @@
+import lightning.pytorch as pl
 from omegaconf import OmegaConf
 
 # from src.model import Model
-from data.siar_data import SIARDataModule
-
-from models.decomposer import Decomposer
-
 from utils.parser import parse_arguments
+from models.decomposer import Decomposer
+from data.siar_data import SIARDataModule
 
 def main(args):
     config = OmegaConf.load(args.config)
 
     siar = SIARDataModule(config.data.dir, 4)
-    model = Decomposer(unet_config=config.unet)
-    siar.setup('val')
-    
+    siar.setup('train')
 
+    model = Decomposer(unet_config=config.unet)
+    trainer = pl.Trainer(max_epochs=1)
+    trainer.fit(model, train_dataloaders=siar.train_dataloader())
 
     return
 
