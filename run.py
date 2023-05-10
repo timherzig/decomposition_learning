@@ -9,7 +9,7 @@ from data.siar_data import SIARDataModule
 def main(args):
     config = OmegaConf.load(args.config)
 
-    siar = SIARDataModule(config.data.dir, 4)
+    siar = SIARDataModule(config.data.dir, 2)
     siar.setup('train')
 
     model = Decomposer(unet_config=config.unet)

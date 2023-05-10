@@ -16,17 +16,18 @@ class SIAR(Dataset):
     def __init__(self, data_dir: str, split: str) -> None:
         super().__init__()
 
-        self.df = pd.read_csv(os.path.join(data_dir, split + '.csv'))
+        self.df = pd.read_csv(os.path.join(data_dir, split + '.csv'), index_col=None)
         self.df['dir'] = [os.path.join(data_dir, x) for x in self.df['id']]
 
     def __getitem__(self, index):
-        dir = self.df.iloc[[index]]['dir']
+        dir = self.df.iloc[index]['dir']
 
         ground_truth = os.path.join(dir, 'gt.png')
         assert os.path.exists(ground_truth) == True
         ground_truth = ToTensor()(Image.open(ground_truth))
         
-        images = torch.Stack([ToTensor()(Image.open(x)) for x in os.listdir(dir) if x.split('.')[0].isnumeric()])
+        images = torch.stack([ToTensor()(Image.open(os.path.join(dir, x))) for x in os.listdir(dir) if x.split('.')[0].isnumeric()])
+        images = torch.swapaxes(images, 0, 1)
 
         return images, ground_truth
 

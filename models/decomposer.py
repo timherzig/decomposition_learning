@@ -32,8 +32,8 @@ class Decomposer(SwinTransformer3D):
         x = self.norm(x)
         x = rearrange(x, 'n d h w c -> n c d h w')
 
-        
         return x
+    
     def training_step(self, batch, batch_idx):
         x, y = batch
         x = x.type(torch.FloatTensor)
