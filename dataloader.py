@@ -1,13 +1,10 @@
 import torch
-from torch.utils.data import random_split, DataLoader
-from torch.utils.data import Dataset
+from torch.utils.data import random_split, DataLoader, Dataset
 import lightning.pytorch as pl
 import os
 import re
-import natsort
 import numpy as np
 from skimage import io
-import plotly.express as px
 
 
 class ImageDataset(Dataset):
