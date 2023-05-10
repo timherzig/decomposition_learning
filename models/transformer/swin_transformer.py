@@ -663,7 +663,6 @@ class SwinTransformer3D(pl.LightningModule):
         x = rearrange(x, 'n c d h w -> n d h w c')
         x = self.norm(x)
         x = rearrange(x, 'n d h w c -> n c d h w')
-
         return x
 
     def train(self, mode=True):
