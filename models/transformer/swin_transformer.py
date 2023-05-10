@@ -472,7 +472,7 @@ class SwinTransformer3D(pl.LightningModule):
         num_heads (tuple[int]): Number of attention head of each stage.
         window_size (int): Window size. Default: 7.
         mlp_ratio (float): Ratio of mlp hidden dim to embedding dim. Default: 4.
-        qkv_bias (bool): If True, add a learnable bias to query, key, value. Default: Truee
+        qkv_bias (bool): If True, add a learnable bias to query, key, value. Default: True
         qk_scale (float): Override default qk scale of head_dim ** -0.5 if set.
         drop_rate (float): Dropout rate.
         attn_drop_rate (float): Attention dropout rate. Default: 0.
