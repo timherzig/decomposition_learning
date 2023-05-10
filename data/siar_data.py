@@ -1,5 +1,4 @@
 import os
-from lightning.pytorch.utilities.types import TRAIN_DATALOADERS
 import torch
 
 import pandas as pd
@@ -58,11 +57,11 @@ class SIARDataModule(LightningDataModule):
             self.siar_val = SIAR(self.data_dir, 'val')
         # etc...
 
-    def train_dataloader(self) -> TRAIN_DATALOADERS:
+    def train_dataloader(self):
         return DataLoader(self.siar_train, batch_size=self.batch_size)
     
-    def test_dataloader(self) -> TRAIN_DATALOADERS:
+    def test_dataloader(self):
         return DataLoader(self.siar_train, batch_size=self.batch_size)
     
-    def val_dataloader(self) -> TRAIN_DATALOADERS:
+    def val_dataloader(self):
         return DataLoader(self.siar_train, batch_size=self.batch_size)

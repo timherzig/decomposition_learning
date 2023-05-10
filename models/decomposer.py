@@ -15,8 +15,8 @@ class Decomposer(SwinTransformer3D):
         super().__init__()
         self.unet_config = unet_config
 
-        self.encoder = create_decoders(unet_config.f_maps, unet_config.basic_module, unet_config.conv_kernel_size, unet_config.conv_padding, unet_config.layer_order, unet_config.num_groups,
-                                        unet_config.is3d)
+        # self.encoder = create_decoders(unet_config.f_maps, unet_config.basic_module, unet_config.conv_kernel_size, unet_config.conv_padding, unet_config.layer_order, unet_config.num_groups,
+        #                                 unet_config.is3d)
 
     # Override original swin forward function
     def forward(self, x):
