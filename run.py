@@ -10,7 +10,7 @@ def main(args):
     siar = SIARDataModule(config.data.dir, 4)
     siar.setup('train')
 
-    print(siar.siar.df)
+    print(siar.siar_train.df)
 
     return
 
