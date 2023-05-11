@@ -1,0 +1,17 @@
+data:
+  dir: '/Users/tim/CS_master/Computer_Vision_Project/SIAR'
+
+model:
+  swin:
+    pretrained: ''
+    use_checkpoint: True
+  
+unet:
+  decoder:
+    f_maps: (96, 192, 384, 768)
+    basic_module: 'DoubleConv'
+    conv_kernel_size: 3
+    conv_padding: 1
+    layer_order: 'gcr'
+    num_groups: 8
+    is3d: True
