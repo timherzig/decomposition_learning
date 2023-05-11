@@ -440,15 +440,12 @@ class PatchEmbed3D(nn.Module):
         """Forward function."""
         # padding
         _, _, D, H, W = x.size()
-        print("Before padding: ", D, H, W)
-        print("Patch size: ", self.patch_size)
         if W % self.patch_size[2] != 0:
             x = F.pad(x, (0, self.patch_size[2] - W % self.patch_size[2]))
         if H % self.patch_size[1] != 0:
             x = F.pad(x, (0, 0, 0, self.patch_size[1] - H % self.patch_size[1]))
         if D % self.patch_size[0] != 0:
             x = F.pad(x, (0, 0, 0, 0, 0, self.patch_size[0] - D % self.patch_size[0]))
-        print("X after padding: ", x.shape)
         x = self.proj(x)  # B C D Wh Ww
         if self.norm is not None:
             D, Wh, Ww = x.size(2), x.size(3), x.size(4)
