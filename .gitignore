@@ -163,3 +163,4 @@ cython_debug/
 
 
 SIAR/
+lightning_logs/
