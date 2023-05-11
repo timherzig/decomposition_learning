@@ -16,7 +16,7 @@ def main(args):
 
     # print(siar.siar.df)
     config = OmegaConf.load(args.config)
-    dataModule = SIARDataModule(datapath="data/SIAR", batch_size=2)
+    dataModule = SIARDataModule("data/SIAR", batch_size=2)
     dataModule.setup(stage='train')
     model =  Decomposer(config.unet)
     trainer = pl.Trainer(max_epochs=1)
