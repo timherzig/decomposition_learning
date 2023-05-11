@@ -11,20 +11,20 @@ from models.up_scaling.unet.unet3d import create_decoders, DoubleConv
 
 
 class Decomposer(SwinTransformer3D): 
-    def __init__(self, unet_config):
-        super().__init__(patch_size=(2, 4, 4))
-        self.decoder_config = unet_config.decoder
+    def __init__(self, swin_config, up_sampling = None, unet_config = None):
+        super().__init__(swin_config.patch_size)
 
-        self.encoder = create_decoders(self.decoder_config.f_maps, DoubleConv, self.decoder_config.conv_kernel_size, self.decoder_config.conv_padding, self.decoder_config.layer_order, self.decoder_config.num_groups,
-                                        self.decoder_config.is3d)
+        if(up_sampling == "unet"):
+            self.decoder_config = unet_config.decoder
+
+            self.encoder = create_decoders(self.decoder_config.f_maps, DoubleConv, self.decoder_config.conv_kernel_size, self.decoder_config.conv_padding, self.decoder_config.layer_order, self.decoder_config.num_groups,
+                                            self.decoder_config.is3d)
 
     # Override original swin forward function
     def forward(self, x):
         x = self.patch_embed(x)
-        print("after patch parition: ", x.shape)
         x = self.pos_drop(x)
 
-        encoder_layers = []
         for idx, layer in enumerate(self.layers):
             x, x_no_merge = layer(x.contiguous())
             # if idx < (self.num_layers -1):
@@ -40,9 +40,7 @@ class Decomposer(SwinTransformer3D):
     def training_step(self, batch, batch_idx):
         x, y = batch
         x = x.type(torch.FloatTensor)
-        print("Input shape: ", x.shape)
         output = self(x)
-        print("output shape: ", output.shape)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.02) 

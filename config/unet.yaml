@@ -5,7 +5,8 @@ model:
   swin:
     pretrained: ''
     use_checkpoint: True
-  
+    patch_size: [2, 4, 4]
+    
 unet:
   decoder:
     f_maps: [96, 192, 384, 768]
