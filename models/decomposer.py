@@ -26,10 +26,10 @@ class Decomposer(SwinTransformer3D):
 
         encoder_layers = []
         for idx, layer in enumerate(self.layers):
-            x = layer(x.contiguous())
-            if idx < (self.num_layers -1):
-                encoder_layers.append(x)
-            print("Layer nr:" ,str(idx), " shape: ", x.shape)
+            x, x_no_merge = layer(x.contiguous())
+            # if idx < (self.num_layers -1):
+            #     encoder_layers.append(x)
+            print("Layer nr:" ,str(idx), " shape: ", x_no_merge.shape)
 
         x = rearrange(x, 'n c d h w -> n d h w c')
         x = self.norm(x)
