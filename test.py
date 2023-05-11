@@ -1,5 +1,5 @@
 import torch
-from data.dataloader import DecompositionDataModule
+from data.siar_data import SIARDataModule
 from models.decomposer import Decomposer
 import lightning.pytorch as pl
 
@@ -16,8 +16,8 @@ def main(args):
 
     # print(siar.siar.df)
     config = OmegaConf.load(args.config)
-    dataModule = DecompositionDataModule(datapath="data/SIAR", batch_size=2)
-    dataModule.setup(stage='fit')
+    dataModule = SIARDataModule(datapath="data/SIAR", batch_size=2)
+    dataModule.setup(stage='train')
     model =  Decomposer(config.unet)
     trainer = pl.Trainer(max_epochs=1)
     trainer.fit(model, train_dataloaders=dataModule.train_dataloader())
