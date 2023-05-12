@@ -163,7 +163,7 @@ cython_debug/
 /.vscode
 
 # Lightning
-/lightning_logs
+lightning_logs/
 
 # Dataset
 SIAR/

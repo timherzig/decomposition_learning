@@ -12,9 +12,9 @@ def main(args):
     siar = SIARDataModule(config.data.dir, 2)
     siar.setup('train')
 
-    model = Decomposer(swin_config=config.model.swin)
+    model = Decomposer(config=config.model)
     trainer = pl.Trainer(max_epochs=1)
-    trainer.fit(model, train_dataloaders=siar.train_dataloader())
+    trainer.fit(model, train_dataloaders=siar.train_dataloader(), val_dataloaders=siar.val_dataloader())
 
     return
 
