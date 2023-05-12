@@ -334,9 +334,10 @@ class Decoder(nn.Module):
                                          padding=padding,
                                          is3d=is3d)
 
-    def forward(self, encoder_features, x):
+    def forward(self, encoder_features, x, skip_joining = False):
         x = self.upsampling(encoder_features=encoder_features, x=x)
-        x = self.joining(encoder_features, x)
+        if not skip_joining:
+            x = self.joining(encoder_features, x)
         x = self.basic_module(x)
         return x
 

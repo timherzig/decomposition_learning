@@ -408,10 +408,14 @@ class BasicLayer(nn.Module):
             x = blk(x, attn_mask)
         x = x.view(B, D, H, W, -1)
 
+        # save data before merging and rearrange into (Batch x channel x Sequence x Height x Width)
+        x_no_merge = x
+        x_no_merge = rearrange(x_no_merge, 'b d h w c -> b c d h w')
+
         if self.downsample is not None:
             x = self.downsample(x)
         x = rearrange(x, 'b d h w c -> b c d h w')
-        return x
+        return x, x_no_merge
 
 
 class PatchEmbed3D(nn.Module):

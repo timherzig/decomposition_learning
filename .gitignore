@@ -163,8 +163,11 @@ cython_debug/
 # VSCode
 /.vscode
 
+# Wandb
+wandb/
+
 # Lightning
-/lightning_logs
+lightning_logs/
 
 # Dataset
 SIAR/
