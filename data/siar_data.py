@@ -52,11 +52,9 @@ class SIARDataModule(LightningDataModule):
     def setup(self, stage: str) -> None:
         if stage == 'train':
             self.siar_train = SIAR(self.data_dir, 'train')
+            self.siar_val = SIAR(self.data_dir, 'val')
         if stage == 'test':
             self.siar_test = SIAR(self.data_dir, 'test')
-        if stage == 'validate':
-            self.siar_val = SIAR(self.data_dir, 'val')
-        # etc...
 
     def train_dataloader(self):
         return DataLoader(self.siar_train, batch_size=self.batch_size)
