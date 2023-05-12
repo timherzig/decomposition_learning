@@ -48,8 +48,8 @@ class Decomposer(SwinTransformer3D):
         return x
     
     def loss_func(self, prediction, target):
-        prediction = torch.mean(prediction, 2)
-        loss = MSELoss() # --- average of N predictions 
+        prediction = torch.mean(prediction, 2) # --- average of N predictions
+        loss = MSELoss()
         return loss(prediction, target)
 
     def training_step(self, batch, batch_idx):
@@ -57,6 +57,13 @@ class Decomposer(SwinTransformer3D):
         output = self(x)
         loss = self.loss_func(output, y)
         self.log('train_loss', loss, prog_bar=True)
+        return loss
+    
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        output = self(x)
+        loss = self.loss_func(output, y)
+        self.log('val_loss', loss, prog_bar=True)
         return loss
 
     def configure_optimizers(self):
