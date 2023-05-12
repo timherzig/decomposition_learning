@@ -162,6 +162,9 @@ cython_debug/
 # VSCode
 /.vscode
 
+# Wandb
+wandb/
+
 # Lightning
 lightning_logs/
 
