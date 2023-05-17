@@ -159,7 +159,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-<<<<<<< HEAD
 # VSCode
 /.vscode
 
@@ -171,10 +170,6 @@ lightning_logs/
 
 # Dataset
 SIAR/
-
-=======
-lightning_logs/
->>>>>>> e4078fb (gitignore updated to not include lightning stuff)
 
 HTCV/
 
