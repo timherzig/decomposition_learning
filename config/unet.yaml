@@ -1,6 +1,11 @@
 data:
   dir: 'data/SIAR'
 
+train:
+  debug: False
+  batch_size: 16
+  max_epochs: 100
+
 model:
   swin:
     pretrained: ''

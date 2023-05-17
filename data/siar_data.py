@@ -14,11 +14,14 @@ class SIAR(Dataset):
     PyTorch Dataset for the provided dataset
     """
 
-    def __init__(self, data_dir: str, split: str) -> None:
+    def __init__(self, data_dir: str, split: str, debug) -> None:
         super().__init__()
 
         self.df = pd.read_csv(os.path.join(data_dir, split + ".csv"), index_col=None)
         self.df["dir"] = [os.path.join(data_dir, str(x)) for x in self.df["id"]]
+
+        if debug:
+            self.df = self.df[:10]
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
@@ -56,12 +59,12 @@ class SIARDataModule(LightningDataModule):
     def prepare_data(self) -> None:
         return
 
-    def setup(self, stage: str) -> None:
+    def setup(self, stage: str, debug=False) -> None:
         if stage == "train":
-            self.siar_train = SIAR(self.data_dir, "train")
-            self.siar_val = SIAR(self.data_dir, "val")
+            self.siar_train = SIAR(self.data_dir, "train", debug)
+            self.siar_val = SIAR(self.data_dir, "val", debug)
         if stage == "test":
-            self.siar_test = SIAR(self.data_dir, "test")
+            self.siar_test = SIAR(self.data_dir, "test", debug)
 
     def train_dataloader(self):
         return DataLoader(self.siar_train, batch_size=self.batch_size)

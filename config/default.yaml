@@ -1,5 +1,10 @@
 data:
   dir: 'data/SIAR'
+  
+train:
+  debug: True
+  batch_size: 2
+  max_epochs: 1
 
 model:
   swin:

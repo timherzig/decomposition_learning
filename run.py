@@ -12,16 +12,24 @@ def main(args):
     config = OmegaConf.load(args.config)
     wandb_logger = WandbLogger(config=config, project="HTCV")
 
-    siar = SIARDataModule(config.data.dir, 2)
-    siar.setup("train")
+    siar = SIARDataModule(config.data.dir, config.train.batch_size)
+    siar.setup("train", config.train.debug)
 
     model = Decomposer(config=config.model)
-    trainer = pl.Trainer(max_epochs=1, logger=wandb_logger)
+    trainer = pl.Trainer(
+        max_epochs=config.train.max_epochs,
+        logger=wandb_logger,
+        default_root_dir="checkpoints",
+    )
+
     trainer.fit(
         model,
         train_dataloaders=siar.train_dataloader(),
         val_dataloaders=siar.val_dataloader(),
     )
+
+    siar.setup("test", config.train.debug)
+    trainer.test(model, test_dataloaders=siar.test_dataloader())
 
     return
 
