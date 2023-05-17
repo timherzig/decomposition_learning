@@ -7,22 +7,22 @@ train:
   max_epochs: 100
 
 model:
+  upsampler: 'unet'
   swin:
     pretrained: ''
     use_checkpoint: True
-    patch_size: [2, 4, 4]
-    
-unet:
-  decoder:
-    output_dim: 1
-    f_maps: [96, 192, 384, 768]
-    basic_module: 'DoubleConv'
-    conv_kernel_size: 3
-    conv_padding: 1
-    layer_order: 'gcr'
-    num_groups: 8
-    is3d: True
-    layers_no_skip:
-      size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
-      scale_factor: 2 
+    patch_size: [2, 4, 4]    
+  unet:
+    decoder:
+      output_dim: 1
+      f_maps: [96, 192, 384, 768]
+      basic_module: 'DoubleConv'
+      conv_kernel_size: 3
+      conv_padding: 1
+      layer_order: 'gcr'
+      num_groups: 8
+      is3d: True
+      layers_no_skip:
+        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
+        scale_factor: 2 
 
