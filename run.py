@@ -20,7 +20,7 @@ def main(args):
         max_epochs=config.train.max_epochs,
         logger=wandb_logger,
         default_root_dir="checkpoints",
-        gpus=-1,
+        accelerator="gpu",
     )
 
     trainer.fit(
