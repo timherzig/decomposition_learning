@@ -177,3 +177,5 @@ lightning_logs/
 >>>>>>> e4078fb (gitignore updated to not include lightning stuff)
 
 HTCV/
+
+.DS_Store
