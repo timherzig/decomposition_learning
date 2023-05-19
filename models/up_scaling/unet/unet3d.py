@@ -479,7 +479,7 @@ class Decoder(nn.Module):
     @staticmethod
     def _joining(encoder_features, x, concat):
         if concat:
-            return torch.cat((encoder_features, x), dim=1)
+            return torch.cat((encoder_features, x), dim=1).to(x.device)
         else:
             return encoder_features + x
 
