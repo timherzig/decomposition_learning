@@ -45,15 +45,18 @@ class Decomposer(SwinTransformer3D):
         x = self.norm(x)
         x = rearrange(x, "n d h w c -> n c d h w")
 
+        print("swin finished")
+
         # Perform upsampling if needed
         if self.config.upsampler == "unet":
             x = self.up_scale(encoder_features[1:], x)
+
+        print("unet finished")
 
         return x
 
     def loss_func(self, prediction, target):
         print(prediction.shape)
-        return 0.1
         prediction = torch.mean(prediction, 2)  # --- average of N predictions
         loss = MSELoss()
         return loss(prediction, target)
@@ -78,8 +81,8 @@ class Decomposer(SwinTransformer3D):
         self.log("val_loss", loss, prog_bar=True)
 
         # Log images on the first validation step
-        # if batch_idx == 0:
-        #     self.log_images(x, output, y)
+        if batch_idx == 0:
+            self.log_images(x, output, y)
         return loss
 
     def configure_optimizers(self):
