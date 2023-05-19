@@ -12,7 +12,7 @@ def main(args):
     config = OmegaConf.load(args.config)
     wandb_logger = WandbLogger(config=config, project="HTCV")
 
-    siar = SIARDataModule(config.data.dir, config.train.batch_size)
+    siar = SIARDataModule(config.data.dir, config.train.batch_size, device="cuda")
     siar.setup("train", config.train.debug)
 
     model = Decomposer(config=config.model)
@@ -25,12 +25,11 @@ def main(args):
 
     trainer.fit(
         model,
-        train_dataloaders=siar.train_dataloader(),
-        val_dataloaders=siar.val_dataloader(),
+        datamodule=siar,
     )
 
     siar.setup("test", config.train.debug)
-    trainer.test(model, test_dataloaders=siar.test_dataloader())
+    trainer.test(model, datamodule=siar)
 
     return
 
