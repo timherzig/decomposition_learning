@@ -45,9 +45,7 @@ class Decomposer(SwinTransformer3D):
         x = self.norm(x)
         x = rearrange(x, "n d h w c -> n c d h w")
 
-        print(
-            f"swin device {self.device}, swin out device {x.device}, unet device {self.up_scale.parameters().__next__().device}"
-        )
+        print(f"encoder features device: {encoder_features[1:].device}")
 
         # Perform upsampling if needed
         if self.config.upsampler == "unet":
