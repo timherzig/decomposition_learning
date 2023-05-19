@@ -81,7 +81,9 @@ class UpSampler(nn.Module):
                 (1, 1, output_size[2], output_size[3], output_size[4])
             )
             dummy_features = dummy_features.to(x.device)
-            print(f"x device {x.device}, dummy device {dummy_features.device}")
+            print(
+                f"x device {x.device}, dummy device {dummy_features.device}, layer device {layer.parameters().device}"
+            )
             x = layer(dummy_features, x, skip_joining=True)
         # Dim. after upscaling: Batch x _ x 10 x 256 x 256
 
