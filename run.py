@@ -23,10 +23,7 @@ def main(args):
         accelerator="gpu",
     )
 
-    trainer.fit(
-        model,
-        datamodule=siar,
-    )
+    trainer.fit(model, datamodule=siar)
 
     siar.setup("test", config.train.debug)
     trainer.test(model, datamodule=siar)

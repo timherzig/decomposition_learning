@@ -47,9 +47,9 @@ class Decomposer(SwinTransformer3D):
 
         # Perform upsampling if needed
         if self.config.upsampler is not None:
-            x = self.up_scale(encoder_features[1:], x)
+            x = self.up_scale(encoder_features[1:], x).to(x.device)
 
-        return x  # .astype(torch.float32)
+        return x
 
     def loss_func(self, prediction, target):
         prediction = torch.mean(prediction, 2)  # --- average of N predictions
