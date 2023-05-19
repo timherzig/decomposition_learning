@@ -1,8 +1,10 @@
-from torch import nn 
+from torch import nn
 from models.up_scaling.unet.unet3d import DoubleConv, Decoder, create_decoders
 import torch
+import lightning.pytorch as pl
 
-class UpSampler(nn.Module):
+
+class UpSampler(pl.LightningModule):
     """
     Module for upscaling output features from video swin transformer. It firstly applies upsampling with skip connection following U-Net architecture. After reaching size [B, C, T/2, H/4, W/4], we apply same upsampling layers, however without skip connections resulting in [B, C_, T, H, W] dim. Finally, a 1x1 kernel conv. layer is applied to obtain desired number of output channels without changing T, H and W.
 
@@ -17,34 +19,53 @@ class UpSampler(nn.Module):
         out_channels (int): number of output channels
         skipless_scale_factor (int, tuple): used as the multiplier for the image H/W/D in
             case of nn.Upsample or as stride in case of ConvTranspose3d, must reverse the MaxPool3d operation from the corresponding encoder
-    
+
         skipless_size (tuple): List containing size for each layer without skip connections. Each has dimensions [input_num_chan, output_num_chan, T, H W].
 
     """
 
-    def __init__(self, f_maps, conv_kernel_size, conv_padding, layer_order, num_groups, is3d, output_dim, skipless_scale_factor, skipless_size):
+    def __init__(
+        self,
+        f_maps,
+        conv_kernel_size,
+        conv_padding,
+        layer_order,
+        num_groups,
+        is3d,
+        output_dim,
+        skipless_scale_factor,
+        skipless_size,
+    ):
         super(UpSampler, self).__init__()
-        self.decoders = create_decoders(f_maps, DoubleConv, conv_kernel_size, conv_padding, layer_order, num_groups, is3d)
+        self.decoders = create_decoders(
+            f_maps,
+            DoubleConv,
+            conv_kernel_size,
+            conv_padding,
+            layer_order,
+            num_groups,
+            is3d,
+        )
         self.skipless_size = skipless_size
         # Upscaling layers without skip connections (no data available from encoder)
 
-        self.layers_no_skip =[]
+        self.layers_no_skip = []
         for size in skipless_size:
-            layer = Decoder(size[0], 
-                            size[1],
-                            basic_module=DoubleConv,
-                            conv_layer_order=layer_order,
-                            conv_kernel_size=conv_kernel_size,
-                            num_groups=num_groups,
-                            padding=conv_padding,
-                            is3d=is3d,
-                            scale_factor=skipless_scale_factor)
+            layer = Decoder(
+                size[0],
+                size[1],
+                basic_module=DoubleConv,
+                conv_layer_order=layer_order,
+                conv_kernel_size=conv_kernel_size,
+                num_groups=num_groups,
+                padding=conv_padding,
+                is3d=is3d,
+                scale_factor=skipless_scale_factor,
+            )
             self.layers_no_skip.append(layer)
 
         # Final conv layer to reduce number of channels using 1x1 kernel
-        self.final_layer = nn.Conv3d(skipless_size[-1][1], output_dim, kernel_size = 1)
-
-
+        self.final_layer = nn.Conv3d(skipless_size[-1][1], output_dim, kernel_size=1)
 
     def forward(self, encoder_features, x):
         # Upscale first layers with information from encoder
@@ -57,13 +78,13 @@ class UpSampler(nn.Module):
         # Apply final upscaling layers without skip connections
         for idx, layer in enumerate(self.layers_no_skip):
             output_size = self.skipless_size[idx]
-            dummy_features = torch.zeros((1, 1, output_size[2], output_size[3], output_size[4]))
-            x = layer(dummy_features, x, skip_joining=True) 
+            dummy_features = torch.zeros(
+                (1, 1, output_size[2], output_size[3], output_size[4])
+            )
+            x = layer(dummy_features, x, skip_joining=True)
         # Dim. after upscaling: Batch x _ x 10 x 256 x 256
 
         # Apply final conv layer
         x = self.final_layer(x)
         # Final dimensions: Batch x output_dim x 10 x 256 x 256
         return x
-
-

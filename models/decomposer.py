@@ -47,7 +47,7 @@ class Decomposer(SwinTransformer3D):
 
         # Perform upsampling if needed
         if self.config.upsampler is not None:
-            x = self.up_scale(encoder_features[1:], x).to(x.device)
+            x = self.up_scale(encoder_features[1:], x)
 
         return x
 
