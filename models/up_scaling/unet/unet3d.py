@@ -469,6 +469,7 @@ class Decoder(nn.Module):
         x = self.upsampling(encoder_features=encoder_features, x=x)
         if not skip_joining:
             x = self.joining(encoder_features, x)
+        print(f"x device: {x.device}")
         x = self.basic_module(x)
         return x
 
