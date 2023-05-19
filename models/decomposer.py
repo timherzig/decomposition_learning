@@ -78,8 +78,8 @@ class Decomposer(SwinTransformer3D):
         self.log("val_loss", loss, prog_bar=True)
 
         # Log images on the first validation step
-        if batch_idx == 0:
-            self.log_images(x, output, y)
+        # if batch_idx == 0:
+        #     self.log_images(x, output, y)
         return loss
 
     def configure_optimizers(self):
