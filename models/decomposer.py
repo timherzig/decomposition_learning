@@ -46,7 +46,7 @@ class Decomposer(SwinTransformer3D):
         x = rearrange(x, "n d h w c -> n c d h w")
 
         # Perform upsampling if needed
-        if self.config.upsampler is not None:
+        if self.config.upsampler == "unet":
             x = self.up_scale(encoder_features[1:], x)
 
         return x
