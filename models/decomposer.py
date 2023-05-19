@@ -45,7 +45,7 @@ class Decomposer(SwinTransformer3D):
         x = self.norm(x)
         x = rearrange(x, "n d h w c -> n c d h w")
 
-        print("swin finished")
+        print("swin finished on device: ", x.device)
 
         # Perform upsampling if needed
         if self.config.upsampler == "unet":
