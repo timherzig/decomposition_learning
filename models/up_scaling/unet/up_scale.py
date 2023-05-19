@@ -1,10 +1,9 @@
 from torch import nn
 from models.up_scaling.unet.unet3d import DoubleConv, Decoder, create_decoders
 import torch
-import lightning.pytorch as pl
 
 
-class UpSampler(pl.LightningModule):
+class UpSampler(nn.Module):
     """
     Module for upscaling output features from video swin transformer. It firstly applies upsampling with skip connection following U-Net architecture. After reaching size [B, C, T/2, H/4, W/4], we apply same upsampling layers, however without skip connections resulting in [B, C_, T, H, W] dim. Finally, a 1x1 kernel conv. layer is applied to obtain desired number of output channels without changing T, H and W.
 

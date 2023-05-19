@@ -7,7 +7,7 @@ train:
   max_epochs: 100
 
 model:
-  upsampler: 'unet'
+  upsampler: None
   swin:
     pretrained: ''
     use_checkpoint: True
