@@ -53,7 +53,7 @@ class Decomposer(SwinTransformer3D):
 
     def loss_func(self, prediction, target):
         print(prediction.shape)
-        return 0
+        return 0.1
         prediction = torch.mean(prediction, 2)  # --- average of N predictions
         loss = MSELoss()
         return loss(prediction, target)
