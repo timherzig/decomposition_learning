@@ -472,14 +472,14 @@ class Decoder(nn.Module):
         if not skip_joining:
             x = self.joining(encoder_features, x)
         print(f"x3 device: {x.device}")
-        x = self.basic_module(x)
+        x = self.basic_module(x).to(x.device)
         print(f"x4 device: {x.device}")
         return x
 
     @staticmethod
     def _joining(encoder_features, x, concat):
         if concat:
-            return torch.cat((encoder_features, x), dim=1).to(x.device)
+            return torch.cat((encoder_features, x), dim=1)
         else:
             return encoder_features + x
 
