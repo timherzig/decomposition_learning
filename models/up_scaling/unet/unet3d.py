@@ -470,7 +470,7 @@ class Decoder(nn.Module):
         if not skip_joining:
             x = self.joining(encoder_features, x)
         x = self.basic_module(x)
-        return x.astype(torch.float32)
+        return x
 
     @staticmethod
     def _joining(encoder_features, x, concat):
