@@ -471,8 +471,9 @@ class Decoder(nn.Module):
         print(f"x2 device: {x.device}")
         if not skip_joining:
             x = self.joining(encoder_features, x)
+            print("joining")
         print(f"x3 device: {x.device}")
-        x = self.basic_module(x).to(x.device)
+        x = self.basic_module(x)
         print(f"x4 device: {x.device}")
         return x
 
