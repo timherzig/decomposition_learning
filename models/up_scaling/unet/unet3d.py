@@ -466,15 +466,10 @@ class Decoder(nn.Module):
         )
 
     def forward(self, encoder_features, x, skip_joining=False):
-        print(f"x1 device: {x.device}")
         x = self.upsampling(encoder_features=encoder_features, x=x)
-        print(f"x2 device: {x.device}")
         if not skip_joining:
             x = self.joining(encoder_features, x)
-            print("joining")
-        print(f"x3 device: {x.device}")
         x = self.basic_module(x)
-        print(f"x4 device: {x.device}")
         return x
 
     @staticmethod
