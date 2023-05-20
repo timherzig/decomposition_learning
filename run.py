@@ -1,4 +1,3 @@
-import os
 import lightning.pytorch as pl
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import OmegaConf
@@ -26,8 +25,6 @@ def main(args):
 
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
     siar.setup("train", config.train.debug)
-
-    run = len(os.listdir("checkpoints")) + 1
 
     model = Decomposer(config=config.model)
     trainer = pl.Trainer(
