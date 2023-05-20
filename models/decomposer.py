@@ -51,10 +51,28 @@ class Decomposer(SwinTransformer3D):
 
         return x
 
-    def loss_func(self, prediction, target):
-        prediction = torch.mean(prediction, 2)  # --- average of N predictions
+    def loss_func(self, prediction, target, input):
+        gt_reconstruction = torch.mean(
+            prediction[:, :3, :, :, :], 2
+        )  # --- average of N predictions
+        light_mask = prediction[:, 3, :, :, :].unsqueeze(1)
+        shadow_mask = prediction[:, 4, :, :, :].unsqueeze(1)
+        occlusion_mask = prediction[:, 5, :, :, :].unsqueeze(1)
+        occlusion_rgb = prediction[:, 6:, :, :, :]
+
         loss = MSELoss()
-        return loss(prediction, target)
+        gt_loss = loss(gt_reconstruction, target)
+
+        gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+        reconstruction = torch.where(
+            occlusion_mask < 0.5,
+            (gt_reconstruction * shadow_mask + light_mask),
+            occlusion_rgb,
+        )
+
+        reconstruction_loss = loss(reconstruction, input)
+
+        return gt_loss + reconstruction_loss
 
     def training_step(self, batch, batch_idx):
         (
@@ -62,7 +80,7 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
         output = self(x)  # --- output: (B, C, N, H, W)
-        loss = self.loss_func(output, y)
+        loss = self.loss_func(output, y, x)
         self.log("train_loss", loss, prog_bar=True)
         return loss
 
@@ -72,7 +90,7 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
         output = self(x)  # --- output: (B, C, N, H, W)
-        loss = self.loss_func(output, y)
+        loss = self.loss_func(output, y, x)
         self.log("val_loss", loss, prog_bar=True)
 
         # Log images on the first validation step
@@ -92,6 +110,7 @@ class Decomposer(SwinTransformer3D):
                 output (torch.Tensor): output tensor. Shape: (B, C, N, H, W) \\
                 y (torch.Tensor): target tensor. Shape: (B, C, H, W)
         """
+        output = output[:, :3, :, :, :]
         idx = torch.randint(0, x.shape[0], (1,)).item()
         columns = ["input", "output", "merged output", "target"]
         my_data = [

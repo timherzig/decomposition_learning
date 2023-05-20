@@ -21,7 +21,7 @@ def main(args):
         logger=wandb_logger,
         default_root_dir="checkpoints",
         log_every_n_steps=config.train.log_every_n_steps,
-        accelerator="gpu",
+        accelerator="cpu",
     )
 
     trainer.fit(model, datamodule=siar)

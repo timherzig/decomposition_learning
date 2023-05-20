@@ -2,19 +2,20 @@ data:
   dir: 'data/SIAR'
   
 train:
-  debug: True
+  debug: False
   batch_size: 2
-  max_epochs: 1
+  max_epochs: 30
+  log_every_n_steps: 15
 
 model:
+  upsampler: 'unet'
   swin:
     pretrained: ''
-    use_checkpoint: False
-    patch_size: [2, 4, 4]
-  upsampler: 'unet'
+    use_checkpoint: True
+    patch_size: [2, 4, 4]    
   unet:
     decoder:
-      output_dim: 3
+      output_dim: 9
       f_maps: [96, 192, 384, 768]
       basic_module: 'DoubleConv'
       conv_kernel_size: 3
