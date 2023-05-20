@@ -3,7 +3,7 @@ data:
 
 train:
   debug: False
-  batch_size: 16
+  batch_size: 2
   max_epochs: 100
 
 model:
