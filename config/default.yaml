@@ -4,7 +4,8 @@ data:
 train:
   debug: True
   batch_size: 2
-  max_epochs: 1
+  max_epochs: 3
+  log_every_n_steps: 1
 
 model:
   swin:

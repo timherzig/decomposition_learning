@@ -80,6 +80,16 @@ class Decomposer(SwinTransformer3D):
             self.log_images(x, output, y)
         return loss
 
+    def test_step(self, batch, batch_idx):
+        (
+            x,
+            y,
+        ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
+        output = self(x)  # --- output: (B, C, N, H, W)
+        loss = self.loss_func(output, y)
+        self.log("train_loss", loss, prog_bar=True)
+        return loss
+
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.02)
 
