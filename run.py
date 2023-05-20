@@ -33,7 +33,7 @@ def main(args):
         logger=wandb_logger,
         default_root_dir=f"checkpoints",
         log_every_n_steps=config.train.log_every_n_steps,
-        accelerator="cpu",
+        accelerator="gpu",
     )
 
     trainer.fit(model, datamodule=siar)
