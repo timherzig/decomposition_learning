@@ -63,6 +63,8 @@ class UpSampler(nn.Module):
             )
             self.layers_no_skip.append(layer)
 
+        self.layers_no_skip = nn.ModuleList(self.layers_no_skip)
+
         # Final conv layer to reduce number of channels using 1x1 kernel
         self.final_layer = nn.Conv3d(skipless_size[-1][1], output_dim, kernel_size=1)
 
