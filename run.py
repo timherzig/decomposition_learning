@@ -20,6 +20,7 @@ def main(args):
         max_epochs=config.train.max_epochs,
         logger=wandb_logger,
         default_root_dir="checkpoints",
+        log_every_n_steps=config.train.log_every_n_steps,
         accelerator="gpu",
     )
 
