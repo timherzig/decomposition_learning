@@ -127,7 +127,7 @@ class Decomposer(SwinTransformer3D):
                 #     self.to_pil(torch.mean(output[idx], 1)),
                 #     caption=columns[2],
                 # ),
-                wandb.Image(self.to_pil(output[:, :, 0, :, :], caption=columns[2])),
+                wandb.Image(self.to_pil(output[idx, :, 0, :, :]), caption=columns[2]),
                 wandb.Image(self.to_pil(y[idx, :, :, :]), caption=columns[3]),
             ]
         ]
