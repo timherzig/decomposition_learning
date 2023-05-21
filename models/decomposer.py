@@ -112,14 +112,14 @@ class Decomposer(SwinTransformer3D):
             [
                 [
                     wandb.Image(self.to_pil(x[idx, :, img, :, :]), caption=columns[0])
-                    for img in range(x.shape[1])
+                    for img in range(x.shape[2])
                 ],
                 [
                     wandb.Image(
                         self.to_pil(output[idx, :, img, :, :]),
                         caption=columns[1],
                     )
-                    for img in range(output.shape[1])
+                    for img in range(output.shape[2])
                 ],
                 wandb.Image(
                     self.to_pil(torch.mean(output[idx], 1)),
