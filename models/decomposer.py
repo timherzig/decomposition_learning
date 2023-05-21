@@ -52,7 +52,9 @@ class Decomposer(SwinTransformer3D):
         return x
 
     def loss_func(self, prediction, target):
-        prediction = torch.mean(prediction, 2)  # --- average of N predictions
+        prediction = prediction[
+            :, :, 0, :, :
+        ]  # torch.mean(prediction, 2)  # --- average of N predictions
         loss = MSELoss()
         return loss(prediction, target)
 
@@ -121,10 +123,11 @@ class Decomposer(SwinTransformer3D):
                     )
                     for img in range(output.shape[2])
                 ],
-                wandb.Image(
-                    self.to_pil(torch.mean(output[idx], 1)),
-                    caption=columns[2],
-                ),
+                # wandb.Image(
+                #     self.to_pil(torch.mean(output[idx], 1)),
+                #     caption=columns[2],
+                # ),
+                wandb.Image(self.to_pil(output[:, :, 0, :, :], caption=columns[2])),
                 wandb.Image(self.to_pil(y[idx, :, :, :]), caption=columns[3]),
             ]
         ]
