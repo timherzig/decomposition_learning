@@ -88,6 +88,10 @@ class Decomposer(SwinTransformer3D):
         output = self(x)  # --- output: (B, C, N, H, W)
         loss = self.loss_func(output, y)
         self.log("train_loss", loss, prog_bar=True)
+
+        # Log images on the first validation step
+        if batch_idx == 0:
+            self.log_images(x, output, y)
         return loss
 
     def configure_optimizers(self):
