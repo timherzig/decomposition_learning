@@ -10,7 +10,7 @@ class PatchSplitting(nn.Module):
         super().__init__()
         self.dim = dim
         self.expansion = nn.Linear(dim, 2*dim, bias=False)
-        self.norm = norm_layer(dim)
+        self.norm = norm_layer(dim//2)
 
     def forward(self, x): 
 
@@ -22,7 +22,7 @@ class PatchSplitting(nn.Module):
         merged[:, :, 1::2, 0::2, :] = x2
         merged[:, :, 1::2, 1::2, :] = x3
 
-        #merged = self.norm(merged)
+        merged = self.norm(merged)
         print(merged.shape)
 
         return merged
@@ -83,11 +83,11 @@ class SwinTransformer3D_up(SwinTransformer3D):
                 attn_drop=attn_drop_rate,
                 drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],
                 norm_layer=norm_layer,
-                downsample=PatchSplitting if i_layer<self.num_layers-1 else None,
+                downsample=PatchSplitting if i_layer<self.num_layers-1 else None,  #changed
                 use_checkpoint=use_checkpoint)
             self.layers.append(layer)
 
-        self.num_features = int(embed_dim * 2**(self.num_layers-1))
+        self.num_features = int(embed_dim / 2**(self.num_layers-1))   #changed from *2 to /2
 
         # add a norm layer for each output
         self.norm = norm_layer(self.num_features)
@@ -117,7 +117,7 @@ class SwinTransformer3D_up(SwinTransformer3D):
 
         print(x.shape)
         for idx, layer in enumerate(self.layers):
-            x = layer(x.contiguous())
+            x, _ = layer(x.contiguous())
             print("Layer nr:" ,str(idx), " shape: ", x.shape)
 
         x = rearrange(x, 'n c d h w -> n d h w c')
