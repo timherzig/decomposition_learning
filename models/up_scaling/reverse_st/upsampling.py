@@ -23,7 +23,7 @@ class PatchSplitting(nn.Module):
         merged[:, :, 1::2, 1::2, :] = x3
 
         merged = self.norm(merged)
-        print(merged.shape)
+        #print(merged.shape)
 
         return merged
 
@@ -112,10 +112,9 @@ class SwinTransformer3D_up(SwinTransformer3D):
     def forward(self, x):
         """Forward function."""
         #x = self.patch_embed(x)
-        print("after patch parition: ", x.shape)
+        #print("after patch parition: ", x.shape)
         x = self.pos_drop(x)
 
-        print(x.shape)
         for idx, layer in enumerate(self.layers):
             x, _ = layer(x.contiguous())
             print("Layer nr:" ,str(idx), " shape: ", x.shape)
@@ -123,6 +122,11 @@ class SwinTransformer3D_up(SwinTransformer3D):
         x = rearrange(x, 'n c d h w -> n d h w c')
         x = self.norm(x)
         x = rearrange(x, 'n d h w c -> n c d h w')
+
+        proj = torch.nn.ConvTranspose3d(x.shape[1], 3, (2,4,4), (2,4,4), dilation=(1,1,1))
+        x = proj(x)
+        print(x.shape)
+
         return x
 
         
