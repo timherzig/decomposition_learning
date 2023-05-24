@@ -11,10 +11,11 @@ model:
     pretrained: ''
     use_checkpoint: False
     patch_size: [2, 4, 4]
-  # upsampler: 'unet'
   upsampler: 'diffusion'
   unet:
     decoder:
+      sample_size: [256, 256]
+      input_dim: 3
       output_dim: 3
       f_maps: [96, 192, 384, 768]
       basic_module: 'DoubleConv'

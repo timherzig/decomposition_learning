@@ -2,6 +2,8 @@ import os
 import torch
 
 import wandb
+
+# from diffusers import DDPMPipeline, DDPMScheduler, UNet2DModel
 from torchvision.transforms import ToPILImage
 from torch.nn import MSELoss
 from einops import rearrange
@@ -43,7 +45,7 @@ class Decomposer(SwinTransformer3D):
             encoder_features.insert(0, x_no_merge)
         x = rearrange(x, "n c d h w -> n d h w c")
         x = self.norm(x)
-        x = rearrange(x, "n d h w c -> n c d h w")
+        x = rearrange(x, "n d h w c -> n c d h w")  # --- (B, 768, 5, 8, 8)
 
         # Perform upsampling if needed
         if self.config.upsampler is not None:

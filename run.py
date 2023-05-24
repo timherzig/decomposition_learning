@@ -10,7 +10,8 @@ from data.siar_data import SIARDataModule
 
 def main(args):
     config = OmegaConf.load(args.config)
-    wandb_logger = WandbLogger(config=config, project="HTCV")
+    # wandb_logger = WandbLogger(config=config, project="HTCV")
+    wandb_logger = None
 
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
     siar.setup("train", config.train.debug)
@@ -20,7 +21,7 @@ def main(args):
         max_epochs=config.train.max_epochs,
         logger=wandb_logger,
         default_root_dir="checkpoints",
-        accelerator="gpu",
+        accelerator="cpu",
     )
 
     trainer.fit(
