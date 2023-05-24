@@ -98,6 +98,20 @@ class Decomposer(SwinTransformer3D):
             self.log_images(x, output, y)
         return loss
 
+    def test_step(self, batch, batch_idx):
+        (
+            x,
+            y,
+        ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
+        output = self(x)  # --- output: (B, C, N, H, W)
+        loss = self.loss_func(output, y)
+        self.log("train_loss", loss, prog_bar=True)
+
+        # Log images on the first validation step
+        if batch_idx == 0:
+            self.log_images(x, output, y)
+        return loss
+
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.02)
 
@@ -117,19 +131,20 @@ class Decomposer(SwinTransformer3D):
             [
                 [
                     wandb.Image(self.to_pil(x[idx, :, img, :, :]), caption=columns[0])
-                    for img in range(x.shape[1])
+                    for img in range(x.shape[2])
                 ],
                 [
                     wandb.Image(
                         self.to_pil(output[idx, :, img, :, :]),
                         caption=columns[1],
                     )
-                    for img in range(output.shape[1])
+                    for img in range(output.shape[2])
                 ],
-                wandb.Image(
-                    self.to_pil(torch.mean(output[idx], 1)),
-                    caption=columns[2],
-                ),
+                # wandb.Image(
+                #     self.to_pil(torch.mean(output[idx], 1)),
+                #     caption=columns[2],
+                # ),
+                wandb.Image(self.to_pil(output[idx, :, 0, :, :]), caption=columns[2]),
                 wandb.Image(self.to_pil(y[idx, :, :, :]), caption=columns[3]),
             ]
         ]

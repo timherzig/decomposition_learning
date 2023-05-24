@@ -4,8 +4,9 @@ data:
 train:
   debug: False
   batch_size: 2
-  max_epochs: 30
-  log_every_n_steps: 15
+  max_epochs: 3
+  log_every_n_steps: 1
+  device: 'cpu'
 
 model:
   upsampler: 'unet'
