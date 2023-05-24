@@ -213,37 +213,91 @@ class Decomposer(SwinTransformer3D):
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.02)
 
-    def log_images(self, x, output, y):
-        """log one random input output pair from batch as table
-        Columns: input, output, merged output, target
-
-            Args:
-                x (torch.Tensor): input tensor. Shape: (B, N, C, H, W) \\
-                output (torch.Tensor): output tensor. Shape: (B, C, N, H, W) \\
-                y (torch.Tensor): target tensor. Shape: (B, C, H, W)
+    def log_images(
+        self,
+        y,
+        x,
+        gt_reconstruction,
+        shadow_mask,
+        light_mask,
+        occlusion_mask,
+        occlusion_rgb,
+    ):
         """
-        output = output[:, :3, :, :, :]
-        idx = torch.randint(0, x.shape[0], (1,)).item()
-        columns = ["input", "output", "merged output", "target"]
-        my_data = [
-            [
-                [
-                    wandb.Image(self.to_pil(x[idx, :, img, :, :]), caption=columns[0])
-                    for img in range(x.shape[2])
-                ],
-                [
-                    wandb.Image(
-                        self.to_pil(output[idx, :, img, :, :]),
-                        caption=columns[1],
-                    )
-                    for img in range(output.shape[2])
-                ],
-                # wandb.Image(
-                #     self.to_pil(torch.mean(output[idx], 1)),
-                #     caption=columns[2],
-                # ),
-                wandb.Image(self.to_pil(output[idx, :, 0, :, :]), caption=columns[2]),
-                wandb.Image(self.to_pil(y[idx, :, :, :]), caption=columns[3]),
-            ]
+        Logs one image sequence to the wandb logger
+
+        params:
+            y: unoccluded original input (1)
+            x: occluded input (10)
+            gt_reconstruction: ground truth reconstruction (1)
+            shadow_mask: shadow mask (10)
+            light_mask: light mask (10)
+            occlusion_mask: occlusion mask (10)
+            occlusion_rgb: occlusion rgb (10)
+        """
+        idx = torch.randint(0, y.shape[0], (1,)).item()
+
+        y = y[idx, :, :, :, :]
+        x = x[idx, :, :, :, :]
+        gt_reconstruction = gt_reconstruction[idx, :, :, :]
+        shadow_mask = shadow_mask[idx, :, :, :, :]
+        light_mask = light_mask[idx, :, :, :, :]
+        occlusion_mask = occlusion_mask[idx, :, :, :, :]
+        occlusion_rgb = occlusion_rgb[idx, :, :, :, :]
+
+        columns = [
+            "org_img",
+            "org_occlusion",
+            "gt_reconstruction",
+            "shadow_mask",
+            "light_mask",
+            "occlusion_mask",
+            "occlusion_rgb",
+            "occlusion_reconstruction",
         ]
+
+        occlusion_rec = torch.where(
+            occlusion_mask.unsqueeze(0).repeat(3, 1, 1, 1) < 0.5,
+            (
+                gt_reconstruction * shadow_mask.unsqueeze(0).repeat(3, 1, 1, 1)
+                + light_mask.unsqueeze(0).repeat(3, 1, 1, 1)
+            ),
+            occlusion_rgb,
+        )
+
+        my_data = [
+            wandb.Image(self.to_pil(y), caption=columns[0]),
+            [
+                wandb.Image(self.to_pil(x[img, :, :, :]), caption=columns[1])
+                for img in range(x.shape[0])
+            ],
+            wandb.Image(self.to_pil(gt_reconstruction), caption=columns[2]),
+            [
+                wandb.Image(self.to_pil(shadow_mask[img, :, :, :]), caption=columns[3])
+                for img in range(shadow_mask.shape[0])
+            ],
+            [
+                wandb.Image(self.to_pil(light_mask[img, :, :, :]), caption=columns[4])
+                for img in range(light_mask.shape[0])
+            ],
+            [
+                wandb.Image(
+                    self.to_pil(occlusion_mask[img, :, :, :]), caption=columns[5]
+                )
+                for img in range(occlusion_mask.shape[0])
+            ],
+            [
+                wandb.Image(
+                    self.to_pil(occlusion_rgb[img, :, :, :]), caption=columns[6]
+                )
+                for img in range(occlusion_rgb.shape[0])
+            ],
+            [
+                wandb.Image(
+                    self.to_pil(occlusion_rec[img, :, :, :]), caption=columns[7]
+                )
+                for img in range(occlusion_rec.shape[0])
+            ],
+        ]
+
         self.logger.log_table(key="input_output", columns=columns, data=my_data)
