@@ -12,7 +12,8 @@ from utils.git_commit import get_git_commit
 
 def main(args):
     config = OmegaConf.load(args.config)
-    wandb_logger = WandbLogger(config=config, project="HTCV")
+    if not config.train.debug:
+        wandb_logger = WandbLogger(config=config, project="HTCV")
 
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
     siar.setup("train", config.train.debug)
@@ -20,9 +21,11 @@ def main(args):
     model = Decomposer(config=config.model)
     trainer = pl.Trainer(
         max_epochs=config.train.max_epochs,
-        logger=wandb_logger,
+        logger=wandb_logger if not config.train.debug else None,
         default_root_dir=f"checkpoints",
-        log_every_n_steps=config.train.log_every_n_steps,
+        log_every_n_steps=config.train.log_every_n_steps
+        if not config.train.debug
+        else None,
         accelerator=config.train.device,
     )
 
