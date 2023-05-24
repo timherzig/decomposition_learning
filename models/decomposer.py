@@ -287,7 +287,7 @@ class Decomposer(SwinTransformer3D):
                 wandb.Image(self.to_pil(y), caption=columns[0]),
                 [
                     wandb.Image(self.to_pil(x[:, img, :, :]), caption=columns[1])
-                    for img in range(x.shape[0])
+                    for img in range(x.shape[1])
                 ],
                 wandb.Image(self.to_pil(gt_reconstruction), caption=columns[2]),
                 [
@@ -308,13 +308,13 @@ class Decomposer(SwinTransformer3D):
                     wandb.Image(
                         self.to_pil(occlusion_rgb[:, img, :, :]), caption=columns[6]
                     )
-                    for img in range(occlusion_rgb.shape[0])
+                    for img in range(occlusion_rgb.shape[1])
                 ],
                 [
                     wandb.Image(
                         self.to_pil(occlusion_rec[:, img, :, :]), caption=columns[7]
                     )
-                    for img in range(occlusion_rec.shape[0])
+                    for img in range(occlusion_rec.shape[1])
                 ],
             ]
         ]
