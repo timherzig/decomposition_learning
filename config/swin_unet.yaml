@@ -1,8 +1,11 @@
 data:
-  dir: '/netscratch/herzig/datasets/SIAR'
+  dir: 'data/SIAR'
+
+wandb:
+  logger: False
 
 train:
-  debug: False
+  debug: True
   batch_size: 16
   max_epochs: 100
   log_every_n_steps: 15
