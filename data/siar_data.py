@@ -27,7 +27,7 @@ class SIAR(Dataset):
         dir = self.df.iloc[index]["dir"]
 
         ground_truth = os.path.join(dir, "gt.png")
-        assert os.path.exists(ground_truth) == True
+        assert os.path.exists(ground_truth) == True, f"{ground_truth} does not exist"
         ground_truth = ToTensor()(Image.open(ground_truth))
 
         images = torch.stack(
@@ -70,7 +70,7 @@ class SIARDataModule(LightningDataModule):
         return DataLoader(self.siar_train, batch_size=self.batch_size)
 
     def test_dataloader(self):
-        return DataLoader(self.siar_train, batch_size=self.batch_size)
+        return DataLoader(self.siar_test, batch_size=self.batch_size)
 
     def val_dataloader(self):
-        return DataLoader(self.siar_train, batch_size=self.batch_size)
+        return DataLoader(self.siar_val, batch_size=self.batch_size)
