@@ -7,17 +7,7 @@ from omegaconf import OmegaConf
 from utils.parser import parse_arguments
 from models.decomposer import Decomposer
 from data.siar_data import SIARDataModule
-
-import subprocess
-
-
-def get_git_commit():
-    process = subprocess.Popen(
-        ["git", "rev-parse", "--short", "HEAD"], shell=False, stdout=subprocess.PIPE
-    )
-    git_head_hash = process.communicate()[0].strip()
-
-    return git_head_hash
+from utils.git_commit import get_git_commit
 
 
 def main(args):
