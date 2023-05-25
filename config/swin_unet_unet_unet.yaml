@@ -9,6 +9,7 @@ train:
   device: 'gpu'
 
 model:
+  checkpoint: False
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)

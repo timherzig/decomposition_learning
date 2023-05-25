@@ -18,7 +18,14 @@ def main(args):
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
     siar.setup("train", config.train.debug)
 
-    model = Decomposer(config=config.model)
+    model = (
+        Decomposer(config=config.model)
+        if not config.model.checkpoint
+        else Decomposer.load_from_checkpoint(
+            config.model.checkpoint, config=config.model
+        )
+    )
+
     trainer = pl.Trainer(
         max_epochs=config.train.max_epochs,
         logger=wandb_logger if not config.train.debug else None,

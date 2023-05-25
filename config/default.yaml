@@ -2,13 +2,14 @@ data:
   dir: 'data/SIAR'
   
 train:
-  debug: False
+  debug: True
   batch_size: 2
   max_epochs: 3
   log_every_n_steps: 1
   device: 'cpu'
 
 model:
+  checkpoint: False # 'checkpoints/lightning_logs/version_0/checkpoints/epoch=2-step=15.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
