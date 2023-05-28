@@ -113,7 +113,7 @@ class SwinTransformer3D_up(SwinTransformer3D):
         """Forward function."""
         #x = self.patch_embed(x)
         #print("after patch parition: ", x.shape)
-        x = self.pos_drop(x)
+        #x = self.pos_drop(x)     # needed? 
 
         for idx, layer in enumerate(self.layers):
             x, _ = layer(x.contiguous())
