@@ -12,11 +12,12 @@ import lightning.pytorch as pl
 
 
 class Decomposer(pl.LightningModule):
-    def __init__(self, config):
+    def __init__(self, config, log_dir: str = None):
         super().__init__()
 
         self.model_config = config.model
         self.train_config = config.train
+        self.log_dir = log_dir
 
         if not self.model_config.swin.use_checkpoint:
             self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
@@ -394,5 +395,5 @@ class Decomposer(pl.LightningModule):
             return checkpoint
 
         # TODO: Save only the swin part of the encoder
-        print(f"Logging to: {self.logger.log_dir}")
-        torch.save(self.swin.state_dict(), self.logger.log_dir + "/swin_encoder.pt")
+        print(f"Logging to: {self.log_dir + '/swin_encoder.pt'}")
+        torch.save(self.swin.state_dict(), self.log_dir + "/swin_encoder.pt")
