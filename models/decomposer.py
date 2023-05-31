@@ -18,7 +18,12 @@ class Decomposer(pl.LightningModule):
         self.model_config = config.model
         self.train_config = config.train
 
-        self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
+        if not self.model_config.swin.use_checkpoint:
+            self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
+        else:
+            self.swin = SwinTransformer3D.load_from_checkpoint(
+                self.model_config.swin.checkpoint
+            )
 
         # Ground truth upsampling
         if self.model_config.upsampler_gt == "unet":
@@ -389,3 +394,4 @@ class Decomposer(pl.LightningModule):
             return checkpoint
 
         # TODO: Save only the swin part of the encoder
+        self.swin._save_to_state_dict(self.logger.log_dir + "/swin_encoder.ckpt")

@@ -15,8 +15,8 @@ model:
   upsampler_sl: None #'unet' # upsampler for shadow and light
   upsampler_ob: None #'unet' # upsampler for objects (masks + rgb)
   swin:
-    pretrained: ''
-    use_checkpoint: True
+    checkpoint: ''
+    use_checkpoint: False
     patch_size: [2, 4, 4]    
   unet_gt:
     decoder:
