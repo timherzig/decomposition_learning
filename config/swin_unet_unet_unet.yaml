@@ -15,7 +15,7 @@ model:
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
     pretrained: ''
-    use_checkpoint: True
+    use_checkpoint: False
     patch_size: [2, 4, 4]    
   unet_gt:
     decoder:
