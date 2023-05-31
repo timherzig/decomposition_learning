@@ -82,6 +82,8 @@ class Decomposer(SwinTransformer3D):
         # Perform upsampling if needed
         if self.config.upsampler_gt == "unet":
             gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
+            if self.config.pretrain:
+                return gt_reconstruction
 
         if self.config.upsampler_sl == "unet":
             light_mask = self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
@@ -121,28 +123,40 @@ class Decomposer(SwinTransformer3D):
 
         return gt_loss + reconstruction_loss
 
+    def pretrain_loss(self, gt_reconstruction, input):
+        loss = MSELoss()
+        gt_loss = loss(gt_reconstruction, input)
+        return gt_loss
+
     def training_step(self, batch, batch_idx):
         (
             x,
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        (
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-        ) = self(x)
+        if not self.config.pretrain:
+            (
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+            ) = self(x)
+        else:
+            gt_reconstruction = self(x)
 
-        loss = self.loss_func(
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-            y,
-            x,
+        loss = (
+            self.loss_func(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                y,
+                x,
+            )
+            if not self.config.pretrain
+            else self.pretrain_loss(gt_reconstruction, x)
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -154,22 +168,29 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        (
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-        ) = self(x)
+        if not self.config.pretrain:
+            (
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+            ) = self(x)
+        else:
+            gt_reconstruction = self(x)
 
-        loss = self.loss_func(
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-            y,
-            x,
+        loss = (
+            self.loss_func(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                y,
+                x,
+            )
+            if not self.config.pretrain
+            else self.pretrain_loss(gt_reconstruction, x)
         )
 
         self.log("val_loss", loss, prog_bar=True)
@@ -193,22 +214,29 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        (
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-        ) = self(x)
+        if not self.config.pretrain:
+            (
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+            ) = self(x)
+        else:
+            gt_reconstruction = self(x)
 
-        loss = self.loss_func(
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-            y,
-            x,
+        loss = (
+            self.loss_func(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                y,
+                x,
+            )
+            if not self.config.pretrain
+            else self.pretrain_loss(gt_reconstruction, x)
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -223,6 +251,8 @@ class Decomposer(SwinTransformer3D):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
+            ) if not self.config.pretrain else self.pretrain_log_images(
+                gt_reconstruction, x
             )
         return loss
 
@@ -315,6 +345,31 @@ class Decomposer(SwinTransformer3D):
                         self.to_pil(occlusion_rec[:, img, :, :]), caption=columns[7]
                     )
                     for img in range(occlusion_rec.shape[1])
+                ],
+            ]
+        ]
+
+        self.logger.log_table(key="input_output", columns=columns, data=my_data)
+
+    def pretrain_log_images(self, gt_reconstruction, x):
+        idx = torch.randint(0, x.shape[0], (1,)).item()
+
+        x = x[idx, :, :, :, :]
+        gt_reconstruction = gt_reconstruction[idx, :, :, :]
+
+        columns = ["input", "gt_reconstruction"]
+
+        my_data = [
+            [
+                [
+                    wandb.Image(self.to_pil(x[:, img, :, :]), caption=columns[0])
+                    for img in range(x.shape[1])
+                ],
+                [
+                    wandb.Image(
+                        self.to_pil(gt_reconstruction[:, img, :, :]), caption=columns[1]
+                    )
+                    for img in range(gt_reconstruction.shape[1])
                 ],
             ]
         ]
