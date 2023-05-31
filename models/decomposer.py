@@ -395,4 +395,4 @@ class Decomposer(pl.LightningModule):
             return checkpoint
 
         # TODO: Save only the swin part of the encoder
-        self.swin._save_to_state_dict(self.logger.log_dir + "/swin_encoder.ckpt")
+        torch.save(self.swin.state_dict(), self.logger.log_dir + "/swin_encoder.pt")
