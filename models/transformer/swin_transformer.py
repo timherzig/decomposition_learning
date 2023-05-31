@@ -802,7 +802,7 @@ class SwinTransformer3D(nn.Module):
             self.pretrained = pretrained
         if isinstance(self.pretrained, str):
             self.apply(_init_weights)
-            logger = get_root_logger()
+            logger = get_logger()
             logger.info(f"load model from: {self.pretrained}")
 
             if self.pretrained2d:
