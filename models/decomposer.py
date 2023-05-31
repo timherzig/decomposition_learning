@@ -74,6 +74,7 @@ class Decomposer(pl.LightningModule):
             )
 
         self.to_pil = ToPILImage()
+        print(f"Logging to: {self.logger.log_dir}")
 
     # Override original swin forward function
     def forward(self, x):
