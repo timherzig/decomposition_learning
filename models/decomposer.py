@@ -74,7 +74,6 @@ class Decomposer(pl.LightningModule):
             )
 
         self.to_pil = ToPILImage()
-        print(f"Logging to: {self.logger.log_dir}")
 
     # Override original swin forward function
     def forward(self, x):
@@ -395,4 +394,5 @@ class Decomposer(pl.LightningModule):
             return checkpoint
 
         # TODO: Save only the swin part of the encoder
+        print(f"Logging to: {self.logger.log_dir}")
         torch.save(self.swin.state_dict(), self.logger.log_dir + "/swin_encoder.pt")
