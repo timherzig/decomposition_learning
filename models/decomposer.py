@@ -1,4 +1,5 @@
 import os
+from typing import Any, Dict
 import torch
 
 import wandb
@@ -7,17 +8,21 @@ from torch.nn import MSELoss
 from einops import rearrange
 from models.up_scaling.unet.up_scale import UpSampler
 from models.transformer.swin_transformer import SwinTransformer3D
+import lightning.pytorch as pl
 
 
-class Decomposer(SwinTransformer3D):
+class Decomposer(pl.LightningModule):
     def __init__(self, config):
-        super().__init__(patch_size=config.swin.patch_size)
+        super().__init__()
 
-        self.config = config
+        self.model_config = config.model
+        self.train_config = config.train
+
+        self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
 
         # Ground truth upsampling
-        if config.upsampler_gt == "unet":
-            self.decoder_gt_config = config.unet_gt.decoder
+        if self.model_config.upsampler_gt == "unet":
+            self.decoder_gt_config = self.model_config.unet_gt.decoder
 
             self.up_scale_gt = UpSampler(
                 self.decoder_gt_config.f_maps,
@@ -32,8 +37,8 @@ class Decomposer(SwinTransformer3D):
             )
 
         # Shadow and light upsampling
-        if config.upsampler_sl == "unet":
-            self.decoder_sl_config = config.unet_sl.decoder
+        if self.model_config.upsampler_sl == "unet":
+            self.decoder_sl_config = self.model_config.unet_sl.decoder
 
             self.up_scale_sl = UpSampler(
                 self.decoder_sl_config.f_maps,
@@ -48,8 +53,8 @@ class Decomposer(SwinTransformer3D):
             )
 
         # Object upsampling
-        if config.upsampler_ob == "unet":
-            self.decoder_ob_config = config.unet_ob.decoder
+        if self.model_config.upsampler_ob == "unet":
+            self.decoder_ob_config = self.model_config.unet_ob.decoder
 
             self.up_scale_ob = UpSampler(
                 self.decoder_ob_config.f_maps,
@@ -67,29 +72,30 @@ class Decomposer(SwinTransformer3D):
 
     # Override original swin forward function
     def forward(self, x):
-        x = self.patch_embed(x)
-        x = self.pos_drop(x)
+        # x = self.patch_embed(x)
+        # x = self.pos_drop(x)
 
-        # collect layers from encoder part
-        encoder_features = []
-        for idx, layer in enumerate(self.layers):
-            x, x_no_merge = layer(x.contiguous())
-            encoder_features.insert(0, x_no_merge)
-        x = rearrange(x, "n c d h w -> n d h w c")
-        x = self.norm(x)
-        x = rearrange(x, "n d h w c -> n c d h w")
+        # # collect layers from encoder part
+        # encoder_features = []
+        # for idx, layer in enumerate(self.layers):
+        #     x, x_no_merge = layer(x.contiguous())
+        #     encoder_features.insert(0, x_no_merge)
+        # x = rearrange(x, "n c d h w -> n d h w c")
+        # x = self.norm(x)
+        # x = rearrange(x, "n d h w c -> n c d h w")
+        x, encoder_features = self.swin(x)
 
         # Perform upsampling if needed
-        if self.config.upsampler_gt == "unet":
+        if self.model_config.upsampler_gt == "unet":
             gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
-            if self.config.pretrain:
+            if self.train_config.pre_train:
                 return gt_reconstruction
 
-        if self.config.upsampler_sl == "unet":
+        if self.model_config.upsampler_sl == "unet":
             light_mask = self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
             shadow_mask = self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
 
-        if self.config.upsampler_ob == "unet":
+        if self.model_config.upsampler_ob == "unet":
             occlusion_mask = self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
             occlusion_rgb = self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
 
@@ -123,7 +129,7 @@ class Decomposer(SwinTransformer3D):
 
         return gt_loss + reconstruction_loss
 
-    def pretrain_loss(self, gt_reconstruction, input):
+    def pre_train_loss(self, gt_reconstruction, input):
         loss = MSELoss()
         gt_loss = loss(gt_reconstruction, input)
         return gt_loss
@@ -134,7 +140,7 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        if not self.config.pretrain:
+        if not self.train_config.pre_train:
             (
                 gt_reconstruction,
                 light_mask,
@@ -155,8 +161,8 @@ class Decomposer(SwinTransformer3D):
                 y,
                 x,
             )
-            if not self.config.pretrain
-            else self.pretrain_loss(gt_reconstruction, x)
+            if not self.train_config.pre_train
+            else self.pre_train_loss(gt_reconstruction, x)
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -168,7 +174,7 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        if not self.config.pretrain:
+        if not self.train_config.pre_train:
             (
                 gt_reconstruction,
                 light_mask,
@@ -189,14 +195,14 @@ class Decomposer(SwinTransformer3D):
                 y,
                 x,
             )
-            if not self.config.pretrain
-            else self.pretrain_loss(gt_reconstruction, x)
+            if not self.train_config.pre_train
+            else self.pre_train_loss(gt_reconstruction, x)
         )
 
         self.log("val_loss", loss, prog_bar=True)
 
         # Log images on the first validation step
-        if batch_idx == 0:
+        if batch_idx == 0 and not self.train_config.debug:
             self.log_images(
                 y,
                 x,
@@ -205,6 +211,8 @@ class Decomposer(SwinTransformer3D):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
+            ) if not self.train_config.pre_train else self.pre_train_log_images(
+                gt_reconstruction, x
             )
         return loss
 
@@ -214,7 +222,7 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        if not self.config.pretrain:
+        if not self.train_config.pre_train:
             (
                 gt_reconstruction,
                 light_mask,
@@ -235,14 +243,14 @@ class Decomposer(SwinTransformer3D):
                 y,
                 x,
             )
-            if not self.config.pretrain
-            else self.pretrain_loss(gt_reconstruction, x)
+            if not self.train_config.pre_train
+            else self.pre_train_loss(gt_reconstruction, x)
         )
 
         self.log("train_loss", loss, prog_bar=True)
 
         # Log images on the first test step
-        if batch_idx == 0:
+        if batch_idx == 0 and not self.train_config.debug:
             self.log_images(
                 y,
                 x,
@@ -251,7 +259,7 @@ class Decomposer(SwinTransformer3D):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
-            ) if not self.config.pretrain else self.pretrain_log_images(
+            ) if not self.train_config.pre_train else self.pre_train_log_images(
                 gt_reconstruction, x
             )
         return loss
@@ -351,7 +359,7 @@ class Decomposer(SwinTransformer3D):
 
         self.logger.log_table(key="input_output", columns=columns, data=my_data)
 
-    def pretrain_log_images(self, gt_reconstruction, x):
+    def pre_train_log_images(self, gt_reconstruction, x):
         idx = torch.randint(0, x.shape[0], (1,)).item()
 
         x = x[idx, :, :, :, :]
@@ -375,3 +383,9 @@ class Decomposer(SwinTransformer3D):
         ]
 
         self.logger.log_table(key="input_output", columns=columns, data=my_data)
+
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        if not self.train_config.pre_train:
+            return checkpoint
+
+        # TODO: Save only the swin part of the encoder

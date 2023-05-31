@@ -19,11 +19,9 @@ def main(args):
     siar.setup("train", config.train.debug)
 
     model = (
-        Decomposer(config=config.model)
+        Decomposer(config=config)
         if not config.model.checkpoint
-        else Decomposer.load_from_checkpoint(
-            config.model.checkpoint, config=config.model
-        )
+        else Decomposer.load_from_checkpoint(config.model.checkpoint, config=config)
     )
 
     trainer = pl.Trainer(
