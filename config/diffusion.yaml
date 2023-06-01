@@ -4,7 +4,7 @@ data:
   
 train:
   debug: True
-  batch_size: 2
+  batch_size: 1
   max_epochs: 300
   device: cpu
   lr: 3e-4
