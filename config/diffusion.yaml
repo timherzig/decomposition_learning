@@ -1,30 +1,20 @@
 data:
   dir: 'data/SIAR'
+  img_size: 64 # 256 # 64
   
 train:
   debug: True
   batch_size: 2
-  max_epochs: 1
+  max_epochs: 300
+  device: cpu
+  lr: 3e-4
 
-model:
+decomposer:
   swin:
     pretrained: ''
     use_checkpoint: False
     patch_size: [2, 4, 4]
-  upsampler: 'diffusion'
-  unet:
-    decoder:
-      sample_size: [256, 256]
-      input_dim: 3
-      output_dim: 3
-      f_maps: [96, 192, 384, 768]
-      basic_module: 'DoubleConv'
-      conv_kernel_size: 3
-      conv_padding: 1
-      layer_order: 'gcr'
-      num_groups: 8
-      is3d: True
-      layers_no_skip:
-        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
-        scale_factor: 2 
+    emb_dim: 768
+  upsampler: None
+
 
