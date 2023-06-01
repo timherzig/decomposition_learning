@@ -21,13 +21,13 @@ def main(args):
     model = (
         Decomposer(
             config=config,
-            log_dir=(wandb_logger.experiment.name if config.train.pre_train else None),
+            log_dir=(wandb_logger.save_dir if config.train.pre_train else None),
         )
         if not config.model.checkpoint
         else Decomposer.load_from_checkpoint(
             config.model.checkpoint,
             config=config,
-            log_dir=(wandb_logger.experiment.name if config.train.pre_train else None),
+            log_dir=(wandb_logger.save_dir if config.train.pre_train else None),
         )
     )
 
