@@ -19,7 +19,7 @@ def main(args):
     siar.setup("train", config.train.debug)
 
     model = (
-        Decomposer(config=config)
+        Decomposer(config=config, log_dir=wandb_logger.save_dir)
         if not config.model.checkpoint
         else Decomposer.load_from_checkpoint(config.model.checkpoint, config=config)
     )
