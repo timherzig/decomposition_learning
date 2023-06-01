@@ -3,11 +3,14 @@ import copy
 import numpy as np
 import torch
 import torch.nn as nn
+from torchvision.transforms import ToPILImage
+from torchvision.utils import make_grid
 from tqdm import tqdm
 from torch import optim
 from modules import UNet_conditional, EMA
 import logging
 from omegaconf import OmegaConf
+import wandb
 
 from data.siar_data import SIARDataModule
 from utils.parser import parse_arguments
@@ -39,6 +42,8 @@ class Diffusion:
 
         self.img_size = img_size
         self.device = device
+
+        self.to_pil = ToPILImage()
 
     def prepare_noise_schedule(self):
         return torch.linspace(self.beta_start, self.beta_end, self.noise_steps)
@@ -93,9 +98,12 @@ def train(args):
     config = OmegaConf.load(args.config)
     device = config.train.device
 
+    wandb_logger = wandb.init(config=config, project="HTCV")
+
     dataloader = SIARDataModule(config.data.dir, config.train.batch_size)
     dataloader.setup(stage="train")
     train_dataloader = dataloader.train_dataloader()
+    val_dataloader = dataloader.val_dataloader()
     model = UNet_conditional(device=device, decomposer_config=config.decomposer).to(
         device
     )
@@ -110,6 +118,8 @@ def train(args):
     l = len(train_dataloader)
     ema = EMA(0.995)
     ema_model = copy.deepcopy(model).eval().requires_grad_(False)
+
+    global_step = 0
 
     for epoch in range(config.train.max_epochs):
         logging.info(f"Starting epoch {epoch}:")
@@ -132,6 +142,50 @@ def train(args):
             ema.step_ema(ema_model, model)
 
             pbar.set_postfix(MSE=loss.item())
+
+            # Log to wandb
+            if global_step % config.train.log_every == 0:
+                wandb_logger.log(
+                    {
+                        "loss": loss.item(),
+                        "global_step": global_step,
+                    },
+                    step=global_step,
+                )
+
+            global_step += 1
+
+        # Evaluate model
+        if epoch % config.train.eval_every == 0:
+            with torch.no_grad():
+                losses = []
+                for i, (images, gt) in enumerate(val_dataloader):
+                    xs = diffusion.sample(ema_model, 4, images).to(
+                        device
+                    )  # --- already takes care of setting to eval and train
+                    mean_loss = torch.mean([mse(x, gt.to(device)) for x in xs])
+                    losses.append(mean_loss.item())
+                mean_loss = torch.mean(torch.tensor(losses))
+
+            logging.info(f"Epoch {epoch}: Val MSE: {mean_loss.item()}")
+
+            # Log to wandb
+            wandb_logger.log(
+                {
+                    "val_mse": mean_loss.item(),
+                },
+                step=global_step,
+            )
+            imgs = make_grid(xs, nrow=2)  # --- Only log the last batch
+            imgs = wandb.Image(imgs)
+            wandb_logger.log({"val_samples": imgs}, step=global_step)
+
+        # Save model
+        if epoch % config.train.save_every == 0:
+            torch.save(
+                model.state_dict(),
+                os.path.join(wandb_logger.run.dir, f"model_{epoch}.pt"),
+            )
 
 
 def main():

@@ -1,11 +1,14 @@
 data:
   dir: 'data/SIAR'
-  img_size: 64 # 256 # 64
+  img_size: 256 # 256 # 64
   
 train:
   debug: True
   batch_size: 1
   max_epochs: 300
+  eval_every: 10
+  log_every: 10
+  save_every: 10
   device: cpu
   lr: 3e-4
 
