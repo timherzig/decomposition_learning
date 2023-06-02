@@ -4,7 +4,8 @@ import torch
 import wandb
 from torchvision.transforms import ToPILImage
 from torch.nn import MSELoss
-from torch.optim import Adam, ReduceLROnPlateau
+from torch.optim import Adam
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from einops import rearrange
 from models.up_scaling.unet.up_scale import UpSampler
 from models.transformer.swin_transformer import SwinTransformer3D
