@@ -109,7 +109,7 @@ class SwinTransformer3D_up(SwinTransformer3D):
                     param.requires_grad = False
 
 
-    def forward(self, x):
+    def forward(self, x, channels):
         """Forward function."""
         #x = self.patch_embed(x)
         #print("after patch parition: ", x.shape)
@@ -123,7 +123,7 @@ class SwinTransformer3D_up(SwinTransformer3D):
         x = self.norm(x)
         x = rearrange(x, 'n d h w c -> n c d h w')
 
-        proj = torch.nn.ConvTranspose3d(x.shape[1], 3, (2,4,4), (2,4,4), dilation=(1,1,1))
+        proj = torch.nn.ConvTranspose3d(x.shape[1], channels, (2,4,4), (2,4,4), dilation=(1,1,1))
         x = proj(x)
         print(x.shape)
 

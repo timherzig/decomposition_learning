@@ -7,6 +7,7 @@ from torch.nn import MSELoss
 from einops import rearrange
 from models.up_scaling.unet.up_scale import UpSampler
 from models.transformer.swin_transformer import SwinTransformer3D
+from models.up_scaling.reverse_st.upsampling import SwinTransformer3D_up
 
 
 class Decomposer(SwinTransformer3D):
@@ -67,29 +68,55 @@ class Decomposer(SwinTransformer3D):
 
     # Override original swin forward function
     def forward(self, x):
-        x = self.patch_embed(x)
-        x = self.pos_drop(x)
+        if self.config.upsampler == "swin": 
+            x = self.patch_embed(x)
+            x = self.pos_drop(x)
 
-        # collect layers from encoder part
-        encoder_features = []
-        for idx, layer in enumerate(self.layers):
-            x, x_no_merge = layer(x.contiguous())
-            encoder_features.insert(0, x_no_merge)
-        x = rearrange(x, "n c d h w -> n d h w c")
-        x = self.norm(x)
-        x = rearrange(x, "n d h w c -> n c d h w")
+            for idx, layer in enumerate(self.layers):
+                x, _ = layer(x.contiguous())
+            x = rearrange(x, "n c d h w -> n d h w c")
+            x = self.norm(x)
+            x = rearrange(x, "n d h w c -> n c d h w")
 
-        # Perform upsampling if needed
-        if self.config.upsampler_gt == "unet":
-            gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
+            # Perform upsampling 
+            model_gt = SwinTransformer3D_up()
+            gt_reconstruction = model_gt.forward(x, 3)  # squeeze?
+            model_sl = SwinTransformer3D_up()
+            masks = model_sl.forward(x, 2)
+            light_mask = masks[:, 0, :, :, :]
+            shadow_mask = masks[:, 1, :, :, :]
+            model_ob = SwinTransformer3D_up()
+            occlusion = model_ob.forward(x, 4)
+            occlusion_mask = occlusion[:, 0, :, :, :]
+            occlusion_rgb = occlusion[:, 1:, :, :, :]
+            #model = SwinTransformer3D_up()
+            #x = model.forward(x)
+            #return x
 
-        if self.config.upsampler_sl == "unet":
-            light_mask = self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
-            shadow_mask = self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
+        else: 
+            x = self.patch_embed(x)
+            x = self.pos_drop(x)
 
-        if self.config.upsampler_ob == "unet":
-            occlusion_mask = self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
-            occlusion_rgb = self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+            # collect layers from encoder part
+            encoder_features = []
+            for idx, layer in enumerate(self.layers):
+                x, x_no_merge = layer(x.contiguous())
+                encoder_features.insert(0, x_no_merge)
+            x = rearrange(x, "n c d h w -> n d h w c")
+            x = self.norm(x)
+            x = rearrange(x, "n d h w c -> n c d h w")
+
+            # Perform upsampling if needed
+            if self.config.upsampler_gt == "unet":
+                gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
+
+            if self.config.upsampler_sl == "unet":
+                light_mask = self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+                shadow_mask = self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
+
+            if self.config.upsampler_ob == "unet":
+                occlusion_mask = self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
+                occlusion_rgb = self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
 
         return gt_reconstruction, light_mask, shadow_mask, occlusion_mask, occlusion_rgb
 

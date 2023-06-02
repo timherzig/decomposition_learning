@@ -7,11 +7,15 @@ wandb:
 train:
   debug: True
   batch_size: 32
-  max_epochs: 100
+  max_epochs: 2
   log_every_n_steps: 15
   device: 'gpu'
 
 model:
+  checkpoint: False
+  upsampler_gt: 'swin' # upsampler for ground truth
+  upsampler_sl: 'swin' # upsampler for shadow and light
+  upsampler_ob: 'swin' # upsampler for objects (masks + rgb)
   upsampler: 'swin'
   swin:
     pretrained: ''
