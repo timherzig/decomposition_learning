@@ -3,13 +3,13 @@ data:
   img_size: 256 # 256 # 64
   
 train:
-  debug: True
-  batch_size: 1
-  max_epochs: 300
-  eval_every: 10
-  log_every: 10
+  debug: False
+  batch_size: 16
+  max_epochs: 50
+  eval_every: 2
+  log_every: 15
   save_every: 10
-  device: cpu
+  device: None
   lr: 3e-4
 
 decomposer:

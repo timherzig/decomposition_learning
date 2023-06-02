@@ -23,6 +23,38 @@ logging.basicConfig(
 )
 
 
+def to_pil(x):
+    return ToPILImage()(x)
+
+
+def format_table_logging(images, outputs, target):
+    # images --- [3, 10, H, W]
+    # outputs --- [n, 3, H, W]
+    # target --- [3, H, W]
+    columns = ["input", "output", "target"]
+    my_data = [
+        [
+            [
+                wandb.Image(to_pil(images[:, idx, :, :]), caption=columns[0])
+                for idx in range(images.shape[1])
+            ],
+            [
+                wandb.Image(
+                    to_pil(img),
+                    caption=columns[1],
+                )
+                for img in outputs
+            ],
+            wandb.Image(
+                to_pil(target),
+                caption=columns[2],
+            ),
+        ]
+    ]
+
+    return wandb.Table(columns=columns, data=my_data)
+
+
 class Diffusion:
     def __init__(
         self,
@@ -64,6 +96,10 @@ class Diffusion:
         model.eval()
         with torch.no_grad():
             x = torch.randn((n, 3, self.img_size, self.img_size)).to(self.device)
+            # copy conditioning 4 times
+            conditioning = torch.unsqueeze(conditioning, 0)
+            conditioning = torch.cat([conditioning] * n, dim=0)
+            conditioning = conditioning.to(self.device)  # --- [n, 3, 10, 256, 256]
             for i in tqdm(reversed(range(1, self.noise_steps)), position=0):
                 t = (torch.ones(n) * i).long().to(self.device)
                 predicted_noise = model(x, t, conditioning)
@@ -96,17 +132,25 @@ class Diffusion:
 
 def train(args):
     config = OmegaConf.load(args.config)
-    device = config.train.device
+    if config.train.device == "None":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        device = config.train.device
 
-    wandb_logger = wandb.init(config=config, project="HTCV")
+    if not config.train.debug:
+        wandb_logger = wandb.init(config=config, project="HTCV")
+    else:
+        wandb_logger = None
 
     dataloader = SIARDataModule(config.data.dir, config.train.batch_size)
     dataloader.setup(stage="train")
     train_dataloader = dataloader.train_dataloader()
     val_dataloader = dataloader.val_dataloader()
-    model = UNet_conditional(device=device, decomposer_config=config.decomposer).to(
-        device
-    )
+    model = UNet_conditional(
+        device=device,
+        img_size=config.data.img_size,
+        decomposer_config=config.decomposer,
+    ).to(device)
 
     print("Parameters:", sum(p.numel() for p in model.parameters() if p.requires_grad))
 
@@ -144,11 +188,10 @@ def train(args):
             pbar.set_postfix(MSE=loss.item())
 
             # Log to wandb
-            if global_step % config.train.log_every == 0:
+            if not config.train.debug and global_step % config.train.log_every == 0:
                 wandb_logger.log(
                     {
-                        "loss": loss.item(),
-                        "global_step": global_step,
+                        "train_loss": loss.item(),
                     },
                     step=global_step,
                 )
@@ -156,32 +199,51 @@ def train(args):
             global_step += 1
 
         # Evaluate model
-        if epoch % config.train.eval_every == 0:
+        if epoch % config.train.eval_every == 0 and epoch > 0:
             with torch.no_grad():
-                losses = []
-                for i, (images, gt) in enumerate(val_dataloader):
-                    xs = diffusion.sample(ema_model, 4, images).to(
-                        device
-                    )  # --- already takes care of setting to eval and train
-                    mean_loss = torch.mean([mse(x, gt.to(device)) for x in xs])
-                    losses.append(mean_loss.item())
+                losses = []  # --- list of mean losses for each batch
+                for images, gts in val_dataloader:
+                    # images --- [B, 3, 10, 256, 256]
+                    # gt --- [B, 3, 256, 256]
+                    for batch_elem, gt in zip(images, gts):
+                        predictions = diffusion.sample(ema_model, 4, batch_elem).to(
+                            device
+                        )  # --- already takes care of setting to eval and train
+                        batch_elem_losses = torch.tensor(
+                            [mse(pred, gt.to(device)) for pred in predictions]
+                        )
+                        mean_loss = torch.mean(batch_elem_losses)
+                        losses.append(mean_loss.item())
+                        # if config.train.debug:
+                        # break
+                    # if config.train.debug:
+                    # break
+                # Get mean loss over all batches
                 mean_loss = torch.mean(torch.tensor(losses))
 
             logging.info(f"Epoch {epoch}: Val MSE: {mean_loss.item()}")
 
             # Log to wandb
-            wandb_logger.log(
-                {
-                    "val_mse": mean_loss.item(),
-                },
-                step=global_step,
-            )
-            imgs = make_grid(xs, nrow=2)  # --- Only log the last batch
-            imgs = wandb.Image(imgs)
-            wandb_logger.log({"val_samples": imgs}, step=global_step)
+            if not config.train.debug:
+                wandb_logger.log(
+                    {
+                        "val_loss": mean_loss.item(),
+                    },
+                    step=global_step,
+                )
+                table_to_log = format_table_logging(batch_elem, predictions, gt)
+                wandb_logger.log({"input_output_diffusion": table_to_log})
 
         # Save model
-        if epoch % config.train.save_every == 0:
+        if (
+            not config.train.debug
+            and epoch % config.train.save_every == 0
+            and epoch > 0
+        ):
+            # if dir does not exist, create it
+            if not os.path.exists(wandb_logger.run.dir):
+                os.makedirs(wandb_logger.run.dir)
+
             torch.save(
                 model.state_dict(),
                 os.path.join(wandb_logger.run.dir, f"model_{epoch}.pt"),
