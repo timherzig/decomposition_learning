@@ -1,10 +1,10 @@
 import os
-from typing import Any, Dict
 import torch
 
 import wandb
 from torchvision.transforms import ToPILImage
 from torch.nn import MSELoss
+from torch.optim import Adam, ReduceLROnPlateau
 from einops import rearrange
 from models.up_scaling.unet.up_scale import UpSampler
 from models.transformer.swin_transformer import SwinTransformer3D
@@ -271,7 +271,9 @@ class Decomposer(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.02)
+        optimizer = Adam(self.parameters(), lr=1e-3)
+        scheduler = ReduceLROnPlateau(optimizer, patience=10)
+        return [optimizer], [scheduler]
 
     def log_images(
         self,
@@ -390,7 +392,7 @@ class Decomposer(pl.LightningModule):
 
         self.logger.log_table(key="input_output", columns=columns, data=my_data)
 
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+    def on_save_checkpoint(self, checkpoint):
         if not self.train_config.pre_train:
             return checkpoint
 
