@@ -14,6 +14,7 @@ def main(args):
     config = OmegaConf.load(args.config)
     if not config.train.debug:
         wandb_logger = WandbLogger(config=config, project="HTCV")
+        print(f"Experiment name: {wandb_logger.experiment.name}")
 
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
     siar.setup("train", config.train.debug)
