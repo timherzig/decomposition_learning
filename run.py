@@ -31,6 +31,9 @@ def main(args):
         )
     )
 
+    if not config.train.debug:
+        wandb_logger.watch(model, log="all", log_freq=100)
+
     trainer = pl.Trainer(
         max_epochs=config.train.max_epochs,
         logger=wandb_logger if not config.train.debug else None,
