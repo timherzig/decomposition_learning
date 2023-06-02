@@ -401,5 +401,7 @@ class Decomposer(pl.LightningModule):
             return checkpoint
 
         # TODO: Save only the swin part of the encoder
-        os.makedirs(f"swin_checkpoints/", exist_ok=True)
-        torch.save(self.swin.state_dict(), f"swin_checkpoints/swin_encoder.pt")
+        os.makedirs(f"swin_checkpoints/{self.log_dir}", exist_ok=True)
+        torch.save(
+            self.swin.state_dict(), f"swin_checkpoints/{self.log_dir}/swin_encoder.pt"
+        )
