@@ -274,7 +274,10 @@ class Decomposer(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=1e-3)
         scheduler = ReduceLROnPlateau(optimizer, patience=10)
-        return [optimizer], [scheduler]
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {"scheduler": scheduler, "monitor": "val_loss"},
+        }
 
     def log_images(
         self,
