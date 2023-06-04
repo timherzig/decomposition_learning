@@ -80,7 +80,8 @@ class Decomposer(SwinTransformer3D):
 
             # Perform upsampling 
             model_gt = SwinTransformer3D_up()
-            gt_reconstruction = model_gt.forward(x, 3)  # squeeze?
+            gt_reconstruction = model_gt.forward(x, 3) 
+            gt_reconstruction = torch.squeeze(gt_reconstruction) 
             model_sl = SwinTransformer3D_up()
             masks = model_sl.forward(x, 2)
             light_mask = masks[:, 0, :, :, :]
@@ -89,9 +90,6 @@ class Decomposer(SwinTransformer3D):
             occlusion = model_ob.forward(x, 4)
             occlusion_mask = occlusion[:, 0, :, :, :]
             occlusion_rgb = occlusion[:, 1:, :, :, :]
-            #model = SwinTransformer3D_up()
-            #x = model.forward(x)
-            #return x
 
         else: 
             x = self.patch_embed(x)
@@ -254,7 +252,7 @@ class Decomposer(SwinTransformer3D):
         return loss
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.02)
+        return torch.optim.Adam(self.parameters(), lr=0.001)
 
     def log_images(
         self,

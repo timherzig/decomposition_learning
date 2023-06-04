@@ -34,8 +34,8 @@ class SwinTransformer3D_up(SwinTransformer3D):
                  patch_size=(4,4,4),
                  in_chans=3,      
                  embed_dim=768,   # changed
-                 depths=[1, 1, 1, 1], #changed 
-                 num_heads=[3, 6, 12, 24],
+                 depths=[1, 1, 1, 1], # change?
+                 num_heads=[3, 6, 12, 24],  # reverse order?
                  window_size=(2,7,7),
                  mlp_ratio=4.,
                  qkv_bias=True,
@@ -123,9 +123,14 @@ class SwinTransformer3D_up(SwinTransformer3D):
         x = self.norm(x)
         x = rearrange(x, 'n d h w c -> n c d h w')
 
-        proj = torch.nn.ConvTranspose3d(x.shape[1], channels, (2,4,4), (2,4,4), dilation=(1,1,1))
-        x = proj(x)
-        print(x.shape)
+        if channels == 3:
+            proj = torch.nn.ConvTranspose3d(x.shape[1], channels, (5,4,4), (1,4,4), padding=(4,0,0), dilation=(1,1,1))
+            x = proj(x)
+            #print(x.shape)
+        else:
+            proj = torch.nn.ConvTranspose3d(x.shape[1], channels, (2,4,4), (2,4,4), dilation=(1,1,1))
+            x = proj(x)
+            #print(x.shape)
 
         return x
 

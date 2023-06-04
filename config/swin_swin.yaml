@@ -2,13 +2,13 @@ data:
   dir: 'data/SIAR'
 
 wandb:
-  logger: False
+  logger: True
 
 train:
-  debug: True
-  batch_size: 32
-  max_epochs: 2
-  log_every_n_steps: 15
+  debug: False
+  batch_size: 8
+  max_epochs: 20
+  log_every_n_steps: 5
   device: 'gpu'
 
 model:

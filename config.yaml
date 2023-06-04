@@ -1,0 +1,25 @@
+- data:
+    dir: data/SIAR
+  wandb:
+    logger: true
+  train:
+    debug: false
+    batch_size: 8
+    max_epochs: 1
+    log_every_n_steps: 1
+    device: cpu
+  model:
+    checkpoint: false
+    upsampler_gt: swin
+    upsampler_sl: swin
+    upsampler_ob: swin
+    upsampler: swin
+    swin:
+      pretrained: ''
+      use_checkpoint: true
+      patch_size:
+      - 2
+      - 4
+      - 4
+- git_commit: !!binary |
+    MzgwMjY5NA==
