@@ -117,7 +117,7 @@ class SwinTransformer3D_up(SwinTransformer3D):
 
         for idx, layer in enumerate(self.layers):
             x, _ = layer(x.contiguous())
-            print("Layer nr:" ,str(idx), " shape: ", x.shape)
+            #print("Layer nr:" ,str(idx), " shape: ", x.shape)
 
         x = rearrange(x, 'n c d h w -> n d h w c')
         x = self.norm(x)
