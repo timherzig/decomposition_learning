@@ -1,6 +1,6 @@
 data:
-  dir: 'data/SIAR'
-  img_size: 256 # 256 # 64
+  dir: 'data/SIAR_128'
+  img_size: 128 # 256 # 64
   
 train:
   debug: False

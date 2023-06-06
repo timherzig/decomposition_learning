@@ -202,11 +202,11 @@ def train(args):
         if epoch % config.train.eval_every == 0 and epoch > 0:
             with torch.no_grad():
                 losses = []  # --- list of mean losses for each batch
-                for images, gts in val_dataloader:
+                for batch_idx, (images, gts) in enumerate(val_dataloader):
                     # images --- [B, 3, 10, 256, 256]
                     # gt --- [B, 3, 256, 256]
-                    for batch_elem, gt in zip(images, gts):
-                        predictions = diffusion.sample(ema_model, 4, batch_elem).to(
+                    for elem_idx, (batch_elem, gt) in enumerate(zip(images, gts)):
+                        predictions = diffusion.sample(ema_model, 2, batch_elem).to(
                             device
                         )  # --- already takes care of setting to eval and train
                         batch_elem_losses = torch.tensor(
@@ -214,10 +214,12 @@ def train(args):
                         )
                         mean_loss = torch.mean(batch_elem_losses)
                         losses.append(mean_loss.item())
-                        # if config.train.debug:
-                        # break
-                    # if config.train.debug:
-                    # break
+
+                        if elem_idx == 3:
+                            break
+
+                    if batch_idx == 5:
+                        break
                 # Get mean loss over all batches
                 mean_loss = torch.mean(torch.tensor(losses))
 
@@ -240,14 +242,19 @@ def train(args):
             and epoch % config.train.save_every == 0
             and epoch > 0
         ):
+            path = os.path.join("runs", wandb_logger.name)
             # if dir does not exist, create it
-            if not os.path.exists(wandb_logger.run.dir):
-                os.makedirs(wandb_logger.run.dir)
+            if not os.path.exists(path):
+                os.makedirs(path)
 
             torch.save(
                 model.state_dict(),
-                os.path.join(wandb_logger.run.dir, f"model_{epoch}.pt"),
+                os.path.join(path, f"model_{epoch}.pt"),
             )
+
+        # log epoch
+        if not config.train.debug:
+            wandb_logger.log({"epoch": epoch}, step=global_step)
 
 
 def main():
