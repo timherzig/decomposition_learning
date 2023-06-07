@@ -16,7 +16,7 @@ class PatchSplitting(nn.Module):
 
         x = self.expansion(x)
         x0, x1, x2, x3 = torch.split(x, x.shape[-1]//4, dim = -1)
-        merged = torch.empty((x0.shape[0], x0.shape[1], x0.shape[2]*2, x0.shape[3]*2, x0.shape[4]))
+        merged = torch.empty((x0.shape[0], x0.shape[1], x0.shape[2]*2, x0.shape[3]*2, x0.shape[4])).to(x.get_device())
         merged[:, :, 0::2, 0::2, :] = x0
         merged[:, :, 0::2, 1::2, :] = x1
         merged[:, :, 1::2, 0::2, :] = x2
@@ -34,8 +34,8 @@ class SwinTransformer3D_up(SwinTransformer3D):
                  patch_size=(4,4,4),
                  in_chans=3,      
                  embed_dim=768,   # changed
-                 depths=[1, 1, 1, 1], # change?
-                 num_heads=[3, 6, 12, 24],  # reverse order?
+                 depths=[2, 6, 2, 2], # change?
+                 num_heads=[24, 12, 6, 3],  # reversed order
                  window_size=(2,7,7),
                  mlp_ratio=4.,
                  qkv_bias=True,
@@ -135,12 +135,23 @@ class SwinTransformer3D_up(SwinTransformer3D):
         return x
 
         
-
+# For testing
 # if __name__ == "__main__":
 #     x = torch.rand(10,8,8,8,768)
 #     for i in range(4):
 #         run = PatchSplitting(x.shape[4])
 #         x = run.forward(x)
+
+# from models.up_scaling.reverse_st.upsampling import SwinTransformer3D_up
+
+# def main(): 
+
+#     x = torch.rand(10,768,8,8,8)
+#     model = SwinTransformer3D_up()
+#     x = model.forward(x)
+
+# if __name__ == '__main__':
+#     main()
         
         
 

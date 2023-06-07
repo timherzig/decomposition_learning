@@ -6,7 +6,7 @@ wandb:
 
 train:
   debug: False
-  batch_size: 8
+  batch_size: 16
   max_epochs: 1
   log_every_n_steps: 1
   device: 'gpu'

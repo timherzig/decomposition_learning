@@ -1,5 +1,6 @@
 import os
 import torch
+import cv2
 
 import wandb
 from torchvision.transforms import ToPILImage
@@ -82,10 +83,10 @@ class Decomposer(SwinTransformer3D):
             model_gt = SwinTransformer3D_up()
             gt_reconstruction = model_gt.forward(x, 3) 
             gt_reconstruction = torch.squeeze(gt_reconstruction) 
-            model_sl = SwinTransformer3D_up()
-            masks = model_sl.forward(x, 2)
-            light_mask = masks[:, 0, :, :, :]
-            shadow_mask = masks[:, 1, :, :, :]
+            model_light = SwinTransformer3D_up()
+            light_mask = model_light.forward(x, 1)
+            model_shadow = SwinTransformer3D_up()
+            shadow_mask = model_shadow.forward(x, 1)
             model_ob = SwinTransformer3D_up()
             occlusion = model_ob.forward(x, 4)
             occlusion_mask = occlusion[:, 0, :, :, :]
@@ -141,6 +142,14 @@ class Decomposer(SwinTransformer3D):
             (gt_reconstruction * shadow_mask + light_mask),
             occlusion_rgb,
         )
+
+        # reconstruction = torch.where(
+        #     occlusion_mask < 0.5,
+        #     (gt_reconstruction * shadow_mask + light_mask),
+        #     (gt_reconstruction * shadow_mask + light_mask) + occlusion_rgb,
+        # )
+        # another form
+        #reconstruction = cv2.bitwise_and((gt_reconstruction * shadow_mask + light_mask), occlusion_mask),
 
         reconstruction_loss = loss(reconstruction, input)
 
