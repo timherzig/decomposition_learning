@@ -82,26 +82,14 @@ class Decomposer(pl.LightningModule):
 
         self.to_pil = ToPILImage()
 
-    # Override original swin forward function
     def forward(self, x):
-        # x = self.patch_embed(x)
-        # x = self.pos_drop(x)
-
-        # # collect layers from encoder part
-        # encoder_features = []
-        # for idx, layer in enumerate(self.layers):
-        #     x, x_no_merge = layer(x.contiguous())
-        #     encoder_features.insert(0, x_no_merge)
-        # x = rearrange(x, "n c d h w -> n d h w c")
-        # x = self.norm(x)
-        # x = rearrange(x, "n d h w c -> n c d h w")
         x, encoder_features = self.swin(x)
 
         # Perform upsampling if needed
         if self.model_config.upsampler_gt == "unet":
             gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
             if self.train_config.pre_train:
-                return gt_reconstruction
+                return torch.clip(gt_reconstruction, -1.0, 1.0)
 
         if self.model_config.upsampler_sl == "unet":
             light_mask = self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
@@ -111,7 +99,13 @@ class Decomposer(pl.LightningModule):
             occlusion_mask = self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
             occlusion_rgb = self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
 
-        return gt_reconstruction, light_mask, shadow_mask, occlusion_mask, occlusion_rgb
+        return (
+            torch.clip(gt_reconstruction, -1.0, 1.0),
+            torch.clip(light_mask, -1.0, 1.0),
+            torch.clip(shadow_mask, -1.0, 1.0),
+            torch.clip(occlusion_mask, -1.0, 1.0),
+            torch.clip(occlusion_rgb, -1.0, 1.0),
+        )
 
     def weight_decay(self):
         decay = 0.0
