@@ -218,7 +218,7 @@ class Decomposer(pl.LightningModule):
             else self.pre_train_loss(gt_reconstruction, x)
         )
 
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
         # Log images on the first validation step
         if batch_idx == 0 and not self.train_config.debug:
