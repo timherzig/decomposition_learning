@@ -17,7 +17,7 @@ def main(args):
         print(f"Experiment name: {wandb_logger.experiment.name}")
 
     if config.train.pre_train:
-        log_dir = f"swin_checkpoints/{wandb_logger.name}"
+        log_dir = f"swin_checkpoints/{wandb_logger.experiment.name}"
         os.makedirs(log_dir, exist_ok=True)
 
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
