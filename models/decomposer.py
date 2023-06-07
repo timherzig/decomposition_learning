@@ -108,6 +108,13 @@ class Decomposer(pl.LightningModule):
 
         return gt_reconstruction, light_mask, shadow_mask, occlusion_mask, occlusion_rgb
 
+    def weight_decay(self):
+        decay = 0.0
+        for name, param in self.named_parameters():
+            if name in ["weights"]:
+                decay += torch.sum(param**2)
+        return decay * self.train_config.weight_decay
+
     def loss_func(
         self,
         gt_reconstruction,
@@ -134,12 +141,12 @@ class Decomposer(pl.LightningModule):
 
         reconstruction_loss = loss(reconstruction, input)
 
-        return gt_loss + reconstruction_loss
+        return gt_loss + reconstruction_loss + self.weight_decay()
 
     def pre_train_loss(self, gt_reconstruction, input):
         loss = MSELoss()
         gt_loss = loss(gt_reconstruction, input)
-        return gt_loss
+        return gt_loss + self.weight_decay()
 
     def training_step(self, batch, batch_idx):
         (
@@ -405,3 +412,4 @@ class Decomposer(pl.LightningModule):
         torch.save(
             self.swin.state_dict(), f"swin_checkpoints/{self.log_dir}/swin_encoder.pt"
         )
+        return checkpoint
