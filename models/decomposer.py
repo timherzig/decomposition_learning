@@ -286,7 +286,7 @@ class Decomposer(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = Adam(self.parameters(), lr=1e-3)
+        optimizer = Adam(self.parameters(), lr=0.001)
         scheduler = ReduceLROnPlateau(optimizer, patience=10)
         return {
             "optimizer": optimizer,
