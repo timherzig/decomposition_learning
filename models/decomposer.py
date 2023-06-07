@@ -419,6 +419,6 @@ class Decomposer(pl.LightningModule):
             os.makedirs(f"swin_checkpoints/{self.log_dir}", exist_ok=True)
             torch.save(
                 self.swin.state_dict(),
-                f"swin_checkpoints/{self.log_dir}/swin_encoder_epoch_{self.current_epoch}.pt",
+                f"swin_checkpoints/{self.log_dir}/swin_encoder.pt",
             )
         self.validation_step_outputs.clear()
