@@ -19,17 +19,13 @@ def main(args):
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
     siar.setup("train", config.train.debug)
 
-    model = (
-        Decomposer(
-            config=config,
-            log_dir=(wandb_logger.experiment.name if config.train.pre_train else None),
-        )
-        if not config.model.checkpoint
-        else Decomposer.load_from_checkpoint(
-            config.model.checkpoint,
-            config=config,
-            log_dir=(wandb_logger.experiment.name if config.train.pre_train else None),
-        )
+    model = Decomposer(
+        config=config,
+        log_dir=(
+            wandb_logger.experiment.name
+            if config.train.pre_train and not config.train.debug
+            else None
+        ),
     )
 
     if not config.train.debug:

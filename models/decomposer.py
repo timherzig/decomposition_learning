@@ -20,12 +20,17 @@ class Decomposer(pl.LightningModule):
         self.train_config = config.train
         self.log_dir = log_dir
 
+        self.validation_step_outputs = []
+        self.best_val_loss = float("inf")
+
         if not self.model_config.swin.use_checkpoint:
             self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
         else:
             self.swin = SwinTransformer3D.load_from_checkpoint(
                 self.model_config.swin.checkpoint
             )
+            self.swin.freeze()
+            print(f"Loaded SWIN checkpoint")
 
         # Ground truth upsampling
         if self.model_config.upsampler_gt == "unet":
@@ -228,6 +233,8 @@ class Decomposer(pl.LightningModule):
             ) if not self.train_config.pre_train else self.pre_train_log_images(
                 gt_reconstruction, x
             )
+
+        self.validation_step_outputs.append(loss)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -403,13 +410,15 @@ class Decomposer(pl.LightningModule):
 
         self.logger.log_table(key="input_output", columns=columns, data=my_data)
 
-    def on_save_checkpoint(self, checkpoint):
-        if not self.train_config.pre_train:
-            return checkpoint
+    def on_validation_epoch_end(self) -> None:
+        loss = torch.stack(self.validation_step_outputs).mean()
+        if loss < self.best_val_loss and self.train_config.pre_train:
+            self.best_val_loss = loss
 
-        # TODO: Save only the swin part of the encoder
-        os.makedirs(f"swin_checkpoints/{self.log_dir}", exist_ok=True)
-        torch.save(
-            self.swin.state_dict(), f"swin_checkpoints/{self.log_dir}/swin_encoder.pt"
-        )
-        return checkpoint
+            # TODO: Save only the swin part of the encoder
+            os.makedirs(f"swin_checkpoints/{self.log_dir}", exist_ok=True)
+            torch.save(
+                self.swin.state_dict(),
+                f"swin_checkpoints/{self.log_dir}/swin_encoder_epoch_{self.current_epoch}.pt",
+            )
+        self.validation_step_outputs.clear()
