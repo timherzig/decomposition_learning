@@ -16,16 +16,16 @@ def main(args):
         wandb_logger = WandbLogger(config=config, project="HTCV")
         print(f"Experiment name: {wandb_logger.experiment.name}")
 
+    if config.train.pre_train:
+        log_dir = f"swin_checkpoints/{wandb_logger.name}"
+        os.makedirs(log_dir, exist_ok=True)
+
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
     siar.setup("train", config.train.debug)
 
     model = Decomposer(
         config=config,
-        log_dir=(
-            wandb_logger.experiment.name
-            if config.train.pre_train and not config.train.debug
-            else None
-        ),
+        log_dir=log_dir if config.train.pre_train else None,
     )
 
     if not config.train.debug:

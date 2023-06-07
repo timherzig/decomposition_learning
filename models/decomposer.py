@@ -415,10 +415,9 @@ class Decomposer(pl.LightningModule):
         if loss < self.best_val_loss and self.train_config.pre_train:
             self.best_val_loss = loss
 
-            # TODO: Save only the swin part of the encoder
-            os.makedirs(f"swin_checkpoints/{self.log_dir}", exist_ok=True)
+            # Save only the swin part of the encoder
             torch.save(
                 self.swin.state_dict(),
-                f"swin_checkpoints/{self.log_dir}/swin_encoder.pt",
+                f"{self.log_dir}/swin_encoder.pt",
             )
         self.validation_step_outputs.clear()
