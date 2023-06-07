@@ -198,41 +198,28 @@ def train(args):
 
             global_step += 1
 
-        # Evaluate model
+        # Log to wandb
         if epoch % config.train.eval_every == 0 and epoch > 0:
             with torch.no_grad():
-                losses = []  # --- list of mean losses for each batch
-                for batch_idx, (images, gts) in enumerate(val_dataloader):
-                    # images --- [B, 3, 10, 256, 256]
-                    # gt --- [B, 3, 256, 256]
-                    for elem_idx, (batch_elem, gt) in enumerate(zip(images, gts)):
-                        predictions = diffusion.sample(ema_model, 2, batch_elem).to(
-                            device
-                        )  # --- already takes care of setting to eval and train
-                        batch_elem_losses = torch.tensor(
-                            [mse(pred, gt.to(device)) for pred in predictions]
-                        )
-                        mean_loss = torch.mean(batch_elem_losses)
-                        losses.append(mean_loss.item())
+                # get random batch_idx
+                # batch_idx = torch.randint(0, len(val_dataloader), (1,)).item()
 
-                        if elem_idx == 3:
-                            break
+                # get random batch given batch_idx
+                # images --- [B, 3, 10, 256, 256]
+                # gt --- [B, 3, 256, 256]
+                images, gts = next(iter(val_dataloader))
 
-                    if batch_idx == 5:
-                        break
-                # Get mean loss over all batches
-                mean_loss = torch.mean(torch.tensor(losses))
+                # get random element from batch
+                random_batch_element = torch.randint(0, gt.shape[0], (1,)).item()
 
-            logging.info(f"Epoch {epoch}: Val MSE: {mean_loss.item()}")
+                # get random batch element
+                batch_elem = images[random_batch_element].unsqueeze(0).to(device)
+                gt = gts[random_batch_element].unsqueeze(0).to(device)
 
-            # Log to wandb
-            if not config.train.debug:
-                wandb_logger.log(
-                    {
-                        "val_loss": mean_loss.item(),
-                    },
-                    step=global_step,
-                )
+                predictions = diffusion.sample(model, 2, batch_elem).to(
+                    device
+                )  # --- already takes care of setting to eval and train
+
                 table_to_log = format_table_logging(batch_elem, predictions, gt)
                 wandb_logger.log({"input_output_diffusion": table_to_log})
 
