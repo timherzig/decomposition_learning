@@ -85,6 +85,12 @@ class Decomposer(pl.LightningModule):
     def forward(self, x):
         x, encoder_features = self.swin(x)
 
+        # Apply Upscaler_1 for reconstruction -> (B, 3, H, W)
+
+        # Apply Upscaler_2 for shadow mask, light mask -> (B, 10, 2, H, W)
+
+        # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 10, 4, H, W)
+
         # Perform upsampling if needed
         if self.model_config.upsampler_gt == "unet":
             gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
