@@ -4,7 +4,7 @@ data:
 train:
   debug: False
   batch_size: 8
-  max_epochs: 30
+  max_epochs: 150
   log_every_n_steps: 15
   device: 'gpu'
 
@@ -14,8 +14,8 @@ model:
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
-    pretrained: ''
-    use_checkpoint: False
+    pretrained: 'swin_checkpoints/HTCV/swin_encoder.pt'
+    use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
     decoder:
