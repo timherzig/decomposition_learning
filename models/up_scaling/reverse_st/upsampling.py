@@ -13,10 +13,10 @@ class PatchSplitting(nn.Module):
         self.norm = norm_layer(dim//2)
 
     def forward(self, x): 
-
-        x = self.expansion(x)
+        device = x.device
+        x = self.expansion(x.to(device))
         x0, x1, x2, x3 = torch.split(x, x.shape[-1]//4, dim = -1)
-        merged = torch.empty((x0.shape[0], x0.shape[1], x0.shape[2]*2, x0.shape[3]*2, x0.shape[4])).to(x.get_device())
+        merged = torch.empty((x0.shape[0], x0.shape[1], x0.shape[2]*2, x0.shape[3]*2, x0.shape[4])).to(device)
         merged[:, :, 0::2, 0::2, :] = x0
         merged[:, :, 0::2, 1::2, :] = x1
         merged[:, :, 1::2, 0::2, :] = x2
@@ -117,7 +117,7 @@ class SwinTransformer3D_up(SwinTransformer3D):
 
         for idx, layer in enumerate(self.layers):
             x, _ = layer(x.contiguous())
-            #print("Layer nr:" ,str(idx), " shape: ", x.shape)
+            # print("Layer nr:" ,str(idx), " shape: ", x.shape)
 
         x = rearrange(x, 'n c d h w -> n d h w c')
         x = self.norm(x)
@@ -126,11 +126,11 @@ class SwinTransformer3D_up(SwinTransformer3D):
         if channels == 3:
             proj = torch.nn.ConvTranspose3d(x.shape[1], channels, (5,4,4), (1,4,4), padding=(4,0,0), dilation=(1,1,1))
             x = proj(x)
-            #print(x.shape)
+            # print(x.shape)
         else:
             proj = torch.nn.ConvTranspose3d(x.shape[1], channels, (2,4,4), (2,4,4), dilation=(1,1,1))
             x = proj(x)
-            #print(x.shape)
+            # print(x.shape)
 
         return x
 
