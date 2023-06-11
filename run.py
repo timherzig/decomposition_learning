@@ -16,6 +16,7 @@ def main(args):
         wandb_logger = WandbLogger(config=config, project="HTCV")
         print(f"Experiment name: {wandb_logger.experiment.name}")
 
+    print(f"Pre_train: {config.train.pre_train}")
     if config.train.pre_train:
         log_dir = f"swin_checkpoints/{wandb_logger.experiment.name}"
         os.makedirs(log_dir, exist_ok=True)
