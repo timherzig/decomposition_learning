@@ -8,6 +8,7 @@ train:
   max_epochs: 150
   log_every_n_steps: 15
   device: 'gpu'
+  weight_decay: 0.01
 
 model:
   checkpoint: False
