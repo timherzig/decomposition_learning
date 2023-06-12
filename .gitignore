@@ -176,5 +176,6 @@ SIAR.zip
 HTCV/
 
 checkpoints/
+swin_checkpoints/
 
 .DS_Store
