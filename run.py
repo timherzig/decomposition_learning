@@ -13,6 +13,7 @@ from utils.git_commit import get_git_commit
 def main(args):
     config = OmegaConf.load(args.config)
     print("-----------------")
+    print(args.config)
     print(config)
     print("-----------------")
 
