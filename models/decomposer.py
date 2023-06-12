@@ -32,6 +32,7 @@ class Decomposer(pl.LightningModule):
                 frozen_stages=0,
             )
             print(f"Loaded SWIN checkpoint")
+            print("-----------------")
 
         # Ground truth upsampling
         if self.model_config.upsampler_gt == "unet":

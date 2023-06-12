@@ -19,6 +19,7 @@ def main(args):
     if not config.train.debug:
         wandb_logger = WandbLogger(config=config, project="HTCV")
         print(f"Experiment name: {wandb_logger.experiment.name}")
+        print("-----------------")
 
     if config.train.pre_train:
         log_dir = f"swin_checkpoints/{wandb_logger.experiment.name}"
