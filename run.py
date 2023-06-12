@@ -34,6 +34,7 @@ def main(args):
         if not config.train.debug
         else None,
         accelerator=config.train.device,
+        strategy="ddp_find_unused_parameters_true",
     )
 
     trainer.fit(model, datamodule=siar)
