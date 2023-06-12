@@ -27,7 +27,7 @@ class Decomposer(pl.LightningModule):
             self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
         else:
             self.swin = SwinTransformer3D(
-                pretrained=config.model.swin.checkpoint_path,
+                pretrained=config.model.swin.checkpoint,
                 patch_size=self.model_config.swin.patch_size,
             )
             self.swin.freeze()
