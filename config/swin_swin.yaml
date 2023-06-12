@@ -19,7 +19,7 @@ model:
   upsampler: 'swin'
   swin:
     pretrained: ''
-    use_checkpoint: True
-    patch_size: [2, 4, 4]    
+    use_checkpoint: False
+    patch_size: [2, 4, 4]  
   
 
