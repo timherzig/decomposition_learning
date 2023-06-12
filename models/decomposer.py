@@ -29,7 +29,6 @@ class Decomposer(pl.LightningModule):
             self.swin = SwinTransformer3D(
                 pretrained=config.model.swin.checkpoint,
                 patch_size=self.model_config.swin.patch_size,
-                use_checkpoint=True,
                 frozen_stages=0,
             )
             print(f"Loaded SWIN checkpoint")
