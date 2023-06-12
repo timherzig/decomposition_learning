@@ -12,6 +12,10 @@ from utils.git_commit import get_git_commit
 
 def main(args):
     config = OmegaConf.load(args.config)
+    print("-----------------")
+    print(config)
+    print("-----------------")
+
     if not config.train.debug:
         wandb_logger = WandbLogger(config=config, project="HTCV")
         print(f"Experiment name: {wandb_logger.experiment.name}")
