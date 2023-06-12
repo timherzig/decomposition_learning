@@ -16,7 +16,7 @@ model:
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
-    pretrained: 'swin_checkpoints/HTCV/swin_encoder.pt'
+    checkpoint: 'swin_checkpoints/HTCV/swin_encoder.pt'
     use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
