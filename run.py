@@ -1,12 +1,12 @@
 import os
 import lightning.pytorch as pl
-from lightning.pytorch.loggers import WandbLogger
-from omegaconf import OmegaConf
 
-# from src.model import Model
-from utils.parser import parse_arguments
+from omegaconf import OmegaConf
+from lightning.pytorch.loggers import WandbLogger
+
 from models.decomposer import Decomposer
 from data.siar_data import SIARDataModule
+from utils.parser import parse_arguments
 from utils.git_commit import get_git_commit
 
 
