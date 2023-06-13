@@ -28,10 +28,17 @@ def main(args):
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
     siar.setup("train", config.train.debug)
 
-    model = Decomposer(
-        config=config,
-        log_dir=log_dir if config.train.pre_train else None,
-    )
+    if not config.model.checkpoint:
+        model = Decomposer(
+            config=config,
+            log_dir=log_dir if config.train.pre_train else None,
+        )
+    else:
+        model = Decomposer.load_from_checkpoint(
+            config.model.checkpoint,
+            config=config,
+            log_dir=log_dir if config.train.pre_train else None,
+        )
 
     if not config.train.debug:
         wandb_logger.watch(model, log="all", log_freq=100)

@@ -148,6 +148,9 @@ class Decomposer(pl.LightningModule):
 
         reconstruction_loss = loss(reconstruction, input)
 
+        if self.model_config.checkpoint:
+            return reconstruction_loss + self.weight_decay()
+
         return gt_loss + reconstruction_loss + self.weight_decay()
 
     def pre_train_loss(self, gt_reconstruction, input):
