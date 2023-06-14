@@ -34,6 +34,7 @@ class UpSampler(nn.Module):
         output_dim,
         skipless_scale_factor,
         skipless_size,
+        omit_skip_connections
     ):
         super(UpSampler, self).__init__()
         self.decoders = create_decoders(
@@ -43,8 +44,9 @@ class UpSampler(nn.Module):
             conv_padding,
             layer_order,
             num_groups,
-            is3d,
+            is3d
         )
+        self.omit_skip_connections = omit_skip_connections
         self.skipless_size = skipless_size
         # Upscaling layers without skip connections (no data available from encoder)
 
@@ -71,8 +73,15 @@ class UpSampler(nn.Module):
     def forward(self, encoder_features, x):
         # Upscale first layers with information from encoder
         for decoder, features in zip(self.decoders, encoder_features):
+
+            # replace features with 0 to remove skip connections
+            if(self.omit_skip_connections): 
+                print("features before: ", features)
+                features = features**2 * 0
+                print("features after: ", features)
             # pass the output from the corresponding encoder and the output
             # of the previous decoder
+
             x = decoder(features, x)
         # current dimensionality: Batch x 96 x 5 x 64 x 64
 

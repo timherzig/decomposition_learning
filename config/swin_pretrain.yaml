@@ -1,15 +1,17 @@
 data:
-  dir: '/netscratch/herzig/datasets/SIAR'
-  
+  #dir: '/netscratch/herzig/datasets/SIAR'
+  dir: 'data/SIAR'
+
 train:
   debug: False
   pre_train: True
   batch_size: 8
   max_epochs: 100
   log_every_n_steps: 15
-  device: 'gpu'
+  device: 'cpu'
   weight_decay: 0.01
-
+  strategy: 'ddp_find_unused_parameters_true'
+  
 model:
   checkpoint: False
   upsampler_gt: 'unet' # upsampler for ground truth (in this case 10 images)
@@ -32,6 +34,7 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2 
+      omit_skip_connections: True
   unet_sl:
     decoder:
       output_dim: 2
@@ -45,6 +48,7 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2
+      omit_skip_connections: True
   unet_ob:
     decoder:
       output_dim: 4
@@ -58,3 +62,4 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2 
+      omit_skip_connections: True
