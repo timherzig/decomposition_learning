@@ -6,7 +6,6 @@ from torchvision.transforms import ToPILImage
 from torch.nn import MSELoss
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from einops import rearrange
 from models.up_scaling.unet.up_scale import UpSampler
 from models.transformer.swin_transformer import SwinTransformer3D
 import lightning.pytorch as pl
@@ -48,7 +47,7 @@ class Decomposer(pl.LightningModule):
                 self.decoder_gt_config.output_dim,
                 self.decoder_gt_config.layers_no_skip.scale_factor,
                 self.decoder_gt_config.layers_no_skip.size,
-                self.decoder_gt_config.omit_skip_connections
+                self.decoder_gt_config.omit_skip_connections,
             )
 
         # Shadow and light upsampling
@@ -65,7 +64,7 @@ class Decomposer(pl.LightningModule):
                 self.decoder_sl_config.output_dim,
                 self.decoder_sl_config.layers_no_skip.scale_factor,
                 self.decoder_sl_config.layers_no_skip.size,
-                self.decoder_sl_config.omit_skip_connections
+                self.decoder_sl_config.omit_skip_connections,
             )
 
         # Object upsampling
@@ -82,7 +81,7 @@ class Decomposer(pl.LightningModule):
                 self.decoder_ob_config.output_dim,
                 self.decoder_ob_config.layers_no_skip.scale_factor,
                 self.decoder_ob_config.layers_no_skip.size,
-                self.decoder_ob_config.omit_skip_connections
+                self.decoder_ob_config.omit_skip_connections,
             )
 
         self.to_pil = ToPILImage()
