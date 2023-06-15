@@ -7,7 +7,7 @@ train:
   batch_size: 8
   max_epochs: 100
   log_every_n_steps: 15
-  device: 'cpu'
+  device: 'gpu'
   weight_decay: 0.01
   strategy: 'ddp' #_find_unused_parameters_true'
 
