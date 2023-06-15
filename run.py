@@ -17,7 +17,8 @@ def main(args):
     print("-----------------")
 
     if not config.train.debug:
-        wandb_logger = WandbLogger(config=config, project="HTCV")
+        config_name = os.path.basename(args.config).split(".")[0]
+        wandb_logger = WandbLogger(config=config, project="HTCV", name=config_name)
         print(f"Experiment name: {wandb_logger.experiment.name}")
         print("-----------------")
 
