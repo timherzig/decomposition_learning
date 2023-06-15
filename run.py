@@ -52,7 +52,7 @@ def main(args):
         if not config.train.debug
         else None,
         accelerator=config.train.device,
-        strategy=config.train.strategy,
+        # strategy=config.train.strategy,
     )
 
     trainer.fit(model, datamodule=siar)
