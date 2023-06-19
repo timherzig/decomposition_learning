@@ -4,16 +4,16 @@ data:
 train:
   debug: False
   pre_train: True
-  batch_size: 8
+  batch_size: 16
   max_epochs: 100
   log_every_n_steps: 15
   device: 'gpu'
   weight_decay: 0.01
   strategy: 'auto' # 'ddp_find_unused_parameters_true'
-  accumulate_grad_batches: 8 # This way bs = 8 * 8 = 32 effective bs
+  accumulate_grad_batches: 1 # This way bs = 8 * 8 = 32 effective bs
 
 model:
-  checkpoint: False
+  checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/HTCV/ldp0ua9p/checkpoints/epoch=99-step=4600.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth (in this case 10 images)
   upsampler_sl: None # upsampler for shadow and light
   upsampler_ob: None # upsampler for objects (masks + rgb)
