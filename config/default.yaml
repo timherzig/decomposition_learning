@@ -10,6 +10,7 @@ train:
   device: 'cpu'
   weight_decay: 0.01
   strategy: 'auto' #'ddp_find_unused_parameters_true'
+  accumulate_grad_batches: 1
 
 
 model:

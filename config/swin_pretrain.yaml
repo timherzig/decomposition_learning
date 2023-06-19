@@ -10,6 +10,7 @@ train:
   device: 'gpu'
   weight_decay: 0.01
   strategy: 'auto' # 'ddp_find_unused_parameters_true'
+  accumulate_grad_batches: 8 # This way bs = 8 * 4 = 32 effective bs
 
 model:
   checkpoint: False

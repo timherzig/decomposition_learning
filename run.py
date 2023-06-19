@@ -56,6 +56,7 @@ def main(args):
         else None,
         accelerator=config.train.device,
         strategy=config.train.strategy,
+        accumulate_grad_batches=config.train.accumulate_grad_batches,
     )
 
     trainer.fit(model, datamodule=siar)
