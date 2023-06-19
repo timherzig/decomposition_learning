@@ -28,7 +28,7 @@ class Decomposer(pl.LightningModule):
             self.swin = SwinTransformer3D(
                 pretrained=config.model.swin.checkpoint,
                 patch_size=self.model_config.swin.patch_size,
-                frozen_stages=0,
+                frozen_stages=-1,  # =0
             )
             print(f"Loaded SWIN checkpoint")
             print("-----------------")
@@ -88,6 +88,10 @@ class Decomposer(pl.LightningModule):
 
     def forward(self, x):
         x, encoder_features = self.swin(x)
+        if self.train_config.debug:
+            print(f"swin x shape: {x.shape}")
+            for idx, ef in enumerate(encoder_features):
+                print(f"swin encoder_feature {idx} shape: {ef.shape}")
 
         # Apply Upscaler_1 for reconstruction -> (B, 3, H, W)
 
@@ -158,7 +162,7 @@ class Decomposer(pl.LightningModule):
     def pre_train_loss(self, gt_reconstruction, input):
         loss = MSELoss()
         gt_loss = loss(gt_reconstruction, input)
-        return gt_loss + self.weight_decay()
+        return gt_loss  # + self.weight_decay()
 
     def training_step(self, batch, batch_idx):
         (

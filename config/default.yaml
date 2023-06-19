@@ -3,20 +3,22 @@ data:
   
 train:
   debug: True
-  pre_train: False
+  pre_train: True
   batch_size: 2
   max_epochs: 3
   log_every_n_steps: 1
   device: 'cpu'
   weight_decay: 0.01
+  strategy: 'auto' #'ddp_find_unused_parameters_true'
+
 
 model:
-  checkpoint: True # 'checkpoints/lightning_logs/version_0/checkpoints/epoch=2-step=15.ckpt'
+  checkpoint: False # 'checkpoints/lightning_logs/version_0/checkpoints/epoch=2-step=15.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth
-  upsampler_sl: 'unet' # upsampler for shadow and light
-  upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
+  upsampler_sl: None #'unet' # upsampler for shadow and light
+  upsampler_ob: None #'unet' # upsampler for objects (masks + rgb)
   swin:
-    checkpoint: 'swin_checkpoints/None/swin_encoder_epoch_1.pt'
+    checkpoint: '' #'swin_checkpoints/None/swin_encoder_epoch_1.pt'
     use_checkpoint: False
     patch_size: [2, 4, 4]    
   unet_gt:
@@ -30,8 +32,9 @@ model:
       num_groups: 8
       is3d: True
       layers_no_skip:
-        size: [[96, 48, 5, 128, 128], [48, 24, 1, 256, 256]]
+        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2 
+      omit_skip_connections: True
   unet_sl:
     decoder:
       output_dim: 2
@@ -45,6 +48,7 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2
+      omit_skip_connections: True
   unet_ob:
     decoder:
       output_dim: 4
@@ -57,4 +61,5 @@ model:
       is3d: True
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
-        scale_factor: 2 
+        scale_factor: 2
+      omit_skip_connections: True

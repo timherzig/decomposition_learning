@@ -23,7 +23,10 @@ def main(args):
         print("-----------------")
 
     if config.train.pre_train:
-        log_dir = f"swin_checkpoints/{wandb_logger.experiment.name}"
+        if not config.train.debug:
+            log_dir = f"swin_checkpoints/{wandb_logger.experiment.name}"
+        else:
+            log_dir = "swin_checkpoints/debug"
         os.makedirs(log_dir, exist_ok=True)
 
     siar = SIARDataModule(config.data.dir, config.train.batch_size)
