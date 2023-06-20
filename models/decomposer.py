@@ -91,25 +91,14 @@ class Decomposer(SwinTransformer3D):
         x = rearrange(x, "n d h w c -> n c d h w")
 
         # Perform upsampling
-        # model_gt = SwinTransformer3D_up()
-        # gt_reconstruction = self.model_gt.forward(x, 3)
         gt_reconstruction = self.up_scale_gt.forward(x)
         gt_reconstruction = torch.squeeze(gt_reconstruction)
-        # model_sl = SwinTransformer3D_up()
-        # masks = self.model_sl.forward(x, 2)
         masks = self.up_scale_sl.forward(x)
         light_mask = masks[:, 0, :, :, :]
         shadow_mask = masks[:, 1, :, :, :]
-        # model_ob = SwinTransformer3D_up()
-        # occlusion = self.model_ob.forward(x, 4)
         occlusion = self.up_scale_ob.forward(x)
         occlusion_mask = occlusion[:, 0, :, :, :]
         occlusion_rgb = occlusion[:, 1:, :, :, :]
-
-        # model_light = SwinTransformer3D_up()
-        # light_mask = model_light.forward(x, 1)
-        # model_shadow = SwinTransformer3D_up()
-        # shadow_mask = model_shadow.forward(x, 1)
 
         return gt_reconstruction, light_mask, shadow_mask, occlusion_mask, occlusion_rgb
 
@@ -163,14 +152,6 @@ class Decomposer(SwinTransformer3D):
             (gt_reconstruction * shadow_mask + light_mask),
             occlusion_rgb,
         )
-
-        # reconstruction = torch.where(
-        #     occlusion_mask < 0.5,
-        #     (gt_reconstruction * shadow_mask + light_mask),
-        #     (gt_reconstruction * shadow_mask + light_mask) + occlusion_rgb,
-        # )
-        # another form
-        # reconstruction = cv2.bitwise_and((gt_reconstruction * shadow_mask + light_mask), occlusion_mask),
 
         reconstruction_loss = loss(reconstruction, input)
 
