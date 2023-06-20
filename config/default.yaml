@@ -5,6 +5,7 @@ train:
   debug: True
   pre_train: True
   batch_size: 2
+  lr: 1e-3
   max_epochs: 3
   log_every_n_steps: 1
   device: 'cpu'
