@@ -162,7 +162,7 @@ class Decomposer(pl.LightningModule):
     def pre_train_loss(self, gt_reconstruction, input):
         loss = MSELoss()
         gt_loss = loss(gt_reconstruction, input)
-        return gt_loss  # + self.weight_decay()
+        return gt_loss + self.weight_decay()
 
     def training_step(self, batch, batch_idx):
         (
