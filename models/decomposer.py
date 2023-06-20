@@ -374,4 +374,6 @@ class Decomposer(SwinTransformer3D):
             ]
         ]
 
-        self.logger.log_table(key="input_output", columns=columns, data=my_data)
+        self.logger.log_table(
+            key="input_output_decomposition", columns=columns, data=my_data
+        )

@@ -69,7 +69,7 @@ class SwinTransformer3D_up(SwinTransformer3D):
         #     patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim,
         #     norm_layer=norm_layer if self.patch_norm else None)
 
-        self.pos_drop = nn.Dropout(p=drop_rate)
+        # self.pos_drop = nn.Dropout(p=drop_rate)
 
         # stochastic depth
         dpr = [
@@ -132,7 +132,7 @@ class SwinTransformer3D_up(SwinTransformer3D):
         #         param.requires_grad = False
 
         if self.frozen_stages >= 1:
-            self.pos_drop.eval()
+            # self.pos_drop.eval()
             for i in range(0, self.frozen_stages):
                 m = self.layers[i]
                 m.eval()
