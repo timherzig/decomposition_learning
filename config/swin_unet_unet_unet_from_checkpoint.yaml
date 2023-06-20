@@ -5,20 +5,27 @@ train:
   debug: False
   pre_train: False
   batch_size: 8
-  max_epochs: 150
+  lr: 1e-3
+  max_epochs: 200
   log_every_n_steps: 15
   device: 'gpu'
+  loss_func: 'regularized_loss'
   weight_decay: 0.01
+  mask_decay: 1e-4 # 1e-5
+  lambda_gt_loss: 1.0
+  lambda_decomp_loss: 1.0
+  lambda_occlusion_difference: 1e-3
   strategy: 'ddp_find_unused_parameters_true'
+  accumulate_grad_batches: 8 # effective batch size = batch_size * accumulate_grad_batches
 
 model:
-  checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/HTCV/s0cs99yc/checkpoints/epoch=95-step=34944.ckpt'
+  checkpoint: False
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
-    checkpoint: 'swin_checkpoints/HTCV/swin_encoder.pt'
-    use_checkpoint: False
+    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
+    use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
     decoder:
@@ -33,6 +40,7 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 1, 256, 256]]
         scale_factor: 2 
+      omit_skip_connections: False
   unet_sl:
     decoder:
       output_dim: 2
@@ -46,6 +54,7 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2
+      omit_skip_connections: False
   unet_ob:
     decoder:
       output_dim: 4
@@ -59,3 +68,4 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2 
+      omit_skip_connections: False
