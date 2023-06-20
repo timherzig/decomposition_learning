@@ -285,14 +285,18 @@ class Decomposer(pl.LightningModule):
         else:
             gt_reconstruction = self(x)
 
-        loss = self.loss_func(
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-            y,
-            x,
+        loss = (
+            self.loss_func(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                y,
+                x,
+            )
+            if not self.train_config.pre_train
+            else self.pre_train_loss(gt_reconstruction, x)
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -315,14 +319,18 @@ class Decomposer(pl.LightningModule):
         else:
             gt_reconstruction = self(x)
 
-        loss = self.loss_func(
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-            y,
-            x,
+        loss = (
+            self.loss_func(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                y,
+                x,
+            )
+            if not self.train_config.pre_train
+            else self.pre_train_loss(gt_reconstruction, x)
         )
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
