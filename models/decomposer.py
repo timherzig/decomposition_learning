@@ -128,7 +128,54 @@ class Decomposer(pl.LightningModule):
                 decay += torch.sum(param**2)
         return decay * self.train_config.weight_decay
 
+    def mask_decay(self, mask):
+        """Sum over all mask elements squared
+
+        Args:
+            mask (torch.Tensor): Mask to be summed over
+
+        Returns:
+            torch.Tensor: Sum of all mask elements squared * mask_decay
+        """
+        return self.train_config.mask_decay * torch.sum(mask**2)
+
     def loss_func(
+        self,
+        gt_reconstruction,
+        light_mask,
+        shadow_mask,
+        occlusion_mask,
+        occlusion_rgb,
+        target,
+        input,
+    ):
+        if self.train_config.pre_train:
+            return self.pre_train_loss(gt_reconstruction, input)
+
+        if self.train_config.loss_func == "base_loss":
+            return self.base_loss(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                target,
+                input,
+            )
+        elif self.train_config.loss_func == "regularized_loss":
+            return self.regularized_loss(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                target,
+                input,
+            )
+        else:
+            raise NotImplementedError
+
+    def base_loss(
         self,
         gt_reconstruction,
         light_mask,
@@ -164,6 +211,63 @@ class Decomposer(pl.LightningModule):
         gt_loss = loss(gt_reconstruction, input)
         return gt_loss + self.weight_decay()
 
+    def regularized_loss(
+        self,
+        gt_reconstruction,
+        light_mask,
+        shadow_mask,
+        occlusion_mask,
+        occlusion_rgb,
+        target,
+        input,
+    ):
+        """Compute the regularized loss
+            > Loss =  l_1 * gt_loss + l_2 * decomp_loss + weight_decay + mask_decay - l_3 * Occ_diff
+            > where occlusion_mas = 1: Occ_diff = || Occ_RGB - gt_RGB ||_2 (*l_3 or clip range)
+
+        Args:
+            gt_reconstruction (torch.Tensor): Ground truth reconstruction. Shape (B, 3, H, W)
+            light_mask (torch.Tensor): Light mask. Shape (B, 10, 1, H, W)
+            shadow_mask (torch.Tensor): Shadow mask. Shape (B, 10, 1, H, W)
+            occlusion_mask (torch.Tensor): Occlusion mask. Shape (B, 10, 1, H, W)
+            occlusion_rgb (torch.Tensor): Occlusion rgb. Shape (B, 10, 3, H, W)
+            target (torch.Tensor): Target image. Shape (B, 3, H, W)
+            input (torch.Tensor): Input image sequence. Shape (B, 10, 3, H, W)
+
+        Returns:
+            torch.Tensor: Regularized loss
+        """
+        loss = MSELoss()
+        gt_loss = loss(gt_reconstruction, target)
+
+        gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+        shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        og_occ_mask = occlusion_mask
+        occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+
+        decomposition_reconstruction = torch.where(
+            occlusion_mask < 0.5,
+            (gt_reconstruction * shadow_mask + light_mask),
+            occlusion_rgb,
+        )
+
+        decomp_loss = loss(decomposition_reconstruction, input)
+
+        occ_diff = torch.norm(
+            occlusion_mask * gt_reconstruction - occlusion_mask * occlusion_rgb, 2
+        )
+
+        final_loss = (
+            self.train_config.lambda_gt_loss * gt_loss
+            + self.train_config.lambda_decomp_loss * decomp_loss
+            + self.weight_decay()
+            + self.mask_decay(og_occ_mask)
+            - self.train_config.lambda_occlusion_difference * occ_diff
+        )
+
+        return final_loss
+
     def training_step(self, batch, batch_idx):
         (
             x,
@@ -181,18 +285,14 @@ class Decomposer(pl.LightningModule):
         else:
             gt_reconstruction = self(x)
 
-        loss = (
-            self.loss_func(
-                gt_reconstruction,
-                light_mask,
-                shadow_mask,
-                occlusion_mask,
-                occlusion_rgb,
-                y,
-                x,
-            )
-            if not self.train_config.pre_train
-            else self.pre_train_loss(gt_reconstruction, x)
+        loss = self.loss_func(
+            gt_reconstruction,
+            light_mask,
+            shadow_mask,
+            occlusion_mask,
+            occlusion_rgb,
+            y,
+            x,
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -215,18 +315,14 @@ class Decomposer(pl.LightningModule):
         else:
             gt_reconstruction = self(x)
 
-        loss = (
-            self.loss_func(
-                gt_reconstruction,
-                light_mask,
-                shadow_mask,
-                occlusion_mask,
-                occlusion_rgb,
-                y,
-                x,
-            )
-            if not self.train_config.pre_train
-            else self.pre_train_loss(gt_reconstruction, x)
+        loss = self.loss_func(
+            gt_reconstruction,
+            light_mask,
+            shadow_mask,
+            occlusion_mask,
+            occlusion_rgb,
+            y,
+            x,
         )
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
