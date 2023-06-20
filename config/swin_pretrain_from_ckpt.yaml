@@ -13,7 +13,7 @@ train:
   accumulate_grad_batches: 1 # This way bs = 8 * 8 = 32 effective bs
 
 model:
-  checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/HTCV/ldp0ua9p/checkpoints/epoch=99-step=4600.ckpt'
+  checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/HTCV/85794lr4/checkpoints/epoch=99-step=36400.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth (in this case 10 images)
   upsampler_sl: None # upsampler for shadow and light
   upsampler_ob: None # upsampler for objects (masks + rgb)
