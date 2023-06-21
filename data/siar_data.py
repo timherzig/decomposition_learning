@@ -4,6 +4,7 @@ import torch
 import pandas as pd
 
 from PIL import Image
+from copy import deepcopy
 from lightning.pytorch import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import ToTensor
@@ -63,7 +64,7 @@ class SIARDataModule(LightningDataModule):
         if stage == "train":
             self.siar_train = SIAR(self.data_dir, "train", debug)
             if debug:
-                self.siar_val = self.siar_train.copy()
+                self.siar_val = deepcopy(self.siar_train)
             self.siar_val = SIAR(self.data_dir, "val", debug)
         if stage == "test":
             self.siar_test = SIAR(self.data_dir, "test", debug)
