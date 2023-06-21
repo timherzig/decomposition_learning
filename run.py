@@ -30,7 +30,7 @@ def main(args):
         os.makedirs(log_dir, exist_ok=True)
 
     siar = SIARDataModule(args.data, config.train.batch_size)
-    siar.setup("train", config.train.debug)
+    siar.setup("train", config.data.debug)
 
     if not config.model.checkpoint:
         model = Decomposer(
