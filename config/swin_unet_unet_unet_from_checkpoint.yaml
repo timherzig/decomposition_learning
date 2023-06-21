@@ -1,5 +1,5 @@
 data:
-  debug: True
+  debug: False
 
 train:
   debug: False
