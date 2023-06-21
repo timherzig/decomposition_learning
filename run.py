@@ -29,7 +29,7 @@ def main(args):
             log_dir = "swin_checkpoints/debug"
         os.makedirs(log_dir, exist_ok=True)
 
-    siar = SIARDataModule(config.data.dir, config.train.batch_size)
+    siar = SIARDataModule(args.data, config.train.batch_size)
     siar.setup("train", config.train.debug)
 
     if not config.model.checkpoint:

@@ -1,6 +1,6 @@
 data:
-  dir: 'data/SIAR'
-  
+  debug: False
+    
 train:
   debug: True
   pre_train: True
