@@ -21,7 +21,7 @@ class SIAR(Dataset):
         self.df["dir"] = [os.path.join(data_dir, str(x)) for x in self.df["id"]]
 
         if debug:
-            self.df = self.df[:4]
+            self.df = self.df[:1]
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
@@ -62,6 +62,8 @@ class SIARDataModule(LightningDataModule):
     def setup(self, stage: str, debug=False) -> None:
         if stage == "train":
             self.siar_train = SIAR(self.data_dir, "train", debug)
+            if debug:
+                self.siar_val = self.siar_train.copy()
             self.siar_val = SIAR(self.data_dir, "val", debug)
         if stage == "test":
             self.siar_test = SIAR(self.data_dir, "test", debug)
