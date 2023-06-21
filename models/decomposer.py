@@ -5,7 +5,7 @@ import lightning.pytorch as pl
 
 from models.transformer.swin_transformer import SwinTransformer3D
 from models.up_scaling.unet.up_scale import UpSampler
-from models.loss_functions import (
+from models.util.loss_functions import (
     base_loss,
     reconstruction_loss,
     regularized_loss,
