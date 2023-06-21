@@ -35,6 +35,8 @@ def log_images(
     occlusion_mask = occlusion_mask[idx, :, :, :]
     occlusion_rgb = occlusion_rgb[idx, :, :, :, :]
 
+    print(f"type y: {type(y)}")
+
     columns = [
         "org_img",
         "org_occlusion",
@@ -43,7 +45,7 @@ def log_images(
         "light_mask",
         "occlusion_mask",
         "occlusion_rgb",
-        "occlusion_reconstruction",
+        "complete_reconstruction",
     ]
 
     occlusion_rec = torch.where(
