@@ -22,7 +22,7 @@ class SIAR(Dataset):
         self.df["dir"] = [os.path.join(data_dir, str(x)) for x in self.df["id"]]
 
         if debug:
-            self.df = self.df[:1]
+            self.df = self.df[:2]
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
