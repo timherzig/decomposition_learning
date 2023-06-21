@@ -46,7 +46,7 @@ def log_images(
         "complete_reconstruction",
     ]
 
-    occlusion_rec = torch.where(
+    rec = torch.where(
         occlusion_mask.unsqueeze(0).repeat(3, 1, 1, 1) < 0.5,
         (
             gt_reconstruction.unsqueeze(1).repeat(1, 10, 1, 1)
@@ -81,8 +81,8 @@ def log_images(
                 for img in range(occlusion_rgb.shape[1])
             ],
             [
-                wandb.Image(ToPILImage(occlusion_rec[:, img, :, :]), caption=columns[7])
-                for img in range(occlusion_rec.shape[1])
+                wandb.Image(ToPILImage(rec[:, img, :, :]), caption=columns[7])
+                for img in range(rec.shape[1])
             ],
         ]
     ]
