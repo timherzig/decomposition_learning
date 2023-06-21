@@ -239,6 +239,8 @@ class Decomposer(pl.LightningModule):
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
+        print(f"occu_rgb: {occlusion_rgb.shape}")
+
         # Log images on the first validation step
         if batch_idx == 0 and not self.train_config.debug:
             pre_train_log_images(
