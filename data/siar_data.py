@@ -22,7 +22,10 @@ class SIAR(Dataset):
         self.df["dir"] = [os.path.join(data_dir, str(x)) for x in self.df["id"]]
 
         if debug:
-            self.df = self.df[:2]
+            self.df = self.df[:1]
+            self.df = pd.concat(
+                [self.df, self.df], ignore_index=True
+            )  # Now we can batches but they will all be the same entry
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
