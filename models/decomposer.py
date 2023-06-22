@@ -21,6 +21,7 @@ class Decomposer(pl.LightningModule):
     def __init__(self, config, log_dir: str = None):
         super().__init__()
 
+        self.data_config = config.data
         self.model_config = config.model
         self.train_config = config.train
         self.log_dir = log_dir
@@ -241,18 +242,34 @@ class Decomposer(pl.LightningModule):
 
         # Log images on the first validation step
         if batch_idx == 0 and not self.train_config.debug:
-            pre_train_log_images(
-                self.logger, gt_reconstruction, x
-            ) if self.train_config.pre_train else log_images(
-                self.logger,
-                y,
-                x,
-                gt_reconstruction,
-                light_mask,
-                shadow_mask,
-                occlusion_mask,
-                occlusion_rgb,
-            )
+            if self.data_config.debug:
+                if self.current_epoch % 100 == 0:
+                    pre_train_log_images(
+                        self.logger, gt_reconstruction, x
+                    ) if self.train_config.pre_train else log_images(
+                        self.logger,
+                        y,
+                        x,
+                        gt_reconstruction,
+                        light_mask,
+                        shadow_mask,
+                        occlusion_mask,
+                        occlusion_rgb,
+                    )
+            else:
+                if self.current_epoch % 10 == 0:
+                    pre_train_log_images(
+                        self.logger, gt_reconstruction, x
+                    ) if self.train_config.pre_train else log_images(
+                        self.logger,
+                        y,
+                        x,
+                        gt_reconstruction,
+                        light_mask,
+                        shadow_mask,
+                        occlusion_mask,
+                        occlusion_rgb,
+                    )
 
         self.validation_step_outputs.append(loss)
         return loss
