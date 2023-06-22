@@ -68,7 +68,8 @@ class SIARDataModule(LightningDataModule):
             self.siar_train = SIAR(self.data_dir, "train", debug)
             if debug:
                 self.siar_val = deepcopy(self.siar_train)
-            self.siar_val = SIAR(self.data_dir, "val", debug)
+            else:
+                self.siar_val = SIAR(self.data_dir, "val", debug)
         if stage == "test":
             self.siar_test = SIAR(self.data_dir, "test", debug)
 
