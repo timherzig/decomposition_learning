@@ -1,5 +1,5 @@
 from torch import nn
-from models.up_scaling.unet.unet3d import DoubleConv, Decoder, create_decoders
+from src.models.up_scaling.unet.unet3d import DoubleConv, Decoder, create_decoders
 import torch
 
 
@@ -32,10 +32,14 @@ class UpSampler(nn.Module):
         num_groups,
         is3d,
         output_dim,
-        skipless_scale_factor,
-        skipless_size,
+        layers_no_skip,
+        omit_skip_connections,
     ):
         super(UpSampler, self).__init__()
+
+        skipless_scale_factor = layers_no_skip.scale_factor
+        skipless_size = layers_no_skip.size
+
         self.decoders = create_decoders(
             f_maps,
             DoubleConv,
@@ -45,6 +49,7 @@ class UpSampler(nn.Module):
             num_groups,
             is3d,
         )
+        self.omit_skip_connections = omit_skip_connections
         self.skipless_size = skipless_size
         # Upscaling layers without skip connections (no data available from encoder)
 
@@ -71,8 +76,12 @@ class UpSampler(nn.Module):
     def forward(self, encoder_features, x):
         # Upscale first layers with information from encoder
         for decoder, features in zip(self.decoders, encoder_features):
+            # replace features with 0 to remove skip connections
+            if self.omit_skip_connections:
+                features = features**2 * 0
             # pass the output from the corresponding encoder and the output
             # of the previous decoder
+
             x = decoder(features, x)
         # current dimensionality: Batch x 96 x 5 x 64 x 64
 

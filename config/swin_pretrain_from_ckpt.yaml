@@ -1,37 +1,25 @@
 data:
-  # Name of dataset
-  dataset: 'SIAR'
-  # Split version to use
-  split_dir: 'split-1_80_10_10'
-  # Set validation set equal to train set to provoke overfitting and see if loss works
-  sanity_check: False
-    
+  dir: '/netscratch/herzig/datasets/SIAR'
+
 train:
-  debug: True
-  pre_train: False
+  debug: False
+  pre_train: True
   batch_size: 8
-  lr: 1e-3
-  max_epochs: 150
+  lr: 1e-4
+  max_epochs: 100
   log_every_n_steps: 15
   device: 'gpu'
-  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss'
-  loss_func: 'regularized_loss'
   weight_decay: 0.01
-  mask_decay: 1e-4 # 1e-5
-  lambda_gt_loss: 1.0
-  lambda_decomp_loss: 1.0
-  lambda_occlusion_difference: 1e-3
-  strategy: 'ddp_find_unused_parameters_true'
-  accumulate_grad_batches: 1
-
+  strategy: 'auto' # 'ddp_find_unused_parameters_true'
+  accumulate_grad_batches: 1 # This way bs = 8 * 8 = 32 effective bs
 
 model:
-  checkpoint: False # 'checkpoints/lightning_logs/version_0/checkpoints/epoch=2-step=15.ckpt'
-  upsampler_gt: 'unet' # upsampler for ground truth
-  upsampler_sl: None #'unet' # upsampler for shadow and light
-  upsampler_ob: None #'unet' # upsampler for objects (masks + rgb)
+  checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/HTCV/85794lr4/checkpoints/epoch=99-step=36400.ckpt'
+  upsampler_gt: 'unet' # upsampler for ground truth (in this case 10 images)
+  upsampler_sl: None # upsampler for shadow and light
+  upsampler_ob: None # upsampler for objects (masks + rgb)
   swin:
-    checkpoint: '' #'swin_checkpoints/None/swin_encoder_epoch_1.pt'
+    checkpoint: ''
     use_checkpoint: False
     patch_size: [2, 4, 4]    
   unet_gt:
@@ -74,5 +62,5 @@ model:
       is3d: True
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
-        scale_factor: 2
+        scale_factor: 2 
       omit_skip_connections: True
