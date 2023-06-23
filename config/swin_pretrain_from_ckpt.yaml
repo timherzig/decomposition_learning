@@ -1,33 +1,25 @@
 data:
-  # dir: '/netscratch/herzig/datasets/SIAR'
-  dir: 'data/SIAR'
-  
+  dir: '/netscratch/herzig/datasets/SIAR'
+
 train:
-  debug: True
-  pre_train: False
+  debug: False
+  pre_train: True
   batch_size: 8
-  lr: 1e-3
-  max_epochs: 150
+  lr: 1e-4
+  max_epochs: 100
   log_every_n_steps: 15
   device: 'gpu'
-  loss_func: 'regularized_loss'
   weight_decay: 0.01
-  mask_decay: 1e-4 # 1e-5
-  lambda_gt_loss: 1.0
-  lambda_decomp_loss: 1.0
-  lambda_occlusion_difference: 1e-3
-  strategy: 'ddp_find_unused_parameters_true'
-  accumulate_grad_batches: 1
-
+  strategy: 'auto' # 'ddp_find_unused_parameters_true'
+  accumulate_grad_batches: 1 # This way bs = 8 * 8 = 32 effective bs
 
 model:
-  checkpoint: False
-  upsampler_gt: 'unet' # upsampler for ground truth
-  upsampler_sl: 'unet' # upsampler for shadow and light
-  upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
+  checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/HTCV/85794lr4/checkpoints/epoch=99-step=36400.ckpt'
+  upsampler_gt: 'unet' # upsampler for ground truth (in this case 10 images)
+  upsampler_sl: None # upsampler for shadow and light
+  upsampler_ob: None # upsampler for objects (masks + rgb)
   swin:
-    # checkpoint: 'swin_checkpoints/HTCV/swin_encoder.pt'
-    checkpoint: False
+    checkpoint: ''
     use_checkpoint: False
     patch_size: [2, 4, 4]    
   unet_gt:
@@ -41,7 +33,7 @@ model:
       num_groups: 8
       is3d: True
       layers_no_skip:
-        size: [[96, 48, 5, 128, 128], [48, 24, 1, 256, 256]]
+        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2 
       omit_skip_connections: True
   unet_sl:

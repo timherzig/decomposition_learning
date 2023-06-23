@@ -1,25 +1,49 @@
-import os
 import torch
-import cv2
+from torch.optim import Adam
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+import lightning.pytorch as pl
 
-import wandb
-from torchvision.transforms import ToPILImage
-from torch.nn import MSELoss
-from einops import rearrange
-from models.up_scaling.unet.up_scale import UpSampler
 from models.transformer.swin_transformer import SwinTransformer3D
 from models.up_scaling.reverse_st.upsampling import SwinTransformer3D_up
+from models.up_scaling.unet.up_scale import UpSampler
+from models.util.loss_functions import (
+    base_loss,
+    reconstruction_loss,
+    regularized_loss,
+    pre_train_loss,
+)
+from utils.wandb_logging import (
+    log_images,
+    pre_train_log_images,
+)
+from einops import rearrange
 
+class Decomposer(pl.LightningModule):
+    def __init__(self, config, log_dir: str = None):
+        super().__init__()
 
-class Decomposer(SwinTransformer3D):
-    def __init__(self, config):
-        super().__init__(patch_size=config.swin.patch_size)
+        self.data_config = config.data
+        self.model_config = config.model
+        self.train_config = config.train
+        self.log_dir = log_dir
 
-        self.config = config
+        self.validation_step_outputs = []
+        self.best_val_loss = float("inf")
+
+        if not self.model_config.swin.use_checkpoint:
+            self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
+        else:
+            self.swin = SwinTransformer3D(
+                pretrained=config.model.swin.checkpoint,
+                patch_size=self.model_config.swin.patch_size,
+                frozen_stages=-1,  # =0
+            )
+            print(f"Loaded SWIN checkpoint")
+            print("-----------------")
 
         # Ground truth upsampling
-        if config.upsampler_gt == "unet":
-            self.decoder_gt_config = config.unet_gt.decoder
+        if self.model_config.upsampler_gt == "unet":
+            self.decoder_gt_config = self.model_config.unet_gt.decoder
 
             self.up_scale_gt = UpSampler(
                 self.decoder_gt_config.f_maps,
@@ -31,13 +55,14 @@ class Decomposer(SwinTransformer3D):
                 self.decoder_gt_config.output_dim,
                 self.decoder_gt_config.layers_no_skip.scale_factor,
                 self.decoder_gt_config.layers_no_skip.size,
-            )
+                self.decoder_gt_config.omit_skip_connections,
+            )s
         elif config.upsampler_gt == "swin":
-            self.up_scale_gt = SwinTransformer3D_up(out_chans=3)
+            self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=config.swin.patch_size)
 
         # Shadow and light upsampling
-        if config.upsampler_sl == "unet":
-            self.decoder_sl_config = config.unet_sl.decoder
+        if self.model_config.upsampler_sl == "unet":
+            self.decoder_sl_config = self.model_config.unet_sl.decoder
 
             self.up_scale_sl = UpSampler(
                 self.decoder_sl_config.f_maps,
@@ -49,13 +74,14 @@ class Decomposer(SwinTransformer3D):
                 self.decoder_sl_config.output_dim,
                 self.decoder_sl_config.layers_no_skip.scale_factor,
                 self.decoder_sl_config.layers_no_skip.size,
+                self.decoder_sl_config.omit_skip_connections,
             )
         elif config.upsampler_sl == "swin":
-            self.up_scale_sl = SwinTransformer3D_up(out_chans=2)
+            self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=config.swin.patch_size)
 
         # Object upsampling
-        if config.upsampler_ob == "unet":
-            self.decoder_ob_config = config.unet_ob.decoder
+        if self.model_config.upsampler_ob == "unet":
+            self.decoder_ob_config = self.model_config.unet_ob.decoder
 
             self.up_scale_ob = UpSampler(
                 self.decoder_ob_config.f_maps,
@@ -67,13 +93,11 @@ class Decomposer(SwinTransformer3D):
                 self.decoder_ob_config.output_dim,
                 self.decoder_ob_config.layers_no_skip.scale_factor,
                 self.decoder_ob_config.layers_no_skip.size,
+                self.decoder_ob_config.omit_skip_connections,
             )
         elif config.upsampler_ob == "swin":
-            self.up_scale_ob = SwinTransformer3D_up(out_chans=4)
+            self.up_scale_ob = SwinTransformer3D_up(out_chans=4, patch_size=config.swin.patch_size)
 
-        self.to_pil = ToPILImage()
-
-    # Override original swin forward function
     def forward(self, x):
         if self.config.upsampler == "swin":
             return self.forward_swin(x)
@@ -100,34 +124,44 @@ class Decomposer(SwinTransformer3D):
         occlusion_mask = occlusion[:, 0, :, :, :]
         occlusion_rgb = occlusion[:, 1:, :, :, :]
 
-        return gt_reconstruction, light_mask, shadow_mask, occlusion_mask, occlusion_rgb
+        return (
+            torch.clip(gt_reconstruction, -1.0, 1.0),
+            torch.clip(light_mask, -1.0, 1.0),
+            torch.clip(shadow_mask, -1.0, 1.0),
+            torch.clip(occlusion_mask, -1.0, 1.0),
+            torch.clip(occlusion_rgb, -1.0, 1.0),
+        )
 
     def forward_unet(self, x):
-        x = self.patch_embed(x)
-        x = self.pos_drop(x)
+        x, encoder_features = self.swin(x)
+        if self.train_config.debug:
+            print(f"swin x shape: {x.shape}")
+            for idx, ef in enumerate(encoder_features):
+                print(f"swin encoder_feature {idx} shape: {ef.shape}")
 
-        # collect layers from encoder part
-        encoder_features = []
-        for idx, layer in enumerate(self.layers):
-            x, x_no_merge = layer(x.contiguous())
-            encoder_features.insert(0, x_no_merge)
-        x = rearrange(x, "n c d h w -> n d h w c")
-        x = self.norm(x)
-        x = rearrange(x, "n d h w c -> n c d h w")
-
-        # Perform upsampling if needed
-        if self.config.upsampler_gt == "unet":
+        # Apply Upscaler_1 for reconstruction -> (B, 3, H, W)
+        if self.model_config.upsampler_gt == "unet":
             gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
+            if self.train_config.pre_train:
+                return torch.clip(gt_reconstruction, -1.0, 1.0)
 
-        if self.config.upsampler_sl == "unet":
+        # Apply Upscaler_2 for shadow mask, light mask -> (B, 10, 2, H, W)
+        if self.model_config.upsampler_sl == "unet":
             light_mask = self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
             shadow_mask = self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
 
-        if self.config.upsampler_ob == "unet":
+        # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 10, 4, H, W)
+        if self.model_config.upsampler_ob == "unet":
             occlusion_mask = self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
             occlusion_rgb = self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
 
-        return gt_reconstruction, light_mask, shadow_mask, occlusion_mask, occlusion_rgb
+        return (
+            torch.clip(gt_reconstruction, -1.0, 1.0),
+            torch.clip(light_mask, -1.0, 1.0),
+            torch.clip(shadow_mask, -1.0, 1.0),
+            torch.clip(occlusion_mask, -1.0, 1.0),
+            torch.clip(occlusion_rgb, -1.0, 1.0),
+        )
 
     def loss_func(
         self,
@@ -139,23 +173,54 @@ class Decomposer(SwinTransformer3D):
         target,
         input,
     ):
-        loss = MSELoss()
-        gt_loss = loss(gt_reconstruction, target)
+        if self.train_config.pre_train:
+            return pre_train_loss(
+                gt_reconstruction, input, self, self.train_config.weight_decay
+            )
 
-        gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
-        shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
-        light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
-        occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        if self.model_config.checkpoint:
+            return reconstruction_loss(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                target,
+                input,
+                self,
+                self.train_config.weight_decay,
+            )
 
-        reconstruction = torch.where(
-            occlusion_mask < 0.5,
-            (gt_reconstruction * shadow_mask + light_mask),
-            occlusion_rgb,
-        )
-
-        reconstruction_loss = loss(reconstruction, input)
-
-        return gt_loss + reconstruction_loss
+        if self.train_config.loss_func == "base_loss":
+            return base_loss(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                target,
+                input,
+                self,
+                self.train_config.weight_decay,
+            )
+        elif self.train_config.loss_func == "regularized_loss":
+            return regularized_loss(
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+                target,
+                input,
+                self,
+                self.train_config.weight_decay,
+                self.train_config.mask_decay,
+                self.train_config.lambda_gt_loss,
+                self.train_config.lambda_decomp_loss,
+                self.train_config.lambda_occlusion_difference,
+            )
+        else:
+            raise NotImplementedError
 
     def training_step(self, batch, batch_idx):
         (
@@ -163,13 +228,16 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        (
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-        ) = self(x)
+        if not self.train_config.pre_train:
+            (
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+            ) = self(x)
+        else:
+            gt_reconstruction = self(x)
 
         loss = self.loss_func(
             gt_reconstruction,
@@ -190,13 +258,16 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        (
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-        ) = self(x)
+        if not self.train_config.pre_train:
+            (
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+            ) = self(x)
+        else:
+            gt_reconstruction = self(x)
 
         loss = self.loss_func(
             gt_reconstruction,
@@ -208,19 +279,40 @@ class Decomposer(SwinTransformer3D):
             x,
         )
 
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
         # Log images on the first validation step
-        if batch_idx == 0:
-            self.log_images(
-                y,
-                x,
-                gt_reconstruction,
-                light_mask,
-                shadow_mask,
-                occlusion_mask,
-                occlusion_rgb,
-            )
+        if batch_idx == 0 and not self.train_config.debug:
+            if self.data_config.debug:
+                if self.current_epoch % 100 == 0:
+                    pre_train_log_images(
+                        self.logger, gt_reconstruction, x
+                    ) if self.train_config.pre_train else log_images(
+                        self.logger,
+                        y,
+                        x,
+                        gt_reconstruction,
+                        light_mask,
+                        shadow_mask,
+                        occlusion_mask,
+                        occlusion_rgb,
+                    )
+            else:
+                if self.current_epoch % 10 == 0:
+                    pre_train_log_images(
+                        self.logger, gt_reconstruction, x
+                    ) if self.train_config.pre_train else log_images(
+                        self.logger,
+                        y,
+                        x,
+                        gt_reconstruction,
+                        light_mask,
+                        shadow_mask,
+                        occlusion_mask,
+                        occlusion_rgb,
+                    )
+
+        self.validation_step_outputs.append(loss)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -229,13 +321,16 @@ class Decomposer(SwinTransformer3D):
             y,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
-        (
-            gt_reconstruction,
-            light_mask,
-            shadow_mask,
-            occlusion_mask,
-            occlusion_rgb,
-        ) = self(x)
+        if not self.train_config.pre_train:
+            (
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+            ) = self(x)
+        else:
+            gt_reconstruction = self(x)
 
         loss = self.loss_func(
             gt_reconstruction,
@@ -250,8 +345,11 @@ class Decomposer(SwinTransformer3D):
         self.log("train_loss", loss, prog_bar=True)
 
         # Log images on the first test step
-        if batch_idx == 0:
-            self.log_images(
+        if batch_idx == 0 and not self.train_config.debug:
+            pre_train_log_images(
+                self.logger, gt_reconstruction, x
+            ) if self.train_config.pre_train else log_images(
+                self.logger,
                 y,
                 x,
                 gt_reconstruction,
@@ -263,98 +361,21 @@ class Decomposer(SwinTransformer3D):
         return loss
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.001)
+        optimizer = Adam(self.parameters(), lr=self.train_config.lr)
+        scheduler = ReduceLROnPlateau(optimizer, patience=10)
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {"scheduler": scheduler, "monitor": "val_loss"},
+        }
 
-    def log_images(
-        self,
-        y,
-        x,
-        gt_reconstruction,
-        shadow_mask,
-        light_mask,
-        occlusion_mask,
-        occlusion_rgb,
-    ):
-        """
-        Logs one image sequence to the wandb logger
+    def on_validation_epoch_end(self) -> None:
+        loss = torch.stack(self.validation_step_outputs).mean()
+        if loss < self.best_val_loss and self.train_config.pre_train:
+            self.best_val_loss = loss
 
-        params:
-            y: unoccluded original input (1)
-            x: occluded input (10)
-            gt_reconstruction: ground truth reconstruction (1)
-            shadow_mask: shadow mask (10)
-            light_mask: light mask (10)
-            occlusion_mask: occlusion mask (10)
-            occlusion_rgb: occlusion rgb (10)
-        """
-        idx = torch.randint(0, y.shape[0], (1,)).item()
-
-        y = y[idx, :, :, :]
-        x = x[idx, :, :, :, :]
-        gt_reconstruction = gt_reconstruction[idx, :, :, :]
-        shadow_mask = shadow_mask[idx, :, :, :]
-        light_mask = light_mask[idx, :, :, :]
-        occlusion_mask = occlusion_mask[idx, :, :, :]
-        occlusion_rgb = occlusion_rgb[idx, :, :, :, :]
-
-        columns = [
-            "org_img",
-            "org_occlusion",
-            "gt_reconstruction",
-            "shadow_mask",
-            "light_mask",
-            "occlusion_mask",
-            "occlusion_rgb",
-            "occlusion_reconstruction",
-        ]
-
-        occlusion_rec = torch.where(
-            occlusion_mask.unsqueeze(0).repeat(3, 1, 1, 1) < 0.5,
-            (
-                gt_reconstruction.unsqueeze(1).repeat(1, 10, 1, 1)
-                * shadow_mask.unsqueeze(0).repeat(3, 1, 1, 1)
-                + light_mask.unsqueeze(0).repeat(3, 1, 1, 1)
-            ),
-            occlusion_rgb,
-        )
-
-        my_data = [
-            [
-                wandb.Image(self.to_pil(y), caption=columns[0]),
-                [
-                    wandb.Image(self.to_pil(x[:, img, :, :]), caption=columns[1])
-                    for img in range(x.shape[1])
-                ],
-                wandb.Image(self.to_pil(gt_reconstruction), caption=columns[2]),
-                [
-                    wandb.Image(self.to_pil(shadow_mask[img, :, :]), caption=columns[3])
-                    for img in range(shadow_mask.shape[0])
-                ],
-                [
-                    wandb.Image(self.to_pil(light_mask[img, :, :]), caption=columns[4])
-                    for img in range(light_mask.shape[0])
-                ],
-                [
-                    wandb.Image(
-                        self.to_pil(occlusion_mask[img, :, :]), caption=columns[5]
-                    )
-                    for img in range(occlusion_mask.shape[0])
-                ],
-                [
-                    wandb.Image(
-                        self.to_pil(occlusion_rgb[:, img, :, :]), caption=columns[6]
-                    )
-                    for img in range(occlusion_rgb.shape[1])
-                ],
-                [
-                    wandb.Image(
-                        self.to_pil(occlusion_rec[:, img, :, :]), caption=columns[7]
-                    )
-                    for img in range(occlusion_rec.shape[1])
-                ],
-            ]
-        ]
-
-        self.logger.log_table(
-            key="input_output_decomposition", columns=columns, data=my_data
-        )
+            # Save only the swin part of the encoder
+            torch.save(
+                self.swin.state_dict(),
+                f"{self.log_dir}/swin_encoder.pt",
+            )
+        self.validation_step_outputs.clear()

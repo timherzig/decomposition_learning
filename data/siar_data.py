@@ -4,6 +4,7 @@ import torch
 import pandas as pd
 
 from PIL import Image
+from copy import deepcopy
 from lightning.pytorch import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import ToTensor
@@ -21,7 +22,10 @@ class SIAR(Dataset):
         self.df["dir"] = [os.path.join(data_dir, str(x)) for x in self.df["id"]]
 
         if debug:
-            self.df = self.df[:4]
+            self.df = self.df[:1]
+            self.df = pd.concat(
+                [self.df, self.df], ignore_index=True
+            )  # Now we can batches but they will all be the same entry
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
@@ -62,7 +66,10 @@ class SIARDataModule(LightningDataModule):
     def setup(self, stage: str, debug=False) -> None:
         if stage == "train":
             self.siar_train = SIAR(self.data_dir, "train", debug)
-            self.siar_val = SIAR(self.data_dir, "val", debug)
+            if debug:
+                self.siar_val = deepcopy(self.siar_train)
+            else:
+                self.siar_val = SIAR(self.data_dir, "val", debug)
         if stage == "test":
             self.siar_test = SIAR(self.data_dir, "test", debug)
 

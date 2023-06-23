@@ -1,13 +1,12 @@
 data:
-  # dir: '/netscratch/herzig/datasets/SIAR'
-  dir: 'data/SIAR'
-  
-train:
   debug: True
+
+train:
+  debug: False
   pre_train: False
-  batch_size: 8
+  batch_size: 2
   lr: 1e-3
-  max_epochs: 150
+  max_epochs: 5000
   log_every_n_steps: 15
   device: 'gpu'
   loss_func: 'regularized_loss'
@@ -17,8 +16,7 @@ train:
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
   strategy: 'ddp_find_unused_parameters_true'
-  accumulate_grad_batches: 1
-
+  accumulate_grad_batches: 1 # effective batch size = batch_size * accumulate_grad_batches
 
 model:
   checkpoint: False
@@ -26,9 +24,8 @@ model:
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
-    # checkpoint: 'swin_checkpoints/HTCV/swin_encoder.pt'
-    checkpoint: False
-    use_checkpoint: False
+    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
+    use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
     decoder:
@@ -43,7 +40,7 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 1, 256, 256]]
         scale_factor: 2 
-      omit_skip_connections: True
+      omit_skip_connections: False
   unet_sl:
     decoder:
       output_dim: 2
@@ -57,7 +54,7 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2
-      omit_skip_connections: True
+      omit_skip_connections: False
   unet_ob:
     decoder:
       output_dim: 4
@@ -71,4 +68,4 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2 
-      omit_skip_connections: True
+      omit_skip_connections: False
