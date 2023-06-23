@@ -30,11 +30,11 @@ class UpSampler(nn.Module):
         conv_padding,
         layer_order,
         num_groups,
+        basic_module,
         is3d,
         output_dim,
         layers_no_skip,
         omit_skip_connections,
-        final_activation,
     ):
         super(UpSampler, self).__init__()
 
@@ -43,7 +43,7 @@ class UpSampler(nn.Module):
 
         self.decoders = create_decoders(
             f_maps,
-            DoubleConv,
+            basic_module,
             conv_kernel_size,
             conv_padding,
             layer_order,
@@ -59,7 +59,7 @@ class UpSampler(nn.Module):
             layer = Decoder(
                 size[0],
                 size[1],
-                basic_module=DoubleConv,
+                basic_module=basic_module,
                 conv_layer_order=layer_order,
                 conv_kernel_size=conv_kernel_size,
                 num_groups=num_groups,
