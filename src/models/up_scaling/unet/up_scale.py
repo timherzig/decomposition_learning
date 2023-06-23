@@ -34,6 +34,7 @@ class UpSampler(nn.Module):
         output_dim,
         layers_no_skip,
         omit_skip_connections,
+        final_activation,
     ):
         super(UpSampler, self).__init__()
 
@@ -70,7 +71,7 @@ class UpSampler(nn.Module):
 
         self.layers_no_skip = nn.ModuleList(self.layers_no_skip)
 
-        # Final conv layer to reduce number of channels using 1x1 kernel
+        # Final conv layer to reduce number of channels using 1x1 kernel and final activation function
         self.final_layer = nn.Conv3d(skipless_size[-1][1], output_dim, kernel_size=1)
 
     def forward(self, encoder_features, x):
@@ -95,7 +96,8 @@ class UpSampler(nn.Module):
             x = layer(dummy_features, x, skip_joining=True)
         # Dim. after upscaling: Batch x _ x 10 x 256 x 256
 
-        # Apply final conv layer
+        # Apply final conv layer and final activation
         x = self.final_layer(x)
+
         # Final dimensions: Batch x output_dim x 10 x 256 x 256
         return x

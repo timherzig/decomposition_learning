@@ -1,6 +1,9 @@
 import torch
-from torch.nn import MSELoss
 import torch.nn as nn
+from torch.nn import MSELoss
+
+from src.models.utils.preprocessing import get_shadow_light_gt
+from src.models.utils.utils import get_class
 
 
 def weight_decay(model, weight_decay):
@@ -34,6 +37,10 @@ def mask_decay(mask, mask_decay):
     return mask_decay * torch.sum(mask**2)
 
 
+def get_metric(metric):
+    return get_class(metric, ["src.models.metrics"])
+
+
 class base_loss(nn.Module):
     """Base loss. Sum of MSE between (i) and (ii) \\
         (i) reconstructed occluded image and input \\
@@ -56,8 +63,8 @@ class base_loss(nn.Module):
         target,
         input,
     ):
-        loss = MSELoss()
-        gt_loss = loss(gt_reconstruction, target)
+        metric = get_metric(self.config.train.metric)
+        gt_loss = metric(gt_reconstruction, target)
 
         gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
@@ -70,7 +77,7 @@ class base_loss(nn.Module):
             occlusion_rgb,
         )
 
-        reconstruction_loss = loss(reconstruction, input)
+        reconstruction_loss = metric(reconstruction, input)
 
         return (
             gt_loss
@@ -97,7 +104,7 @@ class reconstruction_loss(nn.Module):
         occlusion_rgb,
         input,
     ):
-        loss = MSELoss()
+        metric = get_metric(self.config.train.metric)
         gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
         light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
@@ -109,7 +116,7 @@ class reconstruction_loss(nn.Module):
             occlusion_rgb,
         )
 
-        reconstruction_loss = loss(reconstruction, input)
+        reconstruction_loss = metric(reconstruction, input)
 
         return reconstruction_loss + weight_decay(
             self.model, self.config.weight_decay_param
@@ -135,8 +142,8 @@ class pre_train_loss(nn.Module):
         target,
         input,
     ):
-        loss = MSELoss()
-        gt_loss = loss(gt_reconstruction, input)
+        metric = get_metric(self.config.train.metric)
+        gt_loss = metric(gt_reconstruction, input)
 
         return gt_loss + weight_decay(self.model, self.config.weight_decay_param)
 
@@ -163,8 +170,8 @@ class regularized_loss(nn.Module):
         target,
         input,
     ):
-        loss = MSELoss()
-        gt_loss = loss(gt_reconstruction, target)
+        metric = get_metric(self.config.train.metric)
+        gt_loss = metric(gt_reconstruction, target)
 
         gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
@@ -178,7 +185,7 @@ class regularized_loss(nn.Module):
             occlusion_rgb,
         )
 
-        decomp_loss = loss(decomposition_reconstruction, input)
+        decomp_loss = metric(decomposition_reconstruction, input)
 
         occ_diff = torch.norm(
             occlusion_mask * gt_reconstruction - occlusion_mask * occlusion_rgb, 2
@@ -193,3 +200,42 @@ class regularized_loss(nn.Module):
         )
 
         return final_loss
+
+
+class light_and_shadow_loss(nn.Module):
+    def __init__(self, model, config):
+        super(regularized_loss, self).__init__()
+
+        self.model = model
+        self.config = config
+
+    def forward(
+        self,
+        gt_reconstruction,
+        light_mask,
+        shadow_mask,
+        occlusion_mask,
+        occlusion_rgb,
+        target,
+        input,
+    ):
+        metric = get_metric(self.config.train.metric)
+        gt_loss = metric(gt_reconstruction, target)
+
+        imgs_no_occlusion_preprocessed = get_shadow_light_gt(target, input)
+
+        gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+        shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+
+        imgs_no_occlusion_reconstruction = gt_reconstruction * shadow_mask + light_mask
+
+        light_shadow_loss = metric(
+            imgs_no_occlusion_preprocessed, imgs_no_occlusion_reconstruction
+        )
+
+        return (
+            gt_loss
+            + light_shadow_loss
+            + weight_decay(self.model, self.config.weight_decay_param)
+        )

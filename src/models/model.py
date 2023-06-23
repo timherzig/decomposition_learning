@@ -2,6 +2,7 @@ import torch
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import lightning.pytorch as pl
+import torch.nn.functional as F
 
 from src.models.transformer.swin_transformer import SwinTransformer3D
 from src.models.up_scaling.unet.up_scale import UpSampler
@@ -72,19 +73,30 @@ class Decomposer(pl.LightningModule):
 
         # Apply Upscaler_1 for reconstruction -> (B, 3, H, W)
         if self.model_config.upsampler_gt == "unet":
-            gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
+            # Apply sigmoid activation layer
+            gt_reconstruction = F.sigmoid(
+                torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
+            )
             if self.train_config.pre_train:
                 return torch.clip(gt_reconstruction, -1.0, 1.0)
 
         # Apply Upscaler_2 for shadow mask, light mask -> (B, 10, 2, H, W)
         if self.model_config.upsampler_sl == "unet":
-            light_mask = self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
-            shadow_mask = self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
+            light_mask = F.relu(
+                self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+            )  # ReLU activation
+            shadow_mask = F.sigmoid(
+                self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
+            )  # Sigmoid activation
 
         # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 10, 4, H, W)
         if self.model_config.upsampler_ob == "unet":
-            occlusion_mask = self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
-            occlusion_rgb = self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+            occlusion_mask = F.relu(
+                self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
+            )  # ReLU
+            occlusion_rgb = F.relu(
+                self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+            )  # ReLU
 
         return (
             torch.clip(gt_reconstruction, -1.0, 1.0),

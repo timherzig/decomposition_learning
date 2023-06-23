@@ -20,6 +20,7 @@ class SIAR(Dataset):
         split: str,
         split_version: str = "split-1_80_10_10",
         sanity_check=False,
+        manual_dataset_path=None,
     ) -> None:
         super().__init__()
         """SIAR Dataset
@@ -30,7 +31,10 @@ class SIAR(Dataset):
             sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
         """
 
-        path_to_dataset = os.path.join(os.getcwd(), "data/SIAR")
+        if manual_dataset_path:
+            path_to_dataset = manual_dataset_path
+        else:
+            path_to_dataset = os.path.join(os.getcwd(), "data/SIAR")
         path_to_split = os.path.join(
             os.getcwd(), "data/data_splits", split_version, f"{split}.csv"
         )
@@ -75,9 +79,15 @@ class SIARDataModule(LightningDataModule):
     Data Module for SIAR Dataset
     """
 
-    def __init__(self, batch_size: int, split_dir: str = "split-1_80_10_10") -> None:
+    def __init__(
+        self,
+        batch_size: int,
+        split_dir: str = "split-1_80_10_10",
+        manual_dataset_path=None,
+    ) -> None:
         super().__init__()
 
+        self.manual_dataset_path = manual_dataset_path
         self.batch_size = batch_size
         self.split_dir = split_dir
 
@@ -86,14 +96,26 @@ class SIARDataModule(LightningDataModule):
 
     def setup(self, stage: str, sanity_check=False) -> None:
         if stage == "test":
-            self.siar_test = SIAR(split="test", sanity_check=sanity_check)
+            self.siar_test = SIAR(
+                split="test",
+                sanity_check=sanity_check,
+                manual_dataset_path=self.manual_dataset_path,
+            )
         elif stage == "train":
-            self.siar_train = SIAR(split="train", sanity_check=sanity_check)
+            self.siar_train = SIAR(
+                split="train",
+                sanity_check=sanity_check,
+                manual_dataset_path=self.manual_dataset_path,
+            )
             # If we are doing a sanity check, we want to use the same data for validation and overfit to it
             self.siar_val = (
                 deepcopy(self.siar_train)
                 if sanity_check
-                else SIAR(split="val", sanity_check=sanity_check)
+                else SIAR(
+                    split="val",
+                    sanity_check=sanity_check,
+                    manual_dataset_path=self.manual_dataset_path,
+                )
             )
 
     def train_dataloader(self):

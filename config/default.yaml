@@ -16,6 +16,8 @@ train:
   device: 'gpu'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss'
   loss_func: 'regularized_loss'
+  # Select metric to use for comparison: 'MSELoss', 'SSIMLoss'
+  metric: 'MSELoss'
   weight_decay: 0.01
   mask_decay: 1e-4 # 1e-5
   lambda_gt_loss: 1.0
@@ -31,7 +33,7 @@ model:
   upsampler_sl: None #'unet' # upsampler for shadow and light
   upsampler_ob: None #'unet' # upsampler for objects (masks + rgb)
   swin:
-    checkpoint: '' #'swin_checkpoints/None/swin_encoder_epoch_1.pt'
+    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
     use_checkpoint: False
     patch_size: [2, 4, 4]    
   unet_gt:
