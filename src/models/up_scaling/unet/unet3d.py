@@ -4,7 +4,7 @@ import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
-from models.up_scaling.unet.se import (
+from src.models.up_scaling.unet.se import (
     ChannelSELayer3D,
     ChannelSpatialSELayer3D,
     SpatialSELayer3D,

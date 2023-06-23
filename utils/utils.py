@@ -30,11 +30,10 @@ def setup_training(args):
         os.makedirs(log_dir, exist_ok=True)
 
     siar = SIARDataModule(
-        config.data.dataset,
         config.train.batch_size,
-        config.data.split_name,
+        config.data.split_dir,
     )
-    siar.setup("train", config.data.debug)
+    siar.setup("train", config.data.sanity_check)
 
     if not config.model.checkpoint:
         model = Decomposer(
@@ -70,9 +69,7 @@ def parse_arguments():
     parser = ArgumentParser()
 
     # parser.add_argument("--config", type=str, help="", default="config/default.yaml")
-    parser.add_argument(
-        "--config", type=str, help="", default="config/swin_unet_unet_unet.yaml"
-    )
+    parser.add_argument("--config", type=str, help="", default="config/default.yaml")
 
     parser.add_argument("--data", help="", type=str)
 

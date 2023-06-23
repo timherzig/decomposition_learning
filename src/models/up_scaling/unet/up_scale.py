@@ -1,5 +1,5 @@
 from torch import nn
-from models.up_scaling.unet.unet3d import DoubleConv, Decoder, create_decoders
+from src.models.up_scaling.unet.unet3d import DoubleConv, Decoder, create_decoders
 import torch
 
 

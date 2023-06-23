@@ -31,7 +31,9 @@ class SIAR(Dataset):
         """
 
         path_to_dataset = os.path.join(os.getcwd(), "data/SIAR")
-        path_to_split = os.path.join(os.getcwd(), "data", split_version, f"{split}.csv")
+        path_to_split = os.path.join(
+            os.getcwd(), "data/data_splits", split_version, f"{split}.csv"
+        )
 
         # Load ids of current split
         self.df = pd.read_csv(path_to_split, index_col=None)
@@ -91,7 +93,7 @@ class SIARDataModule(LightningDataModule):
             self.siar_val = (
                 deepcopy(self.siar_train)
                 if sanity_check
-                else SIAR(self.data_dir, "val", sanity_check)
+                else SIAR(split="val", sanity_check=sanity_check)
             )
 
     def train_dataloader(self):

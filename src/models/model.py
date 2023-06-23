@@ -3,9 +3,9 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import lightning.pytorch as pl
 
-from models.transformer.swin_transformer import SwinTransformer3D
-from models.up_scaling.unet.up_scale import UpSampler
-from models.utils.utils import get_class
+from src.models.transformer.swin_transformer import SwinTransformer3D
+from src.models.up_scaling.unet.up_scale import UpSampler
+from src.models.utils.utils import get_class
 from utils.wandb_logging import (
     log_images,
     pre_train_log_images,
