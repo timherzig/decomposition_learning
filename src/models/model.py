@@ -5,7 +5,7 @@ import lightning.pytorch as pl
 import torch.nn.functional as F
 
 from src.models.transformer.swin_transformer import SwinTransformer3D
-from models.up_scaling.reverse_st.upsampling import SwinTransformer3D_up
+from src.models.up_scaling.swin.upsampling import SwinTransformer3D_up
 from src.models.up_scaling.unet.up_scale import UpSampler
 from src.models.utils.utils import get_class
 
