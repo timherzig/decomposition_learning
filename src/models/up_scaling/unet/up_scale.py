@@ -43,7 +43,7 @@ class UpSampler(nn.Module):
 
         self.decoders = create_decoders(
             f_maps,
-            basic_module,
+            DoubleConv,
             conv_kernel_size,
             conv_padding,
             layer_order,
@@ -59,7 +59,7 @@ class UpSampler(nn.Module):
             layer = Decoder(
                 size[0],
                 size[1],
-                basic_module=basic_module,
+                basic_module=DoubleConv,
                 conv_layer_order=layer_order,
                 conv_kernel_size=conv_kernel_size,
                 num_groups=num_groups,
