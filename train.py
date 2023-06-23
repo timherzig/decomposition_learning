@@ -8,6 +8,7 @@ from utils.utils import setup_training, parse_arguments, get_git_commit
 def main(args):
     config, siar, model, trainer = setup_training(args)
 
+    siar.setup("train", config.data.sanity_check)
     trainer.fit(model, datamodule=siar)
 
     siar.setup("test", config.train.debug)

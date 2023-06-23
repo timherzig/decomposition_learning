@@ -34,8 +34,7 @@ def setup_training(args):
         config.data.split_dir,
         args.data_dir,
     )
-    siar.setup("train", config.data.sanity_check)
-
+    
     if not config.model.checkpoint:
         model = Decomposer(
             config=config,

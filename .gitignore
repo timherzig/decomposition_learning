@@ -181,3 +181,5 @@ swin_checkpoints/
 utils/helper/
 
 **/.DS_Store
+
+.code-server/
