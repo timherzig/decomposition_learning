@@ -56,7 +56,7 @@ class Decomposer(pl.LightningModule):
                 self.decoder_gt_config.layers_no_skip.scale_factor,
                 self.decoder_gt_config.layers_no_skip.size,
                 self.decoder_gt_config.omit_skip_connections,
-            )s
+            )
         elif config.upsampler_gt == "swin":
             self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=config.swin.patch_size)
 
