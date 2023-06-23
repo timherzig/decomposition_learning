@@ -178,4 +178,8 @@ HTCV/
 checkpoints/
 swin_checkpoints/
 
-.DS_Store
+utils/helper/
+
+**/.DS_Store
+
+.code-server/

@@ -1,5 +1,5 @@
 from torch import nn
-from models.up_scaling.unet.unet3d import DoubleConv, Decoder, create_decoders
+from src.models.up_scaling.unet.unet3d import DoubleConv, Decoder, create_decoders
 import torch
 
 
@@ -30,13 +30,17 @@ class UpSampler(nn.Module):
         conv_padding,
         layer_order,
         num_groups,
+        basic_module,
         is3d,
         output_dim,
-        skipless_scale_factor,
-        skipless_size,
+        layers_no_skip,
         omit_skip_connections,
     ):
         super(UpSampler, self).__init__()
+
+        skipless_scale_factor = layers_no_skip.scale_factor
+        skipless_size = layers_no_skip.size
+
         self.decoders = create_decoders(
             f_maps,
             DoubleConv,
@@ -67,7 +71,7 @@ class UpSampler(nn.Module):
 
         self.layers_no_skip = nn.ModuleList(self.layers_no_skip)
 
-        # Final conv layer to reduce number of channels using 1x1 kernel
+        # Final conv layer to reduce number of channels using 1x1 kernel and final activation function
         self.final_layer = nn.Conv3d(skipless_size[-1][1], output_dim, kernel_size=1)
 
     def forward(self, encoder_features, x):
@@ -92,7 +96,8 @@ class UpSampler(nn.Module):
             x = layer(dummy_features, x, skip_joining=True)
         # Dim. after upscaling: Batch x _ x 10 x 256 x 256
 
-        # Apply final conv layer
+        # Apply final conv layer and final activation
         x = self.final_layer(x)
+
         # Final dimensions: Batch x output_dim x 10 x 256 x 256
         return x

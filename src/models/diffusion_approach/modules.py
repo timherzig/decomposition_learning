@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.decomposer import Decomposer
+from src.models.decomposer import Decomposer
 
 
 class EMA:

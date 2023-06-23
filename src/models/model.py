@@ -2,16 +2,13 @@ import torch
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import lightning.pytorch as pl
+import torch.nn.functional as F
 
-from models.transformer.swin_transformer import SwinTransformer3D
+from src.models.transformer.swin_transformer import SwinTransformer3D
 from models.up_scaling.reverse_st.upsampling import SwinTransformer3D_up
-from models.up_scaling.unet.up_scale import UpSampler
-from models.util.loss_functions import (
-    base_loss,
-    reconstruction_loss,
-    regularized_loss,
-    pre_train_loss,
-)
+from src.models.up_scaling.unet.up_scale import UpSampler
+from src.models.utils.utils import get_class
+
 from utils.wandb_logging import (
     log_images,
     pre_train_log_images,
@@ -30,6 +27,12 @@ class Decomposer(pl.LightningModule):
         self.validation_step_outputs = []
         self.best_val_loss = float("inf")
 
+        # --- Loss ---
+        loss_class = get_class(self.train_config.loss_func, ["src.models.losses"])
+        self.loss = loss_class(self, self.train_config)
+        # ------------
+
+        # --- Enocder ---
         if not self.model_config.swin.use_checkpoint:
             self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
         else:
@@ -38,65 +41,38 @@ class Decomposer(pl.LightningModule):
                 patch_size=self.model_config.swin.patch_size,
                 frozen_stages=-1,  # =0
             )
-            print(f"Loaded SWIN checkpoint")
+            print("Loaded SWIN checkpoint")
             print("-----------------")
+        # ----------------
 
+        # --- Upscaler ---
         # Ground truth upsampling
         if self.model_config.upsampler_gt == "unet":
             self.decoder_gt_config = self.model_config.unet_gt.decoder
 
-            self.up_scale_gt = UpSampler(
-                self.decoder_gt_config.f_maps,
-                self.decoder_gt_config.conv_kernel_size,
-                self.decoder_gt_config.conv_padding,
-                self.decoder_gt_config.layer_order,
-                self.decoder_gt_config.num_groups,
-                self.decoder_gt_config.is3d,
-                self.decoder_gt_config.output_dim,
-                self.decoder_gt_config.layers_no_skip.scale_factor,
-                self.decoder_gt_config.layers_no_skip.size,
-                self.decoder_gt_config.omit_skip_connections,
-            )
+            arguments = dict(self.decoder_gt_config)
+            self.up_scale_gt = UpSampler(**arguments)
+
         elif config.upsampler_gt == "swin":
             self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=config.swin.patch_size)
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
             self.decoder_sl_config = self.model_config.unet_sl.decoder
+            arguments = dict(self.decoder_gt_config)
+            self.up_scale_sl = UpSampler(**arguments)
 
-            self.up_scale_sl = UpSampler(
-                self.decoder_sl_config.f_maps,
-                self.decoder_sl_config.conv_kernel_size,
-                self.decoder_sl_config.conv_padding,
-                self.decoder_sl_config.layer_order,
-                self.decoder_sl_config.num_groups,
-                self.decoder_sl_config.is3d,
-                self.decoder_sl_config.output_dim,
-                self.decoder_sl_config.layers_no_skip.scale_factor,
-                self.decoder_sl_config.layers_no_skip.size,
-                self.decoder_sl_config.omit_skip_connections,
-            )
         elif config.upsampler_sl == "swin":
             self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=config.swin.patch_size)
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
             self.decoder_ob_config = self.model_config.unet_ob.decoder
-
-            self.up_scale_ob = UpSampler(
-                self.decoder_ob_config.f_maps,
-                self.decoder_ob_config.conv_kernel_size,
-                self.decoder_ob_config.conv_padding,
-                self.decoder_ob_config.layer_order,
-                self.decoder_ob_config.num_groups,
-                self.decoder_ob_config.is3d,
-                self.decoder_ob_config.output_dim,
-                self.decoder_ob_config.layers_no_skip.scale_factor,
-                self.decoder_ob_config.layers_no_skip.size,
-                self.decoder_ob_config.omit_skip_connections,
-            )
-        elif config.upsampler_ob == "swin":
-            self.up_scale_ob = SwinTransformer3D_up(out_chans=4, patch_size=config.swin.patch_size)
+            arguments = dict(self.decoder_gt_config)
+            self.up_scale_ob = UpSampler(**arguments)
+        
+        elif config.upsampler_sl == "swin":
+            self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=config.swin.patch_size)
 
     def forward(self, x):
         if self.config.upsampler == "swin":
@@ -141,19 +117,30 @@ class Decomposer(pl.LightningModule):
 
         # Apply Upscaler_1 for reconstruction -> (B, 3, H, W)
         if self.model_config.upsampler_gt == "unet":
-            gt_reconstruction = torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
+            # Apply sigmoid activation layer
+            gt_reconstruction = F.sigmoid(
+                torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
+            )
             if self.train_config.pre_train:
                 return torch.clip(gt_reconstruction, -1.0, 1.0)
 
         # Apply Upscaler_2 for shadow mask, light mask -> (B, 10, 2, H, W)
         if self.model_config.upsampler_sl == "unet":
-            light_mask = self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
-            shadow_mask = self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
+            light_mask = F.relu(
+                self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+            )  # ReLU activation
+            shadow_mask = F.sigmoid(
+                self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
+            )  # Sigmoid activation
 
         # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 10, 4, H, W)
         if self.model_config.upsampler_ob == "unet":
-            occlusion_mask = self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
-            occlusion_rgb = self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+            occlusion_mask = F.relu(
+                self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
+            )  # ReLU
+            occlusion_rgb = F.relu(
+                self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+            )  # ReLU
 
         return (
             torch.clip(gt_reconstruction, -1.0, 1.0),
@@ -173,54 +160,15 @@ class Decomposer(pl.LightningModule):
         target,
         input,
     ):
-        if self.train_config.pre_train:
-            return pre_train_loss(
-                gt_reconstruction, input, self, self.train_config.weight_decay
-            )
-
-        if self.model_config.checkpoint:
-            return reconstruction_loss(
-                gt_reconstruction,
-                light_mask,
-                shadow_mask,
-                occlusion_mask,
-                occlusion_rgb,
-                target,
-                input,
-                self,
-                self.train_config.weight_decay,
-            )
-
-        if self.train_config.loss_func == "base_loss":
-            return base_loss(
-                gt_reconstruction,
-                light_mask,
-                shadow_mask,
-                occlusion_mask,
-                occlusion_rgb,
-                target,
-                input,
-                self,
-                self.train_config.weight_decay,
-            )
-        elif self.train_config.loss_func == "regularized_loss":
-            return regularized_loss(
-                gt_reconstruction,
-                light_mask,
-                shadow_mask,
-                occlusion_mask,
-                occlusion_rgb,
-                target,
-                input,
-                self,
-                self.train_config.weight_decay,
-                self.train_config.mask_decay,
-                self.train_config.lambda_gt_loss,
-                self.train_config.lambda_decomp_loss,
-                self.train_config.lambda_occlusion_difference,
-            )
-        else:
-            raise NotImplementedError
+        return self.loss(
+            gt_reconstruction=gt_reconstruction,
+            light_mask=light_mask,
+            shadow_mask=shadow_mask,
+            occlusion_mask=occlusion_mask,
+            occlusion_rgb=occlusion_rgb,
+            target=target,
+            input=input,
+        )
 
     def training_step(self, batch, batch_idx):
         (
@@ -282,36 +230,28 @@ class Decomposer(pl.LightningModule):
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
         # Log images on the first validation step
-        if batch_idx == 0 and not self.train_config.debug:
-            if self.data_config.debug:
-                if self.current_epoch % 100 == 0:
-                    pre_train_log_images(
-                        self.logger, gt_reconstruction, x
-                    ) if self.train_config.pre_train else log_images(
-                        self.logger,
-                        y,
-                        x,
-                        gt_reconstruction,
-                        light_mask,
-                        shadow_mask,
-                        occlusion_mask,
-                        occlusion_rgb,
-                    )
-            else:
-                if self.current_epoch % 10 == 0:
-                    pre_train_log_images(
-                        self.logger, gt_reconstruction, x
-                    ) if self.train_config.pre_train else log_images(
-                        self.logger,
-                        y,
-                        x,
-                        gt_reconstruction,
-                        light_mask,
-                        shadow_mask,
-                        occlusion_mask,
-                        occlusion_rgb,
-                    )
-
+        if (
+            batch_idx == 0
+            and not self.train_config.debug
+            and (
+                self.data_config.sanity_check
+                and self.current_epoch % 100 == 0
+                or not self.data_config.sanity_check
+                and self.current_epoch % 10 == 0
+            )
+        ):
+            pre_train_log_images(
+                self.logger, gt_reconstruction, x
+            ) if self.train_config.pre_train else log_images(
+                self.logger,
+                y,
+                x,
+                gt_reconstruction,
+                light_mask,
+                shadow_mask,
+                occlusion_mask,
+                occlusion_rgb,
+            )
         self.validation_step_outputs.append(loss)
         return loss
 
