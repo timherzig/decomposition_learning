@@ -53,8 +53,8 @@ class Decomposer(pl.LightningModule):
             arguments = dict(self.decoder_gt_config)
             self.up_scale_gt = UpSampler(**arguments)
 
-        elif config.upsampler_gt == "swin":
-            self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=config.swin.patch_size)
+        elif self.model_config.upsampler_gt == "swin":
+            self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=self.model_config.swin.patch_size)
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
@@ -62,8 +62,8 @@ class Decomposer(pl.LightningModule):
             arguments = dict(self.decoder_gt_config)
             self.up_scale_sl = UpSampler(**arguments)
 
-        elif config.upsampler_sl == "swin":
-            self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=config.swin.patch_size)
+        elif self.model_config.upsampler_sl == "swin":
+            self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
@@ -71,8 +71,8 @@ class Decomposer(pl.LightningModule):
             arguments = dict(self.decoder_gt_config)
             self.up_scale_ob = UpSampler(**arguments)
         
-        elif config.upsampler_sl == "swin":
-            self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=config.swin.patch_size)
+        elif self.model_config.upsampler_sl == "swin":
+            self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
 
     def forward(self, x):
         if self.config.upsampler == "swin":
@@ -84,7 +84,7 @@ class Decomposer(pl.LightningModule):
         x = self.patch_embed(x)
         x = self.pos_drop(x)
 
-        for idx, layer in enumerate(self.layers):
+        for idx, layer in enumerate(self.swin.layers):
             x, _ = layer(x.contiguous())
         x = rearrange(x, "n c d h w -> n d h w c")
         x = self.norm(x)

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from models.transformer.swin_transformer import SwinTransformer3D, BasicLayer
+from src.models.transformer.swin_transformer import SwinTransformer3D, BasicLayer
 from einops import rearrange
 
 
