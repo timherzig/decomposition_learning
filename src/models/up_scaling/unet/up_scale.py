@@ -32,11 +32,14 @@ class UpSampler(nn.Module):
         num_groups,
         is3d,
         output_dim,
-        skipless_scale_factor,
-        skipless_size,
+        layers_no_skip,
         omit_skip_connections,
     ):
         super(UpSampler, self).__init__()
+
+        skipless_scale_factor = layers_no_skip.scale_factor
+        skipless_size = layers_no_skip.size
+
         self.decoders = create_decoders(
             f_maps,
             DoubleConv,

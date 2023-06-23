@@ -1,16 +1,27 @@
 data:
-  debug: False
+  # Name of dataset
+  dataset: 'SIAR'
+  # Split version to use
+  split_dir: 'split-1_80_10_10'
+  # Set validation set equal to train set to provoke overfitting and see if loss works
+  sanity_check: False
     
 train:
   debug: True
-  pre_train: True
-  batch_size: 2
+  pre_train: False
+  batch_size: 8
   lr: 1e-3
-  max_epochs: 3
-  log_every_n_steps: 1
-  device: 'cpu'
+  max_epochs: 150
+  log_every_n_steps: 15
+  device: 'gpu'
+  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss'
+  loss_func: 'regularized_loss'
   weight_decay: 0.01
-  strategy: 'auto' #'ddp_find_unused_parameters_true'
+  mask_decay: 1e-4 # 1e-5
+  lambda_gt_loss: 1.0
+  lambda_decomp_loss: 1.0
+  lambda_occlusion_difference: 1e-3
+  strategy: 'ddp_find_unused_parameters_true'
   accumulate_grad_batches: 1
 
 

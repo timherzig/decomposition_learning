@@ -12,7 +12,7 @@ import logging
 from omegaconf import OmegaConf
 import wandb
 
-from data.siar_data import SIARDataModule
+from src.data.siar_data import SIARDataModule
 from utils.parser import parse_arguments
 
 

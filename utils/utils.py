@@ -1,16 +1,16 @@
 import os
-import lightning.pytorch as pl
+import subprocess
+from argparse import ArgumentParser
 
+import lightning.pytorch as pl
 from omegaconf import OmegaConf
 from lightning.pytorch.loggers import WandbLogger
 
-from models.decomposer import Decomposer
-from data.siar_data import SIARDataModule
-from utils.parser import parse_arguments
-from utils.git_commit import get_git_commit
+from src.models.model import Decomposer
+from src.data.siar_data import SIARDataModule
 
 
-def main(args):
+def setup_training(args):
     config = OmegaConf.load(args.config)
     print("-----------------")
     print(f"Config: {args.config}")
@@ -29,7 +29,11 @@ def main(args):
             log_dir = "swin_checkpoints/debug"
         os.makedirs(log_dir, exist_ok=True)
 
-    siar = SIARDataModule(args.data, config.train.batch_size)
+    siar = SIARDataModule(
+        config.data.dataset,
+        config.train.batch_size,
+        config.data.split_name,
+    )
     siar.setup("train", config.data.debug)
 
     if not config.model.checkpoint:
@@ -49,32 +53,34 @@ def main(args):
 
     trainer = pl.Trainer(
         max_epochs=config.train.max_epochs,
-        logger=wandb_logger if not config.train.debug else None,
-        default_root_dir=f"checkpoints",
-        log_every_n_steps=config.train.log_every_n_steps
-        if not config.train.debug
-        else None,
+        logger=None if config.train.debug else wandb_logger,
+        default_root_dir="checkpoints",
+        log_every_n_steps=None
+        if config.train.debug
+        else config.train.log_every_n_steps,
         accelerator=config.train.device,
         strategy=config.train.strategy,
         accumulate_grad_batches=config.train.accumulate_grad_batches,
     )
 
-    trainer.fit(model, datamodule=siar)
-
-    siar.setup("test", config.train.debug)
-    trainer.test(model, datamodule=siar)
-
-    conf = OmegaConf.merge([config, OmegaConf.create({"git_commit": get_git_commit()})])
-
-    yaml_data: str = OmegaConf.to_yaml(conf)
-
-    with open(os.path.join(trainer.log_dir, "config.yaml"), "w") as f:
-        OmegaConf.save(conf, f)
-
-    return
+    return config, siar, model, trainer
 
 
-if __name__ == "__main__":
-    args = parse_arguments()
+def parse_arguments():
+    parser = ArgumentParser()
 
-    main(args)
+    # parser.add_argument("--config", type=str, help="", default="config/default.yaml")
+    parser.add_argument(
+        "--config", type=str, help="", default="config/swin_unet_unet_unet.yaml"
+    )
+
+    parser.add_argument("--data", help="", type=str)
+
+    return parser.parse_args()
+
+
+def get_git_commit():
+    process = subprocess.Popen(
+        ["git", "rev-parse", "--short", "HEAD"], shell=False, stdout=subprocess.PIPE
+    )
+    return process.communicate()[0].strip()
