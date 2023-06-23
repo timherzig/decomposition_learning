@@ -34,7 +34,7 @@ def setup_training(args):
         config.data.split_dir,
         args.data_dir,
     )
-    
+
     if not config.model.checkpoint:
         model = Decomposer(
             config=config,
@@ -61,6 +61,10 @@ def setup_training(args):
         strategy=config.train.strategy,
         accumulate_grad_batches=config.train.accumulate_grad_batches,
     )
+
+    print('Model loaded')
+    print("-----------------")
+
 
     return config, siar, model, trainer
 
