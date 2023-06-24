@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import MSELoss
-from torchmetrics import StructuralSimilarityIndexMeasure as SSIM
+from torchmetrics import StructuralSimilarityIndexMeasure as SSIMLoss
 
 
 class MSE:
@@ -16,7 +16,8 @@ class MSE:
 class SSIM:
     def __init__(self):
         super().__init__()
-        self.metric = SSIM()
+        self.metric = SSIMLoss()
 
     def __call__(self, x, y):
+        self.metric.to(x.device)
         return self.metric(x, y)
