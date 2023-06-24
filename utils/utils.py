@@ -62,9 +62,8 @@ def setup_training(args):
         accumulate_grad_batches=config.train.accumulate_grad_batches,
     )
 
-    print('Model loaded')
+    print("Model loaded")
     print("-----------------")
-
 
     return config, siar, model, trainer
 

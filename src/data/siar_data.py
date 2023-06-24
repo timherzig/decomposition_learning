@@ -119,10 +119,10 @@ class SIARDataModule(LightningDataModule):
             )
 
     def train_dataloader(self):
-        return DataLoader(batch_size=self.batch_size)
+        return DataLoader(self.siar_train, batch_size=self.batch_size)
 
     def test_dataloader(self):
-        return DataLoader(batch_size=self.batch_size)
+        return DataLoader(self.siar_test, batch_size=self.batch_size)
 
     def val_dataloader(self):
-        return DataLoader(batch_size=self.batch_size)
+        return DataLoader(self.siar_val, batch_size=self.batch_size)
