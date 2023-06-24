@@ -47,20 +47,19 @@ class Decomposer(pl.LightningModule):
         # Ground truth upsampling
         if self.model_config.upsampler_gt == "unet":
             self.decoder_gt_config = self.model_config.unet_gt.decoder
-
             arguments = dict(self.decoder_gt_config)
             self.up_scale_gt = UpSampler(**arguments)
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
             self.decoder_sl_config = self.model_config.unet_sl.decoder
-            arguments = dict(self.decoder_gt_config)
+            arguments = dict(self.decoder_sl_config)
             self.up_scale_sl = UpSampler(**arguments)
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
             self.decoder_ob_config = self.model_config.unet_ob.decoder
-            arguments = dict(self.decoder_gt_config)
+            arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = UpSampler(**arguments)
         # ----------------
 
@@ -80,22 +79,28 @@ class Decomposer(pl.LightningModule):
             if self.train_config.pre_train:
                 return torch.clip(gt_reconstruction, -1.0, 1.0)
 
-        # Apply Upscaler_2 for shadow mask, light mask -> (B, 10, 2, H, W)
+        # Apply Upscaler_2 for shadow mask, light mask -> (B, 2, 10, H, W)
         if self.model_config.upsampler_sl == "unet":
+            light_and_shadow_raw = self.up_scale_sl(encoder_features[1:], x)
             light_mask = F.relu(
-                self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+                # self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+                light_and_shadow_raw[:, 0, :, :, :]
             )  # ReLU activation
             shadow_mask = F.sigmoid(
-                self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
+                # self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+                light_and_shadow_raw[:, 1, :, :, :]
             )  # Sigmoid activation
 
-        # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 10, 4, H, W)
+        # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 4, 10, H, W)
         if self.model_config.upsampler_ob == "unet":
+            occlusion_raw = self.up_scale_ob(encoder_features[1:], x)
             occlusion_mask = F.relu(
-                self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
+                # self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
+                occlusion_raw[:, 0, :, :, :]
             )  # ReLU
             occlusion_rgb = F.relu(
-                self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+                # self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+                occlusion_raw[:, 1:, :, :, :]
             )  # ReLU
 
         return (

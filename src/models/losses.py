@@ -83,7 +83,7 @@ class base_loss:
         return (
             gt_loss
             + reconstruction_loss
-            + weight_decay(self.model, self.config.weight_decay_param)
+            + weight_decay(self.model, self.config.weight_decay)
         )
 
 
@@ -120,9 +120,7 @@ class reconstruction_loss:
 
         reconstruction_loss = self.metric(reconstruction, input)
 
-        return reconstruction_loss + weight_decay(
-            self.model, self.config.weight_decay_param
-        )
+        return reconstruction_loss + weight_decay(self.model, self.config.weight_decay)
 
 
 class pre_train_loss:
@@ -148,7 +146,7 @@ class pre_train_loss:
     ):
         gt_loss = self.metric(gt_reconstruction, input)
 
-        return gt_loss + weight_decay(self.model, self.config.weight_decay_param)
+        return gt_loss + weight_decay(self.model, self.config.weight_decay)
 
 
 class regularized_loss:
@@ -198,8 +196,8 @@ class regularized_loss:
         final_loss = (
             self.config.lambda_gt_loss * gt_loss
             + self.config.lambda_decomp_loss * decomp_loss
-            + weight_decay(self.model, self.config.weight_decay_param)
-            + mask_decay(og_occ_mask, self.config.mask_decay_param)
+            + weight_decay(self.model, self.config.weight_decay)
+            + mask_decay(og_occ_mask, self.config.mask_decay)
             - self.config.lambda_occlusion_difference * occ_diff
         )
 
@@ -242,5 +240,5 @@ class light_and_shadow_loss:
         return (
             gt_loss
             + light_shadow_loss
-            + weight_decay(self.model, self.config.weight_decay_param)
+            + weight_decay(self.model, self.config.weight_decay)
         )
