@@ -1,4 +1,5 @@
 import os
+import torch
 import subprocess
 from argparse import ArgumentParser
 
@@ -31,7 +32,7 @@ def setup_training(args):
 
     siar = SIARDataModule(
         config.train.batch_size,
-        os.cpu_count(),
+        os.cpu_count() / torch.device_count(),
         config.data.split_dir,
         args.data_dir,
     )
