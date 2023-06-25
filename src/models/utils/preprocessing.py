@@ -29,7 +29,7 @@ def get_shadow_light_gt(gt, occluded_gt):
 
     Parameters:
         gt (torch.Tensor): Ground truth image. Shape: (B, 3, H, W)
-        occluded_gt (torch.Tensor): Occluded ground truth images. Shape: (B, 10, 3, H, W)
+        occluded_gt (torch.Tensor): Occluded ground truth images. Shape: (B, 3, 10, H, W)
     """
 
     print(f"gt.shape: {gt.shape}")
@@ -42,7 +42,7 @@ def get_shadow_light_gt(gt, occluded_gt):
     for i in range(gt.shape[0]):
         gti = to_pil(gt[i, :, :, :])
         occluded_gti = [
-            to_pil(occluded_gt[i, j, :, :, :]) for j in range(occluded_gt.shape[1])
+            to_pil(occluded_gt[i, :, j, :, :]) for j in range(occluded_gt.shape[2])
         ]
 
         batch_images.append(
