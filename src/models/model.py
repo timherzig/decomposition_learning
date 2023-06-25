@@ -39,7 +39,7 @@ class Decomposer(pl.LightningModule):
             self.swin = SwinTransformer3D(
                 pretrained=config.model.swin.checkpoint,
                 patch_size=self.model_config.swin.patch_size,
-                frozen_stages=-1,  # =0
+                frozen_stages=0,
             )
             print("Loaded SWIN checkpoint")
             print("-----------------")
@@ -132,22 +132,28 @@ class Decomposer(pl.LightningModule):
             if self.train_config.pre_train:
                 return torch.clip(gt_reconstruction, -1.0, 1.0)
 
-        # Apply Upscaler_2 for shadow mask, light mask -> (B, 10, 2, H, W)
+        # Apply Upscaler_2 for shadow mask, light mask -> (B, 2, 10, H, W)
         if self.model_config.upsampler_sl == "unet":
+            light_and_shadow_raw = self.up_scale_sl(encoder_features[1:], x)
             light_mask = F.relu(
-                self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+                # self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+                light_and_shadow_raw[:, 0, :, :, :]
             )  # ReLU activation
             shadow_mask = F.sigmoid(
-                self.up_scale_sl(encoder_features[1:], x)[:, 1, :, :, :]
+                # self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
+                light_and_shadow_raw[:, 1, :, :, :]
             )  # Sigmoid activation
 
-        # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 10, 4, H, W)
+        # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 4, 10, H, W)
         if self.model_config.upsampler_ob == "unet":
+            occlusion_raw = self.up_scale_ob(encoder_features[1:], x)
             occlusion_mask = F.relu(
-                self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
+                # self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
+                occlusion_raw[:, 0, :, :, :]
             )  # ReLU
             occlusion_rgb = F.relu(
-                self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+                # self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
+                occlusion_raw[:, 1:, :, :, :]
             )  # ReLU
 
         return (
@@ -167,6 +173,7 @@ class Decomposer(pl.LightningModule):
         occlusion_rgb,
         target,
         input,
+        shadow_light_mask
     ):
         return self.loss(
             gt_reconstruction=gt_reconstruction,
@@ -176,12 +183,14 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb=occlusion_rgb,
             target=target,
             input=input,
+            shadow_light_mask=shadow_light_mask
         )
 
     def training_step(self, batch, batch_idx):
         (
             x,
             y,
+            z,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -203,6 +212,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
+            z
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -212,6 +222,7 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
+            z
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -233,6 +244,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
+            z
         )
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
@@ -267,6 +279,7 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
+            z
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -288,6 +301,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
+            z
         )
 
         self.log("train_loss", loss, prog_bar=True)

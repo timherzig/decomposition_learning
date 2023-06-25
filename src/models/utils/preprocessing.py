@@ -19,7 +19,8 @@ def shadow_light_mask(gt, occluded):
     sl_image = ImageChops.multiply(
         ImageChops.add(gt, light.convert("RGB")), shadow.convert("RGB")
     )
-    return sl_image
+
+    return np.array(sl_image)
 
 
 def get_shadow_light_gt(gt, occluded_gt):
@@ -28,22 +29,23 @@ def get_shadow_light_gt(gt, occluded_gt):
     So they only contain shadow and light.
 
     Parameters:
-        gt (torch.Tensor): Ground truth image. Shape: (B, 3, H, W)
-        occluded_gt (torch.Tensor): Occluded ground truth images. Shape: (B, 10, 3, H, W)
+        gt (torch.Tensor): Ground truth image. Shape: (3, H, W)
+        occluded_gt (torch.Tensor): Occluded ground truth images. Shape: (3, 10, H, W)
     """
 
     to_pil = ToPILImage()
 
-    batch_images = np.array([])
+    images = []
 
-    for i in range(gt.shape[0]):
-        gti = to_pil(gt[i, :, :, :])
-        occluded_gti = [
-            to_pil(occluded_gt[i, j, :, :, :]) for j in range(occluded_gt.shape[1])
-        ]
+    gti = to_pil(gt)
+    occluded_gti = [
+        to_pil(occluded_gt[:, j, :, :]) for j in range(occluded_gt.shape[1])
+    ]
 
-        batch_images.append(
-            np.array([np.array(shadow_light_mask(gti, x) for x in occluded_gti)])
-        )
+    sl_mask = [shadow_light_mask(gti, x) for x in occluded_gti]
+    images.append(sl_mask)
 
-    return torch.tensor(batch_images)
+    images = torch.squeeze(torch.tensor(np.array(images)))
+    images = torch.permute(images, (3, 0, 1, 2))
+
+    return images.float()

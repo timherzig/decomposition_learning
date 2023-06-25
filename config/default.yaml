@@ -7,7 +7,7 @@ data:
   sanity_check: False
     
 train:
-  debug: False
+  debug: True
   pre_train: False
   batch_size: 4
   lr: 1e-3
@@ -15,9 +15,9 @@ train:
   log_every_n_steps: 15
   device: 'gpu'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss'
-  loss_func: 'regularized_loss'
-  # Select metric to use for comparison: 'MSELoss', 'SSIMLoss'
-  metric: 'MSELoss'
+  loss_func: 'light_and_shadow_loss'
+  # Select metric to use for comparison: 'MSE', 'SSIM'
+  metric: 'MSE'
   weight_decay: 0.01
   mask_decay: 1e-4 # 1e-5
   lambda_gt_loss: 1.0

@@ -4,17 +4,20 @@ from torch.nn import MSELoss
 from torchmetrics import StructuralSimilarityIndexMeasure as SSIMLoss
 
 
-class MSELoss(nn.Module):
+class MSE:
     def __init__(self):
-        super(MSELoss, self).__init__()
+        super().__init__()
+        self.metric = MSELoss()
 
-    def forward(x, y):
-        return MSELoss(x, y)
+    def __call__(self, x, y):
+        return self.metric(x, y)
 
 
-class SSIMLoss(nn.Module):
+class SSIM:
     def __init__(self):
-        super(SSIMLoss, self).__init__()
+        super().__init__()
+        self.metric = SSIMLoss()
 
-    def forward(x, y):
-        return SSIMLoss(x, y)
+    def __call__(self, x, y):
+        self.metric.to(x.device)
+        return self.metric(x, y)
