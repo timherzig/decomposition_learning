@@ -32,7 +32,6 @@ def setup_training(args):
 
     siar = SIARDataModule(
         config.train.batch_size,
-        os.cpu_count() / torch.cuda.device_count(),
         config.data.split_dir,
         args.data_dir,
     )
