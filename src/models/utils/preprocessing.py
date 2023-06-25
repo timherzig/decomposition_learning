@@ -19,7 +19,7 @@ def shadow_light_mask(gt, occluded):
     sl_image = ImageChops.multiply(
         ImageChops.add(gt, light.convert("RGB")), shadow.convert("RGB")
     )
-    return sl_image
+    return np.array(sl_image)
 
 
 def get_shadow_light_gt(gt, occluded_gt):
@@ -47,7 +47,7 @@ def get_shadow_light_gt(gt, occluded_gt):
 
         batch_images = np.append(
             batch_images,
-            np.array([np.array(shadow_light_mask(gti, x) for x in occluded_gti)]),
+            np.array([shadow_light_mask(gti, x) for x in occluded_gti]),
             axis=0,
         )
 
