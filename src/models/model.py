@@ -67,7 +67,7 @@ class Decomposer(pl.LightningModule):
         elif self.model_config.upsampler_sl == "swin":
             self.decoder_sl_config = self.model_config.swin_sl.decoder
             arguments = dict(self.decoder_sl_config)
-            arguments = SwinTransformer3D_up(**arguments)
+            self.up_scale_sl = SwinTransformer3D_up(**arguments)
             #self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
 
         # Object upsampling
@@ -80,23 +80,24 @@ class Decomposer(pl.LightningModule):
             self.decoder_ob_config = self.model_config.swin_ob.decoder
             arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = SwinTransformer3D_up(**arguments)
-            #self.up_scale_sl = SwinTransformer3D_up(out_chans=4, patch_size=self.model_config.swin.patch_size)
+            #self.up_scale_ob = SwinTransformer3D_up(out_chans=4, patch_size=self.model_config.swin.patch_size)
 
     def forward(self, x):
-        if self.config.upsampler == "swin":
+        if self.model_config.upsampler_gt == "swin":
             return self.forward_swin(x)
         else:
             return self.forward_unet(x)
 
     def forward_swin(self, x):
-        x = self.patch_embed(x)
-        x = self.pos_drop(x)
+        x = self.swin.patch_embed(x)
+        x = self.swin.pos_drop(x)
 
         for idx, layer in enumerate(self.swin.layers):
             x, _ = layer(x.contiguous())
         x = rearrange(x, "n c d h w -> n d h w c")
-        x = self.norm(x)
+        x = self.swin.norm(x)
         x = rearrange(x, "n d h w c -> n c d h w")
+        print(x.shape)
 
         # Perform upsampling
         gt_reconstruction = self.up_scale_gt.forward(x)

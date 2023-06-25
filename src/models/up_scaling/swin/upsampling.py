@@ -31,26 +31,26 @@ class PatchSplitting(nn.Module):
 
 class SwinTransformer3D_up(SwinTransformer3D):
     def __init__(
-        self,
-        pretrained=None,
-        pretrained2d=True,
-        patch_size=(4, 4, 4),
-        in_chans=3,
-        out_chans=3,
-        embed_dim=768,  # changed
-        depths=[2, 6, 2, 2],  # change?
-        num_heads=[24, 12, 6, 3],  # reversed order
-        window_size=(2, 7, 7),
-        mlp_ratio=4.0,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.2,
-        norm_layer=nn.LayerNorm,
-        patch_norm=False,
-        frozen_stages=-1,
-        use_checkpoint=False,
+            self,
+            pretrained,
+            pretrained2d,
+            patch_size,
+            in_chans,
+            out_chans,
+            embed_dim,
+            depths, 
+            num_heads,
+            window_size,
+            mlp_ratio,
+            qkv_bias,
+            drop_rate,
+            attn_drop_rate,
+            drop_path_rate,
+            patch_norm,
+            frozen_stages,
+            use_checkpoint, 
+            qk_scale=None,
+            norm_layer=nn.LayerNorm,
     ):
         super().__init__()
 
@@ -63,13 +63,6 @@ class SwinTransformer3D_up(SwinTransformer3D):
         self.window_size = window_size
         self.patch_size = patch_size
         self.out_chans = out_chans
-
-        # # split image into non-overlapping patches
-        # self.patch_embed = PatchEmbed3D(
-        #     patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim,
-        #     norm_layer=norm_layer if self.patch_norm else None)
-
-        # self.pos_drop = nn.Dropout(p=drop_rate)
 
         # stochastic depth
         dpr = [
@@ -141,13 +134,10 @@ class SwinTransformer3D_up(SwinTransformer3D):
 
     def forward(self, x):
         """Forward function."""
-        # x = self.patch_embed(x)
-        # print("after patch parition: ", x.shape)
-        # x = self.pos_drop(x)     # needed?
 
         for idx, layer in enumerate(self.layers):
             x, _ = layer(x.contiguous())
-            # print("Layer nr:" ,str(idx), " shape: ", x.shape)
+            print("Layer nr:" ,str(idx), " shape: ", x.shape)
 
         x = rearrange(x, "n c d h w -> n d h w c")
         x = self.norm(x)
