@@ -45,8 +45,13 @@ def get_shadow_light_gt(gt, occluded_gt):
             to_pil(occluded_gt[i, :, j, :, :]) for j in range(occluded_gt.shape[2])
         ]
 
-        batch_images.append(
-            np.array([np.array(shadow_light_mask(gti, x) for x in occluded_gti)])
+        batch_images = np.append(
+            batch_images,
+            np.array([np.array(shadow_light_mask(gti, x) for x in occluded_gti)]),
+            axis=0,
         )
 
-    return torch.tensor(batch_images)
+    batch_images = torch.tensor(batch_images)
+    print(f"batch_images.shape: {batch_images.shape}")
+
+    return batch_images
