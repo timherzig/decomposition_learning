@@ -51,6 +51,9 @@ def get_shadow_light_gt(gt, occluded_gt):
             axis=0,
         )
 
+    print(f"batch_images.shape: {batch_images.shape}")
+    print(f"batch_images.dtype: {batch_images.dtype}")
+
     batch_images = torch.tensor(batch_images)
     print(f"batch_images.shape: {batch_images.shape}")
 
