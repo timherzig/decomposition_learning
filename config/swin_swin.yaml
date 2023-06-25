@@ -12,9 +12,9 @@ train:
   log_every_n_steps: 1
   device: 'cpu'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss'
-  loss_func: 'regularized_loss'
+  loss_func: 'overall_loss'
   # Select metric to use for comparison: 'MSELoss', 'SSIMLoss'
-  metric: 'MSELoss'
+  metric: 'MSE'
   weight_decay: 0.01
   mask_decay: 1e-4 # 1e-5
   lambda_gt_loss: 1.0

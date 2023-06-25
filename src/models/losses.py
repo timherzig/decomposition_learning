@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.nn import MSELoss
 
 from src.models.utils.utils import get_class
+from src.models.metrics import MSE, SSIM
 
 
 def weight_decay(model, weight_decay):
@@ -214,7 +215,7 @@ class light_and_shadow_loss:
         self.model = model
         self.config = config
         metric_class = get_metric(self.config.metric)
-        self.metric = metric_class()
+        self.metric = metric_class()    
 
     def __call__(
         self,
@@ -242,5 +243,63 @@ class light_and_shadow_loss:
         return (
             gt_loss
             + light_shadow_loss
+            + weight_decay(self.model, self.config.weight_decay)
+        )
+
+class overall_loss:
+    def __init__(self, model, config):
+        super().__init__()
+
+        self.model = model
+        self.config = config
+
+    def __call__(
+        self,
+        gt_reconstruction,
+        light_mask,
+        shadow_mask,
+        occlusion_mask,
+        occlusion_rgb,
+        target,
+        input,
+        shadow_light_mask
+    ):
+        mse = MSE()
+        gt_loss = mse(gt_reconstruction, target)
+
+        gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+        shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+
+        decomposition_reconstruction = torch.where(
+            occlusion_mask < 0.5,
+            (gt_reconstruction * shadow_mask + light_mask),
+            occlusion_rgb,
+        )
+
+        ssim = SSIM()
+        decomp_loss = ssim(decomposition_reconstruction, input)
+
+        occ_mask = torch.nonzero(torch.where(occlusion_mask < 0.5, 0, 1))
+        reverse_occ_mask = torch.nonzero(torch.where(occlusion_mask < 0.5, 1, 0))
+
+        imgs_no_occlusion_reconstruction = gt_reconstruction * shadow_mask + light_mask
+        light_shadow_loss = mse(input[reverse_occ_mask], imgs_no_occlusion_reconstruction[reverse_occ_mask])
+        occ_loss = ssim(input[occ_mask], occlusion_rgb[occ_mask])
+
+
+        # light_shadow_loss = self.metric(
+        #     shadow_light_mask, imgs_no_occlusion_reconstruction
+        # )
+
+        # real_occlusion_mask = torch.nonzero(input - shadow_light_mask)
+        # occ_loss = SSIM(input[real_occlusion_mask], decomposition_reconstruction[real_occlusion_mask])
+
+        return (
+            gt_loss
+            + decomp_loss
+            + light_shadow_loss
+            + occ_loss
             + weight_decay(self.model, self.config.weight_decay)
         )
