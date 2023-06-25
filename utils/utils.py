@@ -81,7 +81,7 @@ def parse_arguments():
     )
 
     parser.add_argument("--data-dir", help="Path to dataset", type=str, default=None)
-    parser.add_argument("--num-workers", help="Number of workers", type=int, default=16)
+    parser.add_argument("--num-workers", help="Number of workers", type=int, default=8)
 
     return parser.parse_args()
 
