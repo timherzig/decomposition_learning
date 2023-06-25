@@ -20,7 +20,7 @@ train:
   lambda_gt_loss: 1.0
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
-  strategy: 'ddp_find_unused_parameters_true'
+  strategy: 'ddp_find_unused_parameters_true' #for cpu   or: 'auto'
   accumulate_grad_batches: 4
 
 model:
@@ -59,7 +59,7 @@ model:
         pretrained2d: True
         patch_size: [2, 4, 4] 
         in_chans: 3
-        out_chans: 3
+        out_chans: 2
         embed_dim: 768  # changed
         depths: [2, 6, 2, 2]  # change?
         num_heads: [24, 12, 6, 3]  # reversed order
@@ -80,7 +80,7 @@ model:
         pretrained2d: True
         patch_size: [2, 4, 4] 
         in_chans: 3
-        out_chans: 3
+        out_chans: 4
         embed_dim: 768  # changed
         depths: [2, 6, 2, 2]  # change?
         num_heads: [24, 12, 6, 3]  # reversed order

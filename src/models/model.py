@@ -49,30 +49,38 @@ class Decomposer(pl.LightningModule):
         # Ground truth upsampling
         if self.model_config.upsampler_gt == "unet":
             self.decoder_gt_config = self.model_config.unet_gt.decoder
-
             arguments = dict(self.decoder_gt_config)
             self.up_scale_gt = UpSampler(**arguments)
 
         elif self.model_config.upsampler_gt == "swin":
-            self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=self.model_config.swin.patch_size)
+            self.decoder_gt_config = self.model_config.swin_gt.decoder
+            arguments = dict(self.decoder_gt_config)
+            self.up_scale_gt = SwinTransformer3D_up(**arguments)
+            #self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=self.model_config.swin.patch_size)
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
             self.decoder_sl_config = self.model_config.unet_sl.decoder
-            arguments = dict(self.decoder_gt_config)
+            arguments = dict(self.decoder_sl_config)
             self.up_scale_sl = UpSampler(**arguments)
 
         elif self.model_config.upsampler_sl == "swin":
-            self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
+            self.decoder_sl_config = self.model_config.swin_sl.decoder
+            arguments = dict(self.decoder_sl_config)
+            arguments = SwinTransformer3D_up(**arguments)
+            #self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
             self.decoder_ob_config = self.model_config.unet_ob.decoder
-            arguments = dict(self.decoder_gt_config)
+            arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = UpSampler(**arguments)
         
         elif self.model_config.upsampler_sl == "swin":
-            self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
+            self.decoder_ob_config = self.model_config.swin_ob.decoder
+            arguments = dict(self.decoder_ob_config)
+            self.up_scale_ob = SwinTransformer3D_up(**arguments)
+            #self.up_scale_sl = SwinTransformer3D_up(out_chans=4, patch_size=self.model_config.swin.patch_size)
 
     def forward(self, x):
         if self.config.upsampler == "swin":

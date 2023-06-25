@@ -73,7 +73,7 @@ def parse_arguments():
         "--config",
         type=str,
         help="Path to config.yaml file.",
-        default="config/default.yaml",
+        default="config/swin_swin.yaml",
     )
 
     parser.add_argument("--data-dir", help="Path to dataset", type=str, default=None)
