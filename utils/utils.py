@@ -31,6 +31,7 @@ def setup_training(args):
 
     siar = SIARDataModule(
         config.train.batch_size,
+        args.num_workers,
         config.data.split_dir,
         args.data_dir,
     )
@@ -80,6 +81,7 @@ def parse_arguments():
     )
 
     parser.add_argument("--data-dir", help="Path to dataset", type=str, default=None)
+    parser.add_argument("--num-workers", help="Number of workers", type=int, default=16)
 
     return parser.parse_args()
 
