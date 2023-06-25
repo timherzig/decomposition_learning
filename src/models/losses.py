@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from torch.nn import MSELoss
 
-from src.models.utils.preprocessing import get_shadow_light_gt
 from src.models.utils.utils import get_class
 
 
@@ -64,6 +63,7 @@ class base_loss:
         occlusion_rgb,
         target,
         input,
+        shadow_light_mask
     ):
         gt_loss = self.metric(gt_reconstruction, target)
 
@@ -106,6 +106,7 @@ class reconstruction_loss:
         occlusion_mask,
         occlusion_rgb,
         input,
+        shadow_light_mask
     ):
         gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
@@ -143,6 +144,7 @@ class pre_train_loss:
         occlusion_rgb,
         target,
         input,
+        shadow_light_mask
     ):
         gt_loss = self.metric(gt_reconstruction, input)
 
@@ -172,6 +174,7 @@ class regularized_loss:
         occlusion_rgb,
         target,
         input,
+        shadow_light_mask
     ):
         gt_loss = self.metric(gt_reconstruction, target)
 
@@ -222,10 +225,9 @@ class light_and_shadow_loss:
         occlusion_rgb,
         target,
         input,
+        shadow_light_mask
     ):
         gt_loss = self.metric(gt_reconstruction, target)
-
-        imgs_no_occlusion_preprocessed = get_shadow_light_gt(target, input)
 
         gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
@@ -233,15 +235,8 @@ class light_and_shadow_loss:
 
         imgs_no_occlusion_reconstruction = gt_reconstruction * shadow_mask + light_mask
 
-        print(
-            f"imgs_no_occlusion_preprocessed.shape: {imgs_no_occlusion_preprocessed.shape}"
-        )
-        print(
-            f"imgs_no_occlusion_reconstruction.shape: {imgs_no_occlusion_reconstruction.shape}"
-        )
-
         light_shadow_loss = self.metric(
-            imgs_no_occlusion_preprocessed, imgs_no_occlusion_reconstruction
+            shadow_light_mask, imgs_no_occlusion_reconstruction
         )
 
         return (

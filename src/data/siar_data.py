@@ -9,6 +9,8 @@ from lightning.pytorch import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import ToTensor
 
+from src.models.utils.preprocessing import get_shadow_light_gt
+
 
 class SIAR(Dataset):
     """
@@ -68,7 +70,7 @@ class SIAR(Dataset):
         )
         images = torch.swapaxes(images, 0, 1)
 
-        return images, ground_truth
+        return images, ground_truth, get_shadow_light_gt(ground_truth, images)
 
     def __len__(self):
         return len(self.df)
