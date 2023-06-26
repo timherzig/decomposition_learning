@@ -282,7 +282,7 @@ class stage_loss:
         if "or" in self.config.loss_stages:
             occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
             or_reconstruction = torch.where(
-                occlusion_mask == 1.0,
+                occlusion_mask < 0.5,
                 ((target + light_mask) * shadow_mask),
                 occlusion_rgb,
             )

@@ -47,7 +47,7 @@ def log_images(
     ]
 
     rec = torch.where(
-        occlusion_mask.unsqueeze(0).repeat(3, 1, 1, 1) == 1.0,
+        occlusion_mask.unsqueeze(0).repeat(3, 1, 1, 1) < 0.5,
         (
             (
                 gt_reconstruction.unsqueeze(1).repeat(1, 10, 1, 1)
