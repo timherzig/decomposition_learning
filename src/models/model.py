@@ -104,11 +104,11 @@ class Decomposer(pl.LightningModule):
             )  # ReLU
 
         return (
-            torch.clip(gt_reconstruction, -1.0, 1.0),
-            torch.clip(light_mask, -1.0, 1.0),
-            torch.clip(shadow_mask, -1.0, 1.0),
+            torch.clip(gt_reconstruction, 0.0, 1.0),
+            torch.clip(light_mask, 0.0, 1.0),
+            torch.clip(shadow_mask, 0.0, 1.0),
             torch.relu(occlusion_mask),
-            torch.clip(occlusion_rgb, -1.0, 1.0),
+            torch.clip(occlusion_rgb, 0.0, 1.0),
         )
 
     def loss_func(
