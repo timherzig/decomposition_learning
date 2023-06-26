@@ -50,7 +50,7 @@ class SIAR(Dataset):
         # For sanity check, we only want to use one entry
         # and want to completely overfit to it
         if sanity_check:
-            self.df = self.df[random.randint(0, len(self.df) - 1)]
+            self.df = self.df[random.randint(0, len(self.df.index) - 1)]
             self.df = pd.concat(
                 [self.df, self.df], ignore_index=True
             )  # Now we can batches but they will all be the same entry
