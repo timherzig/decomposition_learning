@@ -271,7 +271,7 @@ class stage_loss:
         if "gt" in self.config.loss_stages:
             loss += self.metric(gt_reconstruction, target)
 
-        gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+        target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
         light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
 
