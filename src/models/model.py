@@ -107,7 +107,7 @@ class Decomposer(pl.LightningModule):
             torch.clip(gt_reconstruction, -1.0, 1.0),
             torch.clip(light_mask, -1.0, 1.0),
             torch.clip(shadow_mask, -1.0, 1.0),
-            torch.clip(occlusion_mask, -1.0, 1.0),
+            torch.heaviside(occlusion_mask, 0.0),
             torch.clip(occlusion_rgb, -1.0, 1.0),
         )
 
@@ -120,7 +120,7 @@ class Decomposer(pl.LightningModule):
         occlusion_rgb,
         target,
         input,
-        shadow_light_mask
+        shadow_light_mask,
     ):
         return self.loss(
             gt_reconstruction=gt_reconstruction,
@@ -130,7 +130,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb=occlusion_rgb,
             target=target,
             input=input,
-            shadow_light_mask=shadow_light_mask
+            shadow_light_mask=shadow_light_mask,
         )
 
     def training_step(self, batch, batch_idx):
@@ -159,7 +159,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            z,
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -169,7 +169,7 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z
+            z,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -191,7 +191,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            z,
         )
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
@@ -226,7 +226,7 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z
+            z,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -248,7 +248,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            z,
         )
 
         self.log("train_loss", loss, prog_bar=True)

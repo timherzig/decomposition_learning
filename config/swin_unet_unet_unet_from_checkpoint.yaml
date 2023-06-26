@@ -14,8 +14,10 @@ train:
   max_epochs: 200
   log_every_n_steps: 15
   device: 'gpu'
-  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss'
-  loss_func: 'light_and_shadow_loss'
+  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss
+  loss_func: 'stage_loss'
+  # Needed for 'stage_loss'
+  loss_stages: ['gt', 'sl', 'or']
   # Select metric to use for comparison: 'MSE', 'SSIM'
   metric: 'MSE'
   weight_decay: 0.01
