@@ -268,14 +268,6 @@ class stage_loss:
     ):
         loss = 0
 
-        print(f"gt_ max: {torch.max(gt_reconstruction)}")
-        print(f"light_mask max: {torch.max(light_mask)}")
-        print(f"shadow_mask max: {torch.max(shadow_mask)}")
-        print(f"occlusion_mask max: {torch.max(occlusion_mask)}")
-        print(f"occlusion_rgb max: {torch.max(occlusion_rgb)}")
-        print(f"target max: {torch.max(target)}")
-        print(f"input max: {torch.max(input)}")
-
         if "gt" in self.config.loss_stages:
             loss += self.metric(gt_reconstruction, target)
 

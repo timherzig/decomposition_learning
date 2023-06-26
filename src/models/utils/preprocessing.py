@@ -48,6 +48,4 @@ def get_shadow_light_gt(gt, occluded_gt):
     images = torch.squeeze(torch.tensor(np.array(images)))
     images = torch.permute(images, (3, 0, 1, 2))
 
-    print(f"Images max: {torch.max(images)}")
-
-    return images.float()
+    return torch.div(images.float(), 255.0)
