@@ -107,7 +107,7 @@ class Decomposer(pl.LightningModule):
             torch.clip(gt_reconstruction, -1.0, 1.0),
             torch.clip(light_mask, -1.0, 1.0),
             torch.clip(shadow_mask, -1.0, 1.0),
-            torch.heaviside(occlusion_mask, torch.tensor(0.0)),
+            torch.relu(occlusion_mask),
             torch.clip(occlusion_rgb, -1.0, 1.0),
         )
 
