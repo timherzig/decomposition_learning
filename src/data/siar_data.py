@@ -49,7 +49,7 @@ class SIAR(Dataset):
         # For sanity check, we only want to use one entry
         # and want to completely overfit to it
         if sanity_check:
-            df = df.sample(frac=1).reset_index(drop=True)
+            self.df = self.df.sample(frac=1).reset_index(drop=True)
             self.df = self.df[:1]
             self.df = pd.concat(
                 [self.df, self.df], ignore_index=True
