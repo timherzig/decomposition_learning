@@ -26,7 +26,7 @@ train:
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
   strategy: 'ddp_find_unused_parameters_true'
-  accumulate_grad_batches: 4
+  accumulate_grad_batches: 1
 
 
 model:
