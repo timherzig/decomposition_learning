@@ -1,0 +1,82 @@
+data:
+  # Name of dataset
+  dataset: 'SIAR'
+  # Split version to use
+  split_dir: 'split-1_80_10_10'
+  # Set validation set equal to train set to provoke overfitting and see if loss works
+  sanity_check: True
+    
+train:
+  debug: False
+  pre_train: False
+  batch_size: 8
+  lr: 1e-3
+  max_epochs: 200
+  log_every_n_steps: 15
+  device: 'gpu'
+  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss
+  loss_func: 'stage_loss'
+  # Needed for 'stage_loss'
+  loss_stages: ['gt', 'sl', 'or']
+  # Select metric to use for comparison: 'MSE', 'SSIM'
+  metric: 'MSE'
+  weight_decay: 0.01
+  mask_decay: 1e-4 # 1e-5
+  lambda_gt_loss: 1.0
+  lambda_decomp_loss: 1.0
+  lambda_occlusion_difference: 1e-3
+  strategy: 'ddp_find_unused_parameters_true'
+  accumulate_grad_batches: 4
+
+
+model:
+  checkpoint: False
+  upsampler_gt: 'unet' # upsampler for ground truth
+  upsampler_sl: 'unet' # upsampler for shadow and light
+  upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
+  swin:
+    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
+    use_checkpoint: True
+    patch_size: [2, 4, 4]    
+  unet_gt:
+    decoder:
+      output_dim: 3
+      f_maps: [96, 192, 384, 768]
+      basic_module: 'DoubleConv'
+      conv_kernel_size: 3
+      conv_padding: 1
+      layer_order: 'gcr'
+      num_groups: 8
+      is3d: True
+      layers_no_skip:
+        size: [[96, 48, 5, 128, 128], [48, 24, 1, 256, 256]]
+        scale_factor: 2 
+      omit_skip_connections: False
+  unet_sl:
+    decoder:
+      output_dim: 2
+      f_maps: [96, 192, 384, 768]
+      basic_module: 'DoubleConv'
+      conv_kernel_size: 3
+      conv_padding: 1
+      layer_order: 'gcr'
+      num_groups: 8
+      is3d: True
+      layers_no_skip:
+        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
+        scale_factor: 2
+      omit_skip_connections: False
+  unet_ob:
+    decoder:
+      output_dim: 4
+      f_maps: [96, 192, 384, 768]
+      basic_module: 'DoubleConv'
+      conv_kernel_size: 3
+      conv_padding: 1
+      layer_order: 'gcr'
+      num_groups: 8
+      is3d: True
+      layers_no_skip:
+        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
+        scale_factor: 2 
+      omit_skip_connections: False
