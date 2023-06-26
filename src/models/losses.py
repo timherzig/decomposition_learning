@@ -235,6 +235,9 @@ class light_and_shadow_loss:
 
         imgs_no_occlusion_reconstruction = gt_reconstruction * shadow_mask + light_mask
 
+        print(f'shadow_light_mask shape: {shadow_light_mask.shape}')
+        print(f'imgs_no_occ shape: {imgs_no_occlusion_reconstruction.shape}')
+
         light_shadow_loss = self.metric(
             shadow_light_mask, imgs_no_occlusion_reconstruction
         )
