@@ -77,7 +77,7 @@ class Decomposer(pl.LightningModule):
                 torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
             )
             if self.train_config.pre_train:
-                return torch.clip(gt_reconstruction, -1.0, 1.0)
+                return torch.clip(gt_reconstruction, 0.0, 1.0)
 
         # Apply Upscaler_2 for shadow mask, light mask -> (B, 2, 10, H, W)
         if self.model_config.upsampler_sl == "unet":
