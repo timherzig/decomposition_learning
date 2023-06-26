@@ -50,8 +50,10 @@ def log_images(
         occlusion_mask.unsqueeze(0).repeat(3, 1, 1, 1) < 0.5,
         (
             gt_reconstruction.unsqueeze(1).repeat(1, 10, 1, 1)
-            * shadow_mask.unsqueeze(0).repeat(3, 1, 1, 1)
-            + light_mask.unsqueeze(0).repeat(3, 1, 1, 1)
+            + (
+                shadow_mask.unsqueeze(0).repeat(3, 1, 1, 1)
+                * light_mask.unsqueeze(0).repeat(3, 1, 1, 1)
+            )
         ),
         occlusion_rgb,
     )
