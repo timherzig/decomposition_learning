@@ -59,7 +59,7 @@ def log_images(
     )
 
     to_pil = ToPILImage()
-    occlusion_mask = torch.where(occlusion_mask < 0.5, 0, 1)
+    occlusion_mask = torch.where(occlusion_mask < 0.5, 0.0, 1.0)
 
     my_data = [
         [
