@@ -17,7 +17,7 @@ train:
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss
   loss_func: 'stage_loss'
   # Needed for 'stage_loss'
-  loss_stages: ['gt', 'sl', 'or']
+  loss_stage: 1
   # Select metric to use for comparison: 'MSE', 'SSIM'
   metric: 'MSE'
   weight_decay: 0.01

@@ -278,6 +278,22 @@ class Decomposer(pl.LightningModule):
         }
 
     def on_validation_epoch_end(self) -> None:
+        if self.current_epoch % 200 == 0:
+            if self.train_config.loss_stage == 1:
+                for param in self.up_scale_gt.parameters():
+                    param.requires_grad = False
+            elif self.train_config.loss_stage == 2:
+                for param in self.up_scale_sl.parameters():
+                    param.requires_grad = False
+            elif self.train_config.loss_stage == 3:
+                for param in self.up_scale_ob.parameters():
+                    param.requires_grad = False
+            elif self.train_config.loss_stage == 4:
+                for param in self.parameters():
+                    param.requires_grad = True
+
+            self.train_config.loss_stage += 1
+
         loss = torch.stack(self.validation_step_outputs).mean()
         if loss < self.best_val_loss and self.train_config.pre_train:
             self.best_val_loss = loss

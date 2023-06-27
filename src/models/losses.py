@@ -268,24 +268,31 @@ class stage_loss:
     ):
         loss = 0
 
-        if "gt" in self.config.loss_stages:
-            loss += self.metric(gt_reconstruction, target)
+        if self.config.loss_stage == 1:
+            return self.metric(gt_reconstruction, target)
 
         target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
         light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
 
-        if "sl" in self.config.loss_stages:
+        if self.config.loss_stage == 2:
             sl_reconstruction = (target + light_mask) * shadow_mask
-            loss += self.metric(sl_reconstruction, shadow_light_mask)
+            return self.metric(sl_reconstruction, shadow_light_mask)
 
-        if "or" in self.config.loss_stages:
-            occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        if self.config.loss_stage == 3:
             or_reconstruction = torch.where(
                 occlusion_mask < 0.5,
                 ((target + light_mask) * shadow_mask),
                 occlusion_rgb,
             )
-            loss += self.metric(or_reconstruction, input) + torch.mean(occlusion_mask)
+            return self.metric(or_reconstruction, input) + torch.mean(occlusion_mask)
+
+        or_reconstruction = torch.where(
+            occlusion_mask < 0.5,
+            ((gt_reconstruction + light_mask) * shadow_mask),
+            occlusion_rgb,
+        )
+        loss = self.metric(or_reconstruction, input) + torch.mean(occlusion_mask)
 
         return loss + weight_decay(self.model, self.config.weight_decay)
