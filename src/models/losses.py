@@ -288,6 +288,7 @@ class stage_loss:
             )
             return self.metric(or_reconstruction, input) + torch.mean(occlusion_mask)
 
+        gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         or_reconstruction = torch.where(
             occlusion_mask < 0.5,
             ((gt_reconstruction + light_mask) * shadow_mask),
