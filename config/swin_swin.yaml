@@ -40,7 +40,7 @@ model:
         in_chans: 3
         out_chans: 3
         embed_dim: 768  # changed
-        depths: [2, 6, 2, 2]  # change?
+        depths: [1, 1, 1, 1] #[2, 6, 2, 2]  # change?
         num_heads: [24, 12, 6, 3]  # reversed order
         window_size: [2, 7, 7]
         mlp_ratio: 4.0
@@ -61,7 +61,7 @@ model:
       in_chans: 3
       out_chans: 2
       embed_dim: 768  
-      depths: [2, 6, 2, 2]  
+      depths: [1, 1, 1, 1] #[2, 6, 2, 2]  
       num_heads: [24, 12, 6, 3] 
       window_size: [2, 7, 7]
       mlp_ratio: 4.0
@@ -82,7 +82,7 @@ model:
       in_chans: 3
       out_chans: 4
       embed_dim: 768  
-      depths: [2, 6, 2, 2]  
+      depths: [1, 1, 1, 1] #[2, 6, 2, 2]  
       num_heads: [24, 12, 6, 3]  
       window_size: [2, 7, 7]
       mlp_ratio: 4.0

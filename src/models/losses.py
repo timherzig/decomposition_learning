@@ -298,8 +298,8 @@ class overall_loss:
 
         return (
             gt_loss
-            + decomp_loss
+            - decomp_loss
             + light_shadow_loss
-            + occ_loss
+            - occ_loss
             + weight_decay(self.model, self.config.weight_decay)
         )
