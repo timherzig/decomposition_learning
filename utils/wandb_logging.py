@@ -84,8 +84,8 @@ def log_images(
                 for img in range(shadow_light_mask.shape[0])
             ],
             [
-                wandb.Image(to_pil(occlusion_mask[img, :, :]), caption=columns[6])
-                for img in range(occlusion_mask.shape[0])
+                wandb.Image(to_pil(occlusion_mask[:, img, :, :]), caption=columns[6])
+                for img in range(occlusion_mask.shape[1])
             ],
             [
                 wandb.Image(to_pil(occlusion_rgb[:, img, :, :]), caption=columns[7])
