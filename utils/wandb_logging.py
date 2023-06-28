@@ -35,6 +35,7 @@ def log_images(
     light_mask = light_mask[idx, :, :, :]
     occlusion_mask = occlusion_mask[idx, :, :, :]
     occlusion_rgb = occlusion_rgb[idx, :, :, :, :]
+    shadow_light_mask = shadow_light_mask[idx, :, :, :]
 
     columns = [
         "org_img",
