@@ -270,12 +270,12 @@ class Decomposer(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = Adam(self.parameters(), lr=self.train_config.lr)
-        scheduler = ReduceLROnPlateau(optimizer, patience=10)
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": {"scheduler": scheduler, "monitor": "val_loss"},
-        }
+        return Adam(self.parameters(), lr=self.train_config.lr)
+        # scheduler = ReduceLROnPlateau(optimizer, patience=10)
+        # return {
+        #     "optimizer": optimizer,
+        #     "lr_scheduler": {"scheduler": scheduler, "monitor": "val_loss"},
+        # }
 
     def on_validation_epoch_end(self) -> None:
         if self.current_epoch % 2000 == 0 and self.current_epoch != 0:
