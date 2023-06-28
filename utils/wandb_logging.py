@@ -63,6 +63,8 @@ def log_images(
     to_pil = ToPILImage()
     occlusion_mask = torch.where(occlusion_mask < 0.5, 0.0, 1.0)
 
+    print(f"shadow_light_mask.shape: {shadow_light_mask.shape}")
+
     my_data = [
         [
             wandb.Image(to_pil(y), caption=columns[0]),

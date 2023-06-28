@@ -269,7 +269,9 @@ class stage_loss:
         loss = 0
 
         if self.config.loss_stage == 1:
-            return self.metric(gt_reconstruction, target)
+            return self.metric(gt_reconstruction, target) + weight_decay(
+                self.model, self.config.weight_decay
+            )
 
         target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
@@ -278,7 +280,9 @@ class stage_loss:
 
         if self.config.loss_stage == 2:
             sl_reconstruction = gt_reconstruction * shadow_mask + light_mask
-            return self.metric(sl_reconstruction, shadow_light_mask)
+            return self.metric(sl_reconstruction, shadow_light_mask) + weight_decay(
+                self.model, self.config.weight_decay
+            )
 
         occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
         if self.config.loss_stage == 3:
@@ -287,7 +291,11 @@ class stage_loss:
                 (gt_reconstruction * shadow_mask + light_mask),
                 occlusion_rgb,
             )
-            return self.metric(or_reconstruction, input) + torch.mean(occlusion_mask)
+            return (
+                self.metric(or_reconstruction, input)
+                + torch.mean(occlusion_mask)
+                + weight_decay(self.model, self.config.weight_decay)
+            )
 
         or_reconstruction = torch.where(
             occlusion_mask < 0.5,
