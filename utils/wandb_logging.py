@@ -12,6 +12,7 @@ def log_images(
     light_mask,
     occlusion_mask,
     occlusion_rgb,
+    shadow_light_mask,
 ):
     """
     Logs one image sequence to the wandb logger
@@ -41,6 +42,7 @@ def log_images(
         "gt_reconstruction",
         "shadow_mask",
         "light_mask",
+        "shadow_light_approx",
         "occlusion_mask",
         "occlusion_rgb",
         "complete_reconstruction",
@@ -78,15 +80,19 @@ def log_images(
                 for img in range(light_mask.shape[0])
             ],
             [
-                wandb.Image(to_pil(occlusion_mask[img, :, :]), caption=columns[5])
+                wandb.Image(to_pil(shadow_light_mask[img, :, :]), caption=columns[5])
+                for img in range(shadow_light_mask.shape[0])
+            ],
+            [
+                wandb.Image(to_pil(occlusion_mask[img, :, :]), caption=columns[6])
                 for img in range(occlusion_mask.shape[0])
             ],
             [
-                wandb.Image(to_pil(occlusion_rgb[:, img, :, :]), caption=columns[6])
+                wandb.Image(to_pil(occlusion_rgb[:, img, :, :]), caption=columns[7])
                 for img in range(occlusion_rgb.shape[1])
             ],
             [
-                wandb.Image(to_pil(rec[:, img, :, :]), caption=columns[7])
+                wandb.Image(to_pil(rec[:, img, :, :]), caption=columns[8])
                 for img in range(rec.shape[1])
             ],
         ]

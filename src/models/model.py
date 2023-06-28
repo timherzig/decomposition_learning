@@ -218,6 +218,7 @@ class Decomposer(pl.LightningModule):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
+                z,
             )
         self.validation_step_outputs.append(loss)
         return loss
@@ -266,6 +267,7 @@ class Decomposer(pl.LightningModule):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
+                z,
             )
         return loss
 
