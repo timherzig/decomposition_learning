@@ -273,6 +273,7 @@ class Decomposer(pl.LightningModule):
 
     def configure_optimizers(self):
         return Adam(self.parameters(), lr=self.train_config.lr)
+        # optimizer = Adam(self.parameters(), lr=self.train_config.lr)
         # scheduler = ReduceLROnPlateau(optimizer, patience=10)
         # return {
         #     "optimizer": optimizer,
@@ -282,15 +283,15 @@ class Decomposer(pl.LightningModule):
     def on_validation_epoch_end(self) -> None:
         if self.current_epoch % 2000 == 0 and self.current_epoch != 0:
             if self.train_config.loss_stage == 1:
-                self.freeze(self.up_scale_gt)
+                self.up_scale_gt.requires_grad_(False)
             elif self.train_config.loss_stage == 2:
-                self.freeze(self.up_scale_sl)
+                self.up_scale_sl.requires_grad_(False)
             elif self.train_config.loss_stage == 3:
-                self.freeze(self.up_scale_oc)
+                self.up_scale_ob.requires_grad_(False)
             elif self.train_config.loss_stage == 4:
-                self.unfreeze(self.up_scale_gt)
-                self.unfreeze(self.up_scale_sl)
-                self.unfreeze(self.up_scale_oc)
+                self.up_scale_gt.requires_grad_(True)
+                self.up_scale_sl.requires_grad_(True)
+                self.up_scale_ob.requires_grad_(True)
 
             self.train_config.loss_stage += 1
 
