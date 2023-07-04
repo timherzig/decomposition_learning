@@ -85,12 +85,14 @@ class SIARDataModule(LightningDataModule):
         self,
         batch_size: int,
         split_dir: str = "split-1_80_10_10",
+        num_workers: int = 0,
         manual_dataset_path=None,
     ) -> None:
         super().__init__()
 
         self.manual_dataset_path = manual_dataset_path
         self.batch_size = batch_size
+        self.num_workers = num_workers
         self.split_dir = split_dir
 
     def prepare_data(self) -> None:
@@ -121,10 +123,18 @@ class SIARDataModule(LightningDataModule):
             )
 
     def train_dataloader(self):
-        return DataLoader(self.siar_train, batch_size=self.batch_size)
+        return DataLoader(
+            self.siar_train,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+        )
 
     def test_dataloader(self):
-        return DataLoader(self.siar_test, batch_size=self.batch_size)
+        return DataLoader(
+            self.siar_test, batch_size=self.batch_size, num_workers=self.num_workers
+        )
 
     def val_dataloader(self):
-        return DataLoader(self.siar_val, batch_size=self.batch_size)
+        return DataLoader(
+            self.siar_val, batch_size=self.batch_size, num_workers=self.num_workers
+        )
