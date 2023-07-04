@@ -14,7 +14,8 @@ The dataset consists of 15618 sequences of 11 256x256 resolution images each.
 Each sequence contains a single underlying image and 10 augmented views.
 The random augmentations are added to the underlying image in the order *shadow*, *occlusion*, and *light*.
 
-### TODO: CREATE FIGURE FOR ARCHITECTURE
+> TODO: CREATE FIGURE FOR ARCHITECTURE
+
 ![Fig 2](figures/Decomposer.png)
 **Fig 2:** *Decomposer model architecture.*
 
@@ -26,6 +27,9 @@ For the decoder, we use three branches, each a 3D UNet architecture, that all ta
 One branch ($decoder_{gt}$) is trained to predict the ground truth underlying image.
 The second branch ($decoder_{sl}$) is trained to predict the light and shadow masks.
 The third branch ($decoder_{oc}$) is trained to predict the occlusions.
+
+## The 3DSWIN architecture
+> TODO: WRITE ABOUT 3DSWIN
 
 ## First steps
 
@@ -57,4 +61,4 @@ Training loss              |  Validation loss
 
 We can see that the training loss, but the validation loss even more so, is very unstable. We can see that the validation loss is not decreasing monotonically. This is a clear indicator that our loss function is not smooth and prone to collapse.
 
-In the next step, pretrain our enocder with a self-supervised task to learn a better latent representation and tackle the challenge of our decomposition learning task.
+In the next step, tackle the challenge of our decomposition learning task.
