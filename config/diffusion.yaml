@@ -1,9 +1,17 @@
 data:
-  dir: 'data/SIAR_128'
+  # Name of dataset
+  dataset: 'SIAR'
+  # Split version to use
+  split_dir: 'split-1_80_10_10'
+  # (Optional) Manual path to dataset
+  manual_dataset_path: '/home/fe/meinardus/decomposition_learning/data/SIAR_128'
+  # Set validation set equal to train set to provoke overfitting and see if loss works
+  sanity_check: False
+  # Size of images
   img_size: 128 # 256 # 64
   
 train:
-  debug: False
+  debug: True
   batch_size: 16
   max_epochs: 50
   eval_every: 2
@@ -12,10 +20,10 @@ train:
   device: None
   lr: 3e-4
 
-decomposer:
+model:
   swin:
-    pretrained: ''
-    use_checkpoint: False
+    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
+    use_checkpoint: True
     patch_size: [2, 4, 4]
     emb_dim: 768
   upsampler: None

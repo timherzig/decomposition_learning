@@ -1,5 +1,8 @@
 import os
+import sys
 import copy
+
+sys.path.append(os.path.join(os.getcwd()))
 import numpy as np
 import torch
 import torch.nn as nn
@@ -13,7 +16,7 @@ from omegaconf import OmegaConf
 import wandb
 
 from src.data.siar_data import SIARDataModule
-from utils.parser import parse_arguments
+from utils.utils import parse_arguments
 
 
 logging.basicConfig(
@@ -142,14 +145,18 @@ def train(args):
     else:
         wandb_logger = None
 
-    dataloader = SIARDataModule(config.data.dir, config.train.batch_size)
+    dataloader = SIARDataModule(
+        config.train.batch_size,
+        config.data.split_dir,
+        config.data.manual_dataset_path,
+    )
     dataloader.setup(stage="train")
     train_dataloader = dataloader.train_dataloader()
     val_dataloader = dataloader.val_dataloader()
     model = UNet_conditional(
         device=device,
         img_size=config.data.img_size,
-        decomposer_config=config.decomposer,
+        conditioning_config=config,
     ).to(device)
 
     print("Parameters:", sum(p.numel() for p in model.parameters() if p.requires_grad))
@@ -176,7 +183,7 @@ def train(args):
             # Add noise to ground truth reconstruction
             x_t, noise = diffusion.noise_images(gt, t)  # --- [B, 3, 256, 256]
 
-            # Add images as conditioning to model (will be passed through decomposer)
+            # Add images as conditioning to model (will be passed through conditioning_model)
             predicted_noise = model(x_t, t, images)
             loss = mse(noise, predicted_noise)
 
