@@ -281,7 +281,7 @@ class Decomposer(pl.LightningModule):
         # }
 
     def on_validation_epoch_end(self) -> None:
-        if self.current_epoch % 2000 == 0 and self.current_epoch != 0:
+        if self.current_epoch % 100 == 0 and self.current_epoch != 0:
             if self.train_config.loss_stage == 1:
                 self.up_scale_gt.requires_grad_(False)
             elif self.train_config.loss_stage == 2:
