@@ -15,6 +15,7 @@ from utils.wandb_logging import (
 )
 from einops import rearrange
 
+
 class Decomposer(pl.LightningModule):
     def __init__(self, config, log_dir: str = None):
         super().__init__()
@@ -56,7 +57,7 @@ class Decomposer(pl.LightningModule):
             self.decoder_gt_config = self.model_config.swin_gt.decoder
             arguments = dict(self.decoder_gt_config)
             self.up_scale_gt = SwinTransformer3D_up(**arguments)
-            #self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=self.model_config.swin.patch_size)
+            # self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=self.model_config.swin.patch_size)
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
@@ -68,19 +69,19 @@ class Decomposer(pl.LightningModule):
             self.decoder_sl_config = self.model_config.swin_sl.decoder
             arguments = dict(self.decoder_sl_config)
             self.up_scale_sl = SwinTransformer3D_up(**arguments)
-            #self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
+            # self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
             self.decoder_ob_config = self.model_config.unet_ob.decoder
             arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = UpSampler(**arguments)
-        
+
         elif self.model_config.upsampler_sl == "swin":
             self.decoder_ob_config = self.model_config.swin_ob.decoder
             arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = SwinTransformer3D_up(**arguments)
-            #self.up_scale_ob = SwinTransformer3D_up(out_chans=4, patch_size=self.model_config.swin.patch_size)
+            # self.up_scale_ob = SwinTransformer3D_up(out_chans=4, patch_size=self.model_config.swin.patch_size)
 
     def forward(self, x):
         if self.model_config.upsampler_gt == "swin":
@@ -97,7 +98,7 @@ class Decomposer(pl.LightningModule):
         x = rearrange(x, "n c d h w -> n d h w c")
         x = self.swin.norm(x)
         x = rearrange(x, "n d h w c -> n c d h w")
-        print(x.shape)
+        # print(x.shape)
 
         # Perform upsampling
         gt_reconstruction = self.up_scale_gt.forward(x)
@@ -174,7 +175,7 @@ class Decomposer(pl.LightningModule):
         occlusion_rgb,
         target,
         input,
-        shadow_light_mask
+        shadow_light_mask,
     ):
         return self.loss(
             gt_reconstruction=gt_reconstruction,
@@ -184,7 +185,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb=occlusion_rgb,
             target=target,
             input=input,
-            shadow_light_mask=shadow_light_mask
+            shadow_light_mask=shadow_light_mask,
         )
 
     def training_step(self, batch, batch_idx):
@@ -213,7 +214,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            z,
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -223,7 +224,7 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z
+            z,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -245,7 +246,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            z,
         )
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
@@ -280,7 +281,7 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z
+            z,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -302,7 +303,7 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            z,
         )
 
         self.log("train_loss", loss, prog_bar=True)
