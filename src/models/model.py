@@ -49,9 +49,9 @@ class Decomposer(pl.LightningModule):
             self.decoder_gt_config = self.model_config.unet_gt.decoder
             arguments = dict(self.decoder_gt_config)
             self.up_scale_gt = UpSampler(**arguments)
-            if self.decoder_gt_config.checkpoint is not None:
+            if self.model_config.unet_gt.checkpoint is not None:
                 self.up_scale_gt.load_state_dict(
-                    torch.load(self.decoder_gt_config.checkpoint)
+                    torch.load(self.model_config.unet_gt.checkpoint)
                 )
 
         # Shadow and light upsampling
@@ -59,9 +59,9 @@ class Decomposer(pl.LightningModule):
             self.decoder_sl_config = self.model_config.unet_sl.decoder
             arguments = dict(self.decoder_sl_config)
             self.up_scale_sl = UpSampler(**arguments)
-            if self.decoder_sl_config.checkpoint is not None:
+            if self.model_config.unet_sl.checkpoint is not None:
                 self.up_scale_sl.load_state_dict(
-                    torch.load(self.decoder_sl_config.checkpoint)
+                    torch.load(self.model_config.unet_sl.checkpoint)
                 )
 
         # Object upsampling
@@ -69,9 +69,9 @@ class Decomposer(pl.LightningModule):
             self.decoder_ob_config = self.model_config.unet_ob.decoder
             arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = UpSampler(**arguments)
-            if self.decoder_ob_config.checkpoint is not None:
+            if self.model_config.unet_ob.checkpoint is not None:
                 self.up_scale_ob.load_state_dict(
-                    torch.load(self.decoder_ob_config.checkpoint)
+                    torch.load(self.model_config.unet_ob.checkpoint)
                 )
         # ----------------
 

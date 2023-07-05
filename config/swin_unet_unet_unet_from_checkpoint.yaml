@@ -41,8 +41,8 @@ model:
     use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
+    checkpoint: None
     decoder:
-      checkpoint: None
       output_dim: 3
       f_maps: [96, 192, 384, 768]
       basic_module: 'DoubleConv'
@@ -56,8 +56,8 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
+    checkpoint: None
     decoder:
-      checkpoint: None
       output_dim: 2
       f_maps: [96, 192, 384, 768]
       basic_module: 'DoubleConv'
@@ -71,8 +71,8 @@ model:
         scale_factor: 2
       omit_skip_connections: False
   unet_ob:
+    checkpoint: None
     decoder:
-      checkpoint: None
       output_dim: 4
       f_maps: [96, 192, 384, 768]
       basic_module: 'DoubleConv'
