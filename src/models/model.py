@@ -149,7 +149,8 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z,
+            sl,
+            ob,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -171,7 +172,8 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z,
+            sl,
+            ob,
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -181,7 +183,8 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z,
+            sl,
+            ob,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -203,7 +206,8 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z,
+            sl,
+            ob,
         )
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
@@ -230,7 +234,8 @@ class Decomposer(pl.LightningModule):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
-                z,
+                sl,
+                ob,
             )
         self.validation_step_outputs.append(loss)
         return loss
@@ -239,7 +244,8 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z,
+            sl,
+            ob,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -261,7 +267,8 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z,
+            sl,
+            ob,
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -279,7 +286,8 @@ class Decomposer(pl.LightningModule):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
-                z,
+                sl,
+                ob,
             )
         return loss
 

@@ -64,6 +64,7 @@ class base_loss:
         target,
         input,
         shadow_light_mask,
+        occlusion_mask_gt,
     ):
         gt_loss = self.metric(gt_reconstruction, target)
 
@@ -107,6 +108,7 @@ class reconstruction_loss:
         occlusion_rgb,
         input,
         shadow_light_mask,
+        occlusion_mask_gt,
     ):
         gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
         shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
@@ -145,6 +147,7 @@ class pre_train_loss:
         target,
         input,
         shadow_light_mask,
+        occlusion_mask_gt,
     ):
         gt_loss = self.metric(gt_reconstruction, input)
 
@@ -175,6 +178,7 @@ class regularized_loss:
         target,
         input,
         shadow_light_mask,
+        occlusion_mask_gt,
     ):
         gt_loss = self.metric(gt_reconstruction, target)
 
@@ -226,6 +230,7 @@ class light_and_shadow_loss:
         target,
         input,
         shadow_light_mask,
+        occlusion_mask_gt,
     ):
         gt_loss = self.metric(gt_reconstruction, target)
 
@@ -268,6 +273,7 @@ class stage_loss:
         target,
         input,
         shadow_light_mask,
+        occlusion_mask_gt,
     ):
         loss = 0
 

@@ -84,7 +84,7 @@ class SIAR(Dataset):
             images,
             ground_truth,
             get_shadow_light_gt(ground_truth, images),
-            # occlusion_masks,
+            torch.zeros_like(images),
         )
 
     def __len__(self):
