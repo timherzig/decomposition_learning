@@ -132,7 +132,8 @@ class Decomposer(pl.LightningModule):
         occlusion_rgb,
         target,
         input,
-        shadow_light_mask,
+        shadow_light_mask_gt,
+        occlusion_mask_gt,
     ):
         return self.loss(
             gt_reconstruction=gt_reconstruction,
@@ -142,7 +143,8 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb=occlusion_rgb,
             target=target,
             input=input,
-            shadow_light_mask=shadow_light_mask,
+            shadow_light_mask=shadow_light_mask_gt,
+            occlusion_mask_gt=occlusion_mask_gt,
         )
 
     def training_step(self, batch, batch_idx):
