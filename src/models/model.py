@@ -49,18 +49,30 @@ class Decomposer(pl.LightningModule):
             self.decoder_gt_config = self.model_config.unet_gt.decoder
             arguments = dict(self.decoder_gt_config)
             self.up_scale_gt = UpSampler(**arguments)
+            if self.decoder_gt_config.checkpoint is not None:
+                self.up_scale_gt.load_state_dict(
+                    torch.load(self.decoder_gt_config.checkpoint)
+                )
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
             self.decoder_sl_config = self.model_config.unet_sl.decoder
             arguments = dict(self.decoder_sl_config)
             self.up_scale_sl = UpSampler(**arguments)
+            if self.decoder_sl_config.checkpoint is not None:
+                self.up_scale_sl.load_state_dict(
+                    torch.load(self.decoder_sl_config.checkpoint)
+                )
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
             self.decoder_ob_config = self.model_config.unet_ob.decoder
             arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = UpSampler(**arguments)
+            if self.decoder_ob_config.checkpoint is not None:
+                self.up_scale_ob.load_state_dict(
+                    torch.load(self.decoder_ob_config.checkpoint)
+                )
         # ----------------
 
     def forward(self, x):
@@ -280,20 +292,6 @@ class Decomposer(pl.LightningModule):
         }
 
     def on_validation_epoch_end(self) -> None:
-        if self.current_epoch % 100 == 0 and self.current_epoch != 0:
-            if self.train_config.loss_stage == 1:
-                self.up_scale_gt.requires_grad_(False)
-            elif self.train_config.loss_stage == 2:
-                self.up_scale_sl.requires_grad_(False)
-            elif self.train_config.loss_stage == 3:
-                self.up_scale_ob.requires_grad_(False)
-            elif self.train_config.loss_stage == 4:
-                self.up_scale_gt.requires_grad_(True)
-                self.up_scale_sl.requires_grad_(True)
-                self.up_scale_ob.requires_grad_(True)
-
-            self.train_config.loss_stage += 1
-
         loss = torch.stack(self.validation_step_outputs).mean()
         if loss < self.best_val_loss and self.train_config.pre_train:
             self.best_val_loss = loss
@@ -304,3 +302,21 @@ class Decomposer(pl.LightningModule):
                 f"{self.log_dir}/swin_encoder.pt",
             )
         self.validation_step_outputs.clear()
+
+        if loss < self.best_val_loss:
+            self.best_val_loss = loss
+            if self.train_config.stage == "train_gt":
+                torch.save(
+                    self.up_scale_gt.state_dict(),
+                    f"{self.log_dir}/up_scale_gt_model.pt",
+                )
+            if self.train_config.stage == "train_sl":
+                torch.save(
+                    self.up_scale_sl.state_dict(),
+                    f"{self.log_dir}/up_scale_sl_model.pt",
+                )
+            if self.train_config.stage == "train_ob":
+                torch.save(
+                    self.up_scale_ob.state_dict(),
+                    f"{self.log_dir}/up_scale_ob_model.pt",
+                )
