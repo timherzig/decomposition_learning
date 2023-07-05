@@ -49,6 +49,7 @@ class SIAR(Dataset):
         # For sanity check, we only want to use one entry
         # and want to completely overfit to it
         if sanity_check:
+            self.df = self.df.sample(frac=1).reset_index(drop=True)
             self.df = self.df[:1]
             self.df = pd.concat(
                 [self.df, self.df], ignore_index=True
@@ -70,7 +71,21 @@ class SIAR(Dataset):
         )
         images = torch.swapaxes(images, 0, 1)
 
-        return images, ground_truth, get_shadow_light_gt(ground_truth, images)
+        # occlusion_masks = torch.stack(
+        #     [
+        #         ToTensor()(Image.open(os.path.join(dir, x)))
+        #         for x in os.listdir(dir)
+        #         if x.split("_")[1] == "occlusion"
+        #     ]
+        # )
+        # occlusion_masks = torch.swapaxes(occlusion_masks, 0, 1)
+
+        return (
+            images,
+            ground_truth,
+            get_shadow_light_gt(ground_truth, images),
+            torch.zeros_like(images),
+        )
 
     def __len__(self):
         return len(self.df)

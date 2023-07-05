@@ -12,6 +12,8 @@ def log_images(
     light_mask,
     occlusion_mask,
     occlusion_rgb,
+    shadow_light_mask,
+    occlusion_mask_gt,
 ):
     """
     Logs one image sequence to the wandb logger
@@ -34,6 +36,8 @@ def log_images(
     light_mask = light_mask[idx, :, :, :]
     occlusion_mask = occlusion_mask[idx, :, :, :]
     occlusion_rgb = occlusion_rgb[idx, :, :, :, :]
+    shadow_light_mask = shadow_light_mask[idx, :, :, :]
+    occlusion_mask_gt = occlusion_mask_gt[idx, :, :, :]
 
     columns = [
         "org_img",
@@ -41,6 +45,8 @@ def log_images(
         "gt_reconstruction",
         "shadow_mask",
         "light_mask",
+        "shadow_light_approx",
+        "occlusion_mask_approx",
         "occlusion_mask",
         "occlusion_rgb",
         "complete_reconstruction",
@@ -49,14 +55,17 @@ def log_images(
     rec = torch.where(
         occlusion_mask.unsqueeze(0).repeat(3, 1, 1, 1) < 0.5,
         (
-            gt_reconstruction.unsqueeze(1).repeat(1, 10, 1, 1)
+            (
+                gt_reconstruction.unsqueeze(1).repeat(1, 10, 1, 1)
+                + light_mask.unsqueeze(0).repeat(3, 1, 1, 1)
+            )
             * shadow_mask.unsqueeze(0).repeat(3, 1, 1, 1)
-            + light_mask.unsqueeze(0).repeat(3, 1, 1, 1)
         ),
         occlusion_rgb,
     )
 
     to_pil = ToPILImage()
+    occlusion_mask = torch.where(occlusion_mask < 0.5, 0.0, 1.0)
 
     my_data = [
         [
@@ -75,15 +84,23 @@ def log_images(
                 for img in range(light_mask.shape[0])
             ],
             [
-                wandb.Image(to_pil(occlusion_mask[img, :, :]), caption=columns[5])
+                wandb.Image(to_pil(shadow_light_mask[:, img, :, :]), caption=columns[5])
+                for img in range(shadow_light_mask.shape[1])
+            ],
+            [
+                wandb.Image(to_pil(occlusion_mask_gt[:, img, :, :]), caption=columns[6])
+                for img in range(occlusion_mask_gt.shape[1])
+            ],
+            [
+                wandb.Image(to_pil(occlusion_mask[img, :, :]), caption=columns[7])
                 for img in range(occlusion_mask.shape[0])
             ],
             [
-                wandb.Image(to_pil(occlusion_rgb[:, img, :, :]), caption=columns[6])
+                wandb.Image(to_pil(occlusion_rgb[:, img, :, :]), caption=columns[8])
                 for img in range(occlusion_rgb.shape[1])
             ],
             [
-                wandb.Image(to_pil(rec[:, img, :, :]), caption=columns[7])
+                wandb.Image(to_pil(rec[:, img, :, :]), caption=columns[9])
                 for img in range(rec.shape[1])
             ],
         ]

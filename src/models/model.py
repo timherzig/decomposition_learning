@@ -49,18 +49,30 @@ class Decomposer(pl.LightningModule):
             self.decoder_gt_config = self.model_config.unet_gt.decoder
             arguments = dict(self.decoder_gt_config)
             self.up_scale_gt = UpSampler(**arguments)
+            if self.model_config.unet_gt.checkpoint is not False:
+                self.up_scale_gt.load_state_dict(
+                    torch.load(self.model_config.unet_gt.checkpoint)
+                )
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
             self.decoder_sl_config = self.model_config.unet_sl.decoder
             arguments = dict(self.decoder_sl_config)
             self.up_scale_sl = UpSampler(**arguments)
+            if self.model_config.unet_sl.checkpoint is not False:
+                self.up_scale_sl.load_state_dict(
+                    torch.load(self.model_config.unet_sl.checkpoint)
+                )
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
             self.decoder_ob_config = self.model_config.unet_ob.decoder
             arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = UpSampler(**arguments)
+            if self.model_config.unet_ob.checkpoint is not False:
+                self.up_scale_ob.load_state_dict(
+                    torch.load(self.model_config.unet_ob.checkpoint)
+                )
         # ----------------
 
     def forward(self, x):
@@ -77,7 +89,7 @@ class Decomposer(pl.LightningModule):
                 torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
             )
             if self.train_config.pre_train:
-                return torch.clip(gt_reconstruction, -1.0, 1.0)
+                return torch.clip(gt_reconstruction, 0.0, 1.0)
 
         # Apply Upscaler_2 for shadow mask, light mask -> (B, 2, 10, H, W)
         if self.model_config.upsampler_sl == "unet":
@@ -104,11 +116,11 @@ class Decomposer(pl.LightningModule):
             )  # ReLU
 
         return (
-            torch.clip(gt_reconstruction, -1.0, 1.0),
-            torch.clip(light_mask, -1.0, 1.0),
-            torch.clip(shadow_mask, -1.0, 1.0),
-            torch.clip(occlusion_mask, -1.0, 1.0),
-            torch.clip(occlusion_rgb, -1.0, 1.0),
+            torch.clip(gt_reconstruction, 0.0, 1.0),
+            torch.clip(light_mask, 0.0, 1.0),
+            torch.clip(shadow_mask, 0.0, 1.0),
+            torch.relu(occlusion_mask),
+            torch.clip(occlusion_rgb, 0.0, 1.0),
         )
 
     def loss_func(
@@ -120,7 +132,8 @@ class Decomposer(pl.LightningModule):
         occlusion_rgb,
         target,
         input,
-        shadow_light_mask
+        shadow_light_mask_gt,
+        occlusion_mask_gt,
     ):
         return self.loss(
             gt_reconstruction=gt_reconstruction,
@@ -130,14 +143,16 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb=occlusion_rgb,
             target=target,
             input=input,
-            shadow_light_mask=shadow_light_mask
+            shadow_light_mask=shadow_light_mask_gt,
+            occlusion_mask_gt=occlusion_mask_gt,
         )
 
     def training_step(self, batch, batch_idx):
         (
             x,
             y,
-            z,
+            sl,
+            ob,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -159,7 +174,8 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            sl,
+            ob,
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -169,7 +185,8 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z
+            sl,
+            ob,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -191,7 +208,8 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            sl,
+            ob,
         )
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
@@ -218,6 +236,8 @@ class Decomposer(pl.LightningModule):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
+                sl,
+                ob,
             )
         self.validation_step_outputs.append(loss)
         return loss
@@ -226,7 +246,8 @@ class Decomposer(pl.LightningModule):
         (
             x,
             y,
-            z
+            sl,
+            ob,
         ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
 
         if not self.train_config.pre_train:
@@ -248,7 +269,8 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
             y,
             x,
-            z
+            sl,
+            ob,
         )
 
         self.log("train_loss", loss, prog_bar=True)
@@ -266,6 +288,8 @@ class Decomposer(pl.LightningModule):
                 shadow_mask,
                 occlusion_mask,
                 occlusion_rgb,
+                sl,
+                ob,
             )
         return loss
 
@@ -287,4 +311,23 @@ class Decomposer(pl.LightningModule):
                 self.swin.state_dict(),
                 f"{self.log_dir}/swin_encoder.pt",
             )
+
+        if loss < self.best_val_loss:
+            self.best_val_loss = loss
+            if self.train_config.stage == "train_gt":
+                torch.save(
+                    self.up_scale_gt.state_dict(),
+                    f"{self.log_dir}/up_scale_gt_model.pt",
+                )
+            if self.train_config.stage == "train_sl":
+                torch.save(
+                    self.up_scale_sl.state_dict(),
+                    f"{self.log_dir}/up_scale_sl_model.pt",
+                )
+            if self.train_config.stage == "train_ob":
+                torch.save(
+                    self.up_scale_ob.state_dict(),
+                    f"{self.log_dir}/up_scale_ob_model.pt",
+                )
+
         self.validation_step_outputs.clear()
