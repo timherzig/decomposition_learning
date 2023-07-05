@@ -9,6 +9,8 @@ from lightning.pytorch.loggers import WandbLogger
 from src.models.model import Decomposer
 from src.data.siar_data import SIARDataModule
 
+from lightning.pytorch.callbacks.early_stopping import EarlyStopping
+
 
 def setup_training(args):
     config = OmegaConf.load(args.config)
@@ -65,6 +67,7 @@ def setup_training(args):
         accelerator=config.train.device,
         strategy=config.train.strategy,
         accumulate_grad_batches=config.train.accumulate_grad_batches,
+        callbacks=[EarlyStopping(monitor="val_loss", mode="min")],
     )
 
     print("Model loaded")
