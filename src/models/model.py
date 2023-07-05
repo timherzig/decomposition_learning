@@ -5,12 +5,15 @@ import lightning.pytorch as pl
 import torch.nn.functional as F
 
 from src.models.transformer.swin_transformer import SwinTransformer3D
+from src.models.up_scaling.swin.upsampling import SwinTransformer3D_up
 from src.models.up_scaling.unet.up_scale import UpSampler
 from src.models.utils.utils import get_class
+
 from utils.wandb_logging import (
     log_images,
     pre_train_log_images,
 )
+from einops import rearrange
 
 
 class Decomposer(pl.LightningModule):
@@ -53,6 +56,11 @@ class Decomposer(pl.LightningModule):
                 self.up_scale_gt.load_state_dict(
                     torch.load(self.model_config.unet_gt.checkpoint)
                 )
+        elif self.model_config.upsampler_gt == "swin":
+            self.decoder_gt_config = self.model_config.swin_gt.decoder
+            arguments = dict(self.decoder_gt_config)
+            self.up_scale_gt = SwinTransformer3D_up(**arguments)
+            # self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=self.model_config.swin.patch_size)
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
@@ -63,6 +71,11 @@ class Decomposer(pl.LightningModule):
                 self.up_scale_sl.load_state_dict(
                     torch.load(self.model_config.unet_sl.checkpoint)
                 )
+        elif self.model_config.upsampler_sl == "swin":
+            self.decoder_sl_config = self.model_config.swin_sl.decoder
+            arguments = dict(self.decoder_sl_config)
+            self.up_scale_sl = SwinTransformer3D_up(**arguments)
+            # self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
@@ -73,9 +86,49 @@ class Decomposer(pl.LightningModule):
                 self.up_scale_ob.load_state_dict(
                     torch.load(self.model_config.unet_ob.checkpoint)
                 )
-        # ----------------
+
+        elif self.model_config.upsampler_sl == "swin":
+            self.decoder_ob_config = self.model_config.swin_ob.decoder
+            arguments = dict(self.decoder_ob_config)
+            self.up_scale_ob = SwinTransformer3D_up(**arguments)
+            # self.up_scale_ob = SwinTransformer3D_up(out_chans=4, patch_size=self.model_config.swin.patch_size)
 
     def forward(self, x):
+        if self.model_config.upsampler_gt == "swin":
+            return self.forward_swin(x)
+        else:
+            return self.forward_unet(x)
+
+    def forward_swin(self, x):
+        x = self.swin.patch_embed(x)
+        x = self.swin.pos_drop(x)
+
+        for idx, layer in enumerate(self.swin.layers):
+            x, _ = layer(x.contiguous())
+        x = rearrange(x, "n c d h w -> n d h w c")
+        x = self.swin.norm(x)
+        x = rearrange(x, "n d h w c -> n c d h w")
+        # print(x.shape)
+
+        # Perform upsampling
+        gt_reconstruction = self.up_scale_gt.forward(x)
+        gt_reconstruction = torch.squeeze(gt_reconstruction)
+        masks = self.up_scale_sl.forward(x)
+        light_mask = masks[:, 0, :, :, :]
+        shadow_mask = masks[:, 1, :, :, :]
+        occlusion = self.up_scale_ob.forward(x)
+        occlusion_mask = occlusion[:, 0, :, :, :]
+        occlusion_rgb = occlusion[:, 1:, :, :, :]
+
+        return (
+            torch.clip(gt_reconstruction, -1.0, 1.0),
+            torch.clip(light_mask, -1.0, 1.0),
+            torch.clip(shadow_mask, -1.0, 1.0),
+            torch.clip(occlusion_mask, -1.0, 1.0),
+            torch.clip(occlusion_rgb, -1.0, 1.0),
+        )
+
+    def forward_unet(self, x):
         x, encoder_features = self.swin(x)
         if self.train_config.debug:
             print(f"swin x shape: {x.shape}")
