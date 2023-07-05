@@ -170,10 +170,16 @@ lightning_logs/
 
 # Dataset
 SIAR/
+SIAR_128/
 SIAR.zip
 
 HTCV/
 
 checkpoints/
+swin_checkpoints/
 
-.DS_Store
+utils/helper/
+
+**/.DS_Store
+
+.code-server/

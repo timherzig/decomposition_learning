@@ -1,0 +1,23 @@
+data:
+  dir: 'data/SIAR_128'
+  img_size: 128 # 256 # 64
+  
+train:
+  debug: False
+  batch_size: 16
+  max_epochs: 50
+  eval_every: 2
+  log_every: 15
+  save_every: 10
+  device: None
+  lr: 3e-4
+
+decomposer:
+  swin:
+    pretrained: ''
+    use_checkpoint: False
+    patch_size: [2, 4, 4]
+    emb_dim: 768
+  upsampler: None
+
+
