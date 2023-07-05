@@ -5,6 +5,7 @@ data:
   split_dir: 'split-1_80_10_10'
   # Set validation set equal to train set to provoke overfitting and see if loss works
   sanity_check: False
+  num_workers: 16
     
 train:
   debug: False
