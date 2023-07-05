@@ -326,10 +326,12 @@ class separate_head_loss:
         metric_class_gt = get_metric(self.config.metric_gt)
         metric_class_sl = get_metric(self.config.metric_sl)
         metric_class_ob = get_metric(self.config.metric_ob)
+        metric_class_all = get_metric(self.config.metric_all)
 
         self.metric_gt = metric_class_gt()
         self.metric_sl = metric_class_sl()
         self.metric_ob = metric_class_ob()
+        self.metric_all = metric_class_all()
 
     def __call__(
         self,
@@ -350,6 +352,8 @@ class separate_head_loss:
 
         if self.config.stage == "train_sl":
             target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+            shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+            light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
             sl_reconstruction = target * shadow_mask + light_mask
             return self.metric_sl(sl_reconstruction, shadow_light_mask) + weight_decay(
                 self.model, self.config.weight_decay
@@ -367,10 +371,11 @@ class separate_head_loss:
                 self.model, self.config.weight_decay
             )
 
-        if self.config.stage == "train_all":
+        if self.config.stage == "train_all_heads":
             gt_loss = self.metric_gt(gt_reconstruction, target)
 
-            target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+            shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+            light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
             sl_reconstruction = target * shadow_mask + light_mask
             sl_loss = self.metric_sl(sl_reconstruction, shadow_light_mask)
 
@@ -387,6 +392,22 @@ class separate_head_loss:
                 + sl_loss
                 + ob_loss
                 + weight_decay(self.model, self.config.weight_decay)
+            )
+
+        if self.config.stage == "train_all":
+            gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+            shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+            light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+            occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+
+            ob_reconstruction = torch.where(
+                occlusion_mask < 0.5,
+                (gt_reconstruction * shadow_mask + light_mask),
+                occlusion_rgb,
+            )
+
+            return self.metric_all(ob_reconstruction, input) + weight_decay(
+                self.model, self.config.weight_decay
             )
 
 

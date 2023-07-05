@@ -21,7 +21,7 @@ train:
   metric_gt: 'MAE'
   metric_sl: 'MAE'
   metric_ob: 'SSIM'
-  metric_base: 'MAE'
+  metric_all: 'SSIM'
   stage: 'train_sl'
   weight_decay: 0.01
   mask_decay: 1e-4 # 1e-5
