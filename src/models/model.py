@@ -311,9 +311,9 @@ class Decomposer(pl.LightningModule):
                 self.swin.state_dict(),
                 f"{self.log_dir}/swin_encoder.pt",
             )
-        self.validation_step_outputs.clear()
 
         if loss < self.best_val_loss:
+            print(f"saving to log dir: {self.log_dir}")
             self.best_val_loss = loss
             if self.train_config.stage == "train_gt":
                 torch.save(
@@ -330,3 +330,5 @@ class Decomposer(pl.LightningModule):
                     self.up_scale_ob.state_dict(),
                     f"{self.log_dir}/up_scale_ob_model.pt",
                 )
+
+        self.validation_step_outputs.clear()
