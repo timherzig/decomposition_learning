@@ -71,7 +71,21 @@ class SIAR(Dataset):
         )
         images = torch.swapaxes(images, 0, 1)
 
-        return images, ground_truth, get_shadow_light_gt(ground_truth, images)
+        occlusion_masks = torch.stack(
+            [
+                ToTensor()(Image.open(os.path.join(dir, x)))
+                for x in os.listdir(dir)
+                if x.split("_")[1] == "occlusion"
+            ]
+        )
+        occlusion_masks = torch.swapaxes(occlusion_masks, 0, 1)
+
+        return (
+            images,
+            ground_truth,
+            get_shadow_light_gt(ground_truth, images),
+            occlusion_masks,
+        )
 
     def __len__(self):
         return len(self.df)

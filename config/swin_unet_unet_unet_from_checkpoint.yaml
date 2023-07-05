@@ -14,12 +14,13 @@ train:
   max_epochs: 500
   log_every_n_steps: 15
   device: 'gpu'
-  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss
-  loss_func: 'stage_loss'
-  # Needed for 'stage_loss'
-  loss_stage: 1
-  # Select metric to use for comparison: 'MSE', 'SSIM'
-  metric: 'MSE'
+  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
+  loss_func: 'separate_head_loss'
+  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
+  metric_gt: 'MAE'
+  metric_sl: 'MAE'
+  metric_or: 'SSIM'
+  metric_base: 'MAE'
   weight_decay: 0.01
   mask_decay: 1e-4 # 1e-5
   lambda_gt_loss: 1.0

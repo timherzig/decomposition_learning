@@ -235,8 +235,8 @@ class light_and_shadow_loss:
 
         imgs_no_occlusion_reconstruction = gt_reconstruction * shadow_mask + light_mask
 
-        print(f'shadow_light_mask shape: {shadow_light_mask.shape}')
-        print(f'imgs_no_occ shape: {imgs_no_occlusion_reconstruction.shape}')
+        print(f"shadow_light_mask shape: {shadow_light_mask.shape}")
+        print(f"imgs_no_occ shape: {imgs_no_occlusion_reconstruction.shape}")
 
         light_shadow_loss = self.metric(
             shadow_light_mask, imgs_no_occlusion_reconstruction
@@ -308,3 +308,51 @@ class stage_loss:
         loss = self.metric(or_reconstruction, input) + torch.mean(occlusion_mask)
 
         return loss + weight_decay(self.model, self.config.weight_decay)
+
+
+class separate_head_loss:
+    def __init__(self, model, config):
+        super().__init__()
+
+        self.model = model
+        self.config = config
+        metric_class_gt = get_metric(self.config.metric_gt)
+        metric_class_sl = get_metric(self.config.metric_sl)
+        metric_class_or = get_metric(self.config.metric_or)
+
+        self.metric_gt = metric_class_gt()
+        self.metric_sl = metric_class_sl()
+        self.metric_or = metric_class_or()
+
+    def __call__(
+        self,
+        gt_reconstruction,
+        light_mask,
+        shadow_mask,
+        occlusion_mask,
+        occlusion_rgb,
+        target,
+        input,
+        shadow_light_mask,
+        occlusion_mask_gt,
+    ):
+        gt_loss = self.metric_gt(gt_reconstruction, target)
+
+        target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+        sl_reconstruction = target * shadow_mask + light_mask
+        sl_loss = self.metric_sl(sl_reconstruction, shadow_light_mask)
+
+        occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        or_reconstruction = torch.where(
+            occlusion_mask < 0.5,
+            (target * shadow_mask + light_mask),
+            occlusion_rgb,
+        )
+        or_loss = self.metric_ob(or_reconstruction, occlusion_mask_gt)
+
+        return (
+            gt_loss
+            + sl_loss
+            + or_loss
+            + weight_decay(self.model, self.config.weight_decay)
+        )
