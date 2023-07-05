@@ -22,11 +22,16 @@ def setup_training(args):
         print(f"Experiment name: {wandb_logger.experiment.name}")
         print("-----------------")
 
+    log_dir = None
     if config.train.pre_train:
         if not config.train.debug:
             log_dir = f"swin_checkpoints/{wandb_logger.experiment.name}"
         else:
             log_dir = "swin_checkpoints/debug"
+        os.makedirs(log_dir, exist_ok=True)
+
+    if config.train.stage in ["train_gt", "train_sl", "train_ob"]:
+        log_dir = f"decoder_checkpoints/{wandb_logger.experiment.name}"
         os.makedirs(log_dir, exist_ok=True)
 
     siar = SIARDataModule(
@@ -38,13 +43,13 @@ def setup_training(args):
     if not config.model.checkpoint:
         model = Decomposer(
             config=config,
-            log_dir=log_dir if config.train.pre_train else None,
+            log_dir=log_dir,
         )
     else:
         model = Decomposer.load_from_checkpoint(
             config.model.checkpoint,
             config=config,
-            log_dir=log_dir if config.train.pre_train else None,
+            log_dir=log_dir,
         )
 
     if not config.train.debug:

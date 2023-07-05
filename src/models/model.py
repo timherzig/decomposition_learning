@@ -313,7 +313,6 @@ class Decomposer(pl.LightningModule):
             )
 
         if loss < self.best_val_loss:
-            print(f"saving to log dir: {self.log_dir}")
             self.best_val_loss = loss
             if self.train_config.stage == "train_gt":
                 torch.save(
