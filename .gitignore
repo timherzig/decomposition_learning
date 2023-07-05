@@ -177,6 +177,7 @@ HTCV/
 
 checkpoints/
 swin_checkpoints/
+decoder_checkpoints/
 
 utils/helper/
 
