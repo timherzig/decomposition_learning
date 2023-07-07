@@ -9,7 +9,7 @@ from lightning.pytorch import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import ToTensor
 
-from src.models.utils.preprocessing import get_shadow_light_gt
+from src.models.utils.preprocessing import get_shadow_light_gt, get_occlusion_gt
 
 
 class SIAR(Dataset):
@@ -79,12 +79,13 @@ class SIAR(Dataset):
         #     ]
         # )
         # occlusion_masks = torch.swapaxes(occlusion_masks, 0, 1)
-
+        sl = get_shadow_light_gt(ground_truth, images)
+        om = get_occlusion_gt(ground_truth, images, sl)
         return (
             images,
             ground_truth,
-            get_shadow_light_gt(ground_truth, images),
-            torch.zeros_like(images),
+            sl,
+            om,
         )
 
     def __len__(self):
