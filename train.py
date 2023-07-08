@@ -1,11 +1,13 @@
 import os
 
+import torch
 from omegaconf import OmegaConf
 
 from utils.utils import setup_training, parse_arguments, get_git_commit
 
 
 def main(args):
+    torch.multiprocessing.set_sharing_strategy("file_system")
     config, siar, model, trainer = setup_training(args)
 
     siar.setup("train", config.data.sanity_check)

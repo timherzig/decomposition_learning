@@ -1,0 +1,135 @@
+- data:
+    dir: data/SIAR
+    split_dir: split-1_80_10_10
+    sanity_check: false
+    num_workers: 16
+  train:
+    debug: false
+    pre_train: false
+    batch_size: 16
+    lr: 0.001
+    max_epochs: 100
+    log_every_n_steps: 15
+    device: gpu
+    loss_func: base_loss
+    metric: MSE
+    weight_decay: 0.01
+    mask_decay: 0.0001
+    lambda_gt_loss: 1.0
+    lambda_decomp_loss: 1.0
+    lambda_occlusion_difference: 0.001
+    strategy: ddp_find_unused_parameters_true
+    accumulate_grad_batches: 4
+  model:
+    checkpoint: false
+    upsampler_gt: swin
+    upsampler_sl: swin
+    upsampler_ob: swin
+    swin:
+      checkpoint: swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt
+      use_checkpoint: true
+      patch_size:
+      - 2
+      - 4
+      - 4
+    swin_gt:
+      decoder:
+        pretrained: None
+        pretrained2d: true
+        patch_size:
+        - 2
+        - 4
+        - 4
+        in_chans: 3
+        out_chans: 3
+        embed_dim: 768
+        depths:
+        - 1
+        - 1
+        - 1
+        - 1
+        num_heads:
+        - 24
+        - 12
+        - 6
+        - 3
+        window_size:
+        - 2
+        - 7
+        - 7
+        mlp_ratio: 4.0
+        qkv_bias: true
+        drop_rate: 0.0
+        attn_drop_rate: 0.0
+        drop_path_rate: 0.2
+        patch_norm: false
+        frozen_stages: -1
+        use_checkpoint: false
+    swin_sl:
+      decoder:
+        pretrained: None
+        pretrained2d: true
+        patch_size:
+        - 2
+        - 4
+        - 4
+        in_chans: 3
+        out_chans: 2
+        embed_dim: 768
+        depths:
+        - 1
+        - 1
+        - 1
+        - 1
+        num_heads:
+        - 24
+        - 12
+        - 6
+        - 3
+        window_size:
+        - 2
+        - 7
+        - 7
+        mlp_ratio: 4.0
+        qkv_bias: true
+        drop_rate: 0.0
+        attn_drop_rate: 0.0
+        drop_path_rate: 0.2
+        patch_norm: false
+        frozen_stages: -1
+        use_checkpoint: false
+    swin_ob:
+      decoder:
+        pretrained: None
+        pretrained2d: true
+        patch_size:
+        - 2
+        - 4
+        - 4
+        in_chans: 3
+        out_chans: 4
+        embed_dim: 768
+        depths:
+        - 1
+        - 1
+        - 1
+        - 1
+        num_heads:
+        - 24
+        - 12
+        - 6
+        - 3
+        window_size:
+        - 2
+        - 7
+        - 7
+        mlp_ratio: 4.0
+        qkv_bias: true
+        drop_rate: 0.0
+        attn_drop_rate: 0.0
+        drop_path_rate: 0.2
+        patch_norm: false
+        frozen_stages: -1
+        use_checkpoint: false
+- git_commit: !!binary |
+    ZWNlNDJmYg==
