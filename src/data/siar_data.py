@@ -37,8 +37,7 @@ class SIAR(Dataset):
             path_to_dataset = manual_dataset_path
         else:
             path_to_dataset = os.path.join(os.getcwd(), "data/SIAR")
-        path_to_split = os.path.join(
-            os.getcwd(), "data/data_splits", split_version, f"{split}.csv"
+        path_to_split = os.path.join(path_to_dataset, "data_splits", split_version, f"{split}.csv"
         )
 
         # Load ids of current split
