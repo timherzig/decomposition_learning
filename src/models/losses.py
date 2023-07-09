@@ -362,10 +362,9 @@ class separate_head_loss:
         if self.config.stage == "train_ob":
             target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
             occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
-            print("ultimate size: ", (target * shadow_mask + light_mask).shape)
             ob_reconstruction = torch.where(
                 occlusion_mask < 0.5,
-                torch.tensor([0.0]),
+                (target * shadow_mask + light_mask),
                 occlusion_rgb,
             )
             return self.metric_ob(ob_reconstruction, occlusion_mask_gt) + weight_decay(
