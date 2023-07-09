@@ -9,7 +9,7 @@ from lightning.pytorch import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import ToTensor
 
-from src.models.utils.preprocessing import get_shadow_light_gt, get_occlusion_gt
+from src.models.utils.preprocessing import get_shadow_light_gt
 
 
 class SIAR(Dataset):
@@ -37,7 +37,8 @@ class SIAR(Dataset):
             path_to_dataset = manual_dataset_path
         else:
             path_to_dataset = os.path.join(os.getcwd(), "data/SIAR")
-        path_to_split = os.path.join(path_to_dataset, "data_splits", split_version, f"{split}.csv"
+        path_to_split = os.path.join(
+            os.getcwd(), "data/data_splits", split_version, f"{split}.csv"
         )
 
         # Load ids of current split
@@ -78,13 +79,12 @@ class SIAR(Dataset):
         #     ]
         # )
         # occlusion_masks = torch.swapaxes(occlusion_masks, 0, 1)
-        sl = get_shadow_light_gt(ground_truth, images)
-        om = get_occlusion_gt(ground_truth, images, sl)
+
         return (
             images,
             ground_truth,
-            sl,
-            om,
+            get_shadow_light_gt(ground_truth, images),
+            torch.zeros_like(images),
         )
 
     def __len__(self):
