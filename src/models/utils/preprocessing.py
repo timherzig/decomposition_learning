@@ -3,7 +3,6 @@ import numpy as np
 
 from PIL import Image, ImageChops, ImageFilter
 from torchvision.transforms import ToPILImage
-import matplotlib.pyplot as plt
 import cv2 
 import os
 def shadow_light_mask(gt, occluded):
@@ -71,8 +70,7 @@ def get_occlusion_gt(gt, occluded_gt, sl_masks):
     occluded_gti = [
         to_pil(occluded_gt[:, j, :, :]) for j in range(occluded_gt.shape[1])
     ]
-    fig, axes = plt.subplots(1, 3, figsize=(10, 4))
-    fig.subplots_adjust(left=0, right=1, hspace=0, wspace=0.01)
+
     sl_masks = torch.moveaxis(sl_masks, 0, 3)
 
     oc_masks = []
@@ -90,6 +88,5 @@ def get_occlusion_gt(gt, occluded_gt, sl_masks):
 
     oc_masks = torch.squeeze(torch.tensor(np.array(oc_masks)))
     oc_masks = torch.permute(oc_masks, (3, 0, 1, 2))
-    print("OC MAKS: ", oc_masks.shape)
 
     return torch.div(oc_masks.float(), 255.0)
