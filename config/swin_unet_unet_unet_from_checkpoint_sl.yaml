@@ -57,7 +57,7 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
-    checkpoint: False
+    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
     decoder:
       output_dim: 2
       f_maps: [96, 192, 384, 768]
