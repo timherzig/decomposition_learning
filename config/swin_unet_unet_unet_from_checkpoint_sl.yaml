@@ -30,6 +30,7 @@ train:
   lambda_occlusion_difference: 1e-3
   strategy: 'ddp_find_unused_parameters_true'
   accumulate_grad_batches: 4
+  es_patience: 10
 
 
 model:
