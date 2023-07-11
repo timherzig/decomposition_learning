@@ -366,7 +366,7 @@ class separate_head_loss:
             light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
             ob_reconstruction = torch.where(
                 occlusion_mask < 0.5,
-                (target * shadow_mask + light_mask),
+                occlusion_rgb * 0,
                 occlusion_rgb,
             )
             return self.metric_ob(ob_reconstruction, occlusion_mask_gt) + weight_decay(
