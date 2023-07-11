@@ -14,7 +14,7 @@ def main(args):
     siar.setup("test", config.train.debug)
     trainer.test(model, datamodule=siar)
 
-    conf = OmegaConf.merge([config, OmegaConf.create({"git_commit": get_git_commit()})])
+    conf = OmegaConf.merge([config, OmegaConf.create({"git_commit": 'test'})])
 
     yaml_data: str = OmegaConf.to_yaml(conf)
 
