@@ -22,7 +22,7 @@ train:
   metric_sl: 'MAE'
   metric_ob: 'SSIM'
   metric_all: 'MAE'
-  stage: 'train_all_heads'
+  stage: 'train_all'
   weight_decay: 0.01
   mask_decay: 1e-4 # 1e-5
   lambda_gt_loss: 1.0
