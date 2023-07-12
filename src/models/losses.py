@@ -376,6 +376,7 @@ class separate_head_loss:
 
             shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
             light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+            target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
             sl_reconstruction = target * shadow_mask + light_mask
             sl_loss = self.metric_sl(sl_reconstruction, shadow_light_mask)
 
