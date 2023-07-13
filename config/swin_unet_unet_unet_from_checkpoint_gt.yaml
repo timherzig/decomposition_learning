@@ -21,8 +21,8 @@ train:
   metric_gt: 'MAE'
   metric_sl: 'MAE'
   metric_ob: 'SSIM'
-  metric_all: 'SSIM'
-  stage: 'train_sl'
+  metric_all: 'MAE'
+  stage: 'train_gt'
   weight_decay: 0.01
   mask_decay: 1e-4 # 1e-5
   lambda_gt_loss: 1.0
@@ -43,7 +43,7 @@ model:
     use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
-    checkpoint: False
+    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint/up_scale_gt_model.pt'
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
@@ -58,7 +58,7 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
-    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
+    checkpoint: False
     decoder:
       output_dim: 2
       f_maps: [96, 192, 384, 768]
