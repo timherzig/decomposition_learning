@@ -43,7 +43,7 @@ model:
     use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
-    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint/up_scale_gt_model.pt'
+    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
