@@ -10,7 +10,7 @@ data:
 train:
   debug: True
   pre_train: False
-  batch_size: 16
+  batch_size: 2
   lr: 1e-4
   max_epochs: 1000
   log_every_n_steps: 15
@@ -41,6 +41,7 @@ model:
   swin:
     checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
     use_checkpoint: True
+    frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
     checkpoint: '/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'

@@ -40,7 +40,7 @@ class Decomposer(pl.LightningModule):
             self.swin = SwinTransformer3D(
                 pretrained=config.model.swin.checkpoint,
                 patch_size=self.model_config.swin.patch_size,
-                frozen_stages=1,
+                frozen_stages=self.model_config.swin.frozen_stages,
             )
             print("Loaded SWIN checkpoint")
             print("-----------------")
@@ -54,7 +54,10 @@ class Decomposer(pl.LightningModule):
             self.up_scale_gt = UpSampler(**arguments)
             if self.model_config.unet_gt.checkpoint is not False:
                 self.up_scale_gt.load_state_dict(
-                    torch.load(self.model_config.unet_gt.checkpoint),
+                    torch.load(
+                        self.model_config.unet_gt.checkpoint,
+                        map_location=torch.device(self.train_config.device),
+                    ),
                 )
                 if self.model_config.unet_gt.freeze:
                     for param in self.up_scale_gt.parameters():
@@ -73,7 +76,10 @@ class Decomposer(pl.LightningModule):
             self.up_scale_sl = UpSampler(**arguments)
             if self.model_config.unet_sl.checkpoint is not False:
                 self.up_scale_sl.load_state_dict(
-                    torch.load(self.model_config.unet_sl.checkpoint),
+                    torch.load(
+                        self.model_config.unet_sl.checkpoint,
+                        map_location=torch.device(self.train_config.device),
+                    )
                 )
                 if self.model_config.unet_sl.freeze:
                     for param in self.up_scale_sl.parameters():
@@ -92,7 +98,10 @@ class Decomposer(pl.LightningModule):
             self.up_scale_ob = UpSampler(**arguments)
             if self.model_config.unet_ob.checkpoint is not False:
                 self.up_scale_ob.load_state_dict(
-                    torch.load(self.model_config.unet_ob.checkpoint)
+                    torch.load(
+                        self.model_config.unet_ob.checkpoint,
+                        map_location=torch.device(self.train_config.device),
+                    )
                 )
                 if self.model_config.unet_ob.freeze:
                     for param in self.up_scale_ob.parameters():
