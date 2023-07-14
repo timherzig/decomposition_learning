@@ -54,8 +54,12 @@ class Decomposer(pl.LightningModule):
             self.up_scale_gt = UpSampler(**arguments)
             if self.model_config.unet_gt.checkpoint is not False:
                 self.up_scale_gt.load_state_dict(
-                    torch.load(self.model_config.unet_gt.checkpoint)
+                    torch.load(self.model_config.unet_gt.checkpoint),
                 )
+                if self.model_config.unet_gt.freeze:
+                    for param in self.up_scale_gt.parameters():
+                        param.requires_grad = False
+
         elif self.model_config.upsampler_gt == "swin":
             self.decoder_gt_config = self.model_config.swin_gt.decoder
             arguments = dict(self.decoder_gt_config)
@@ -69,8 +73,12 @@ class Decomposer(pl.LightningModule):
             self.up_scale_sl = UpSampler(**arguments)
             if self.model_config.unet_sl.checkpoint is not False:
                 self.up_scale_sl.load_state_dict(
-                    torch.load(self.model_config.unet_sl.checkpoint)
+                    torch.load(self.model_config.unet_sl.checkpoint),
                 )
+                if self.model_config.unet_sl.freeze:
+                    for param in self.up_scale_sl.parameters():
+                        param.requires_grad = False
+
         elif self.model_config.upsampler_sl == "swin":
             self.decoder_sl_config = self.model_config.swin_sl.decoder
             arguments = dict(self.decoder_sl_config)
@@ -86,6 +94,9 @@ class Decomposer(pl.LightningModule):
                 self.up_scale_ob.load_state_dict(
                     torch.load(self.model_config.unet_ob.checkpoint)
                 )
+                if self.model_config.unet_ob.freeze:
+                    for param in self.up_scale_ob.parameters():
+                        param.requires_grad = False
 
         elif self.model_config.upsampler_sl == "swin":
             self.decoder_ob_config = self.model_config.swin_ob.decoder
