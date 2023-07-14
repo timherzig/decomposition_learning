@@ -41,6 +41,7 @@ model:
     checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
     use_checkpoint: True
     patch_size: [2, 4, 4]    
+    frozen_stages: 4
   unet_gt:
     checkpoint: False
     decoder:
