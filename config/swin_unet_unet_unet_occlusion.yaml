@@ -10,7 +10,7 @@ data:
 train:
   debug: False
   pre_train: False
-  batch_size: 8
+  batch_size: 16
   lr: 1e-3
   max_epochs: 500
   log_every_n_steps: 15
@@ -30,7 +30,7 @@ train:
   lambda_occlusion_difference: 1e-3
   strategy: 'ddp_find_unused_parameters_true'
   accumulate_grad_batches: 4
-
+  es_patience: 10
 
 model:
   checkpoint: False
@@ -39,7 +39,7 @@ model:
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
     checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
-    use_checkpoint: False
+    use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
     checkpoint: False

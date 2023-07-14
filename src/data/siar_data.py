@@ -85,7 +85,7 @@ class SIAR(Dataset):
             images,
             ground_truth,
             sl,
-            oc,
+            oc
         )
 
     def __len__(self):
