@@ -8,13 +8,13 @@ data:
   num_workers: 8
     
 train:
-  debug: False
+  debug: True
   pre_train: False
-  batch_size: 16
+  batch_size: 2
   lr: 1e-4
   max_epochs: 1000
   log_every_n_steps: 15
-  device: 'gpu'
+  device: 'cpu'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
   loss_func: 'separate_head_loss'
   # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
@@ -41,9 +41,12 @@ model:
   swin:
     checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
     use_checkpoint: True
+    frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
-    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
+    checkpoint: '/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
+    # checkpoint: False
+    freeze: True
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
@@ -58,7 +61,9 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
-    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
+    checkpoint: '/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
+    # checkpoint: False
+    freeze: True
     decoder:
       output_dim: 2
       f_maps: [96, 192, 384, 768]
@@ -74,6 +79,7 @@ model:
       omit_skip_connections: False
   unet_ob:
     checkpoint: False
+    freeze: False
     decoder:
       output_dim: 4
       f_maps: [96, 192, 384, 768]
