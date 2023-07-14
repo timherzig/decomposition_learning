@@ -41,6 +41,7 @@ model:
   swin:
     checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
     use_checkpoint: True
+    frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
     checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
