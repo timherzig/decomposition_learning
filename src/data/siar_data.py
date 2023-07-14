@@ -20,6 +20,7 @@ class SIAR(Dataset):
     def __init__(
         self,
         split: str,
+        preprocess,
         split_version: str = "split-1_80_10_10",
         sanity_check=False,
         manual_dataset_path=None,
@@ -32,7 +33,7 @@ class SIAR(Dataset):
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
             sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
         """
-
+        self.preprocess = preprocess
         if manual_dataset_path:
             path_to_dataset = manual_dataset_path
         else:
@@ -79,8 +80,14 @@ class SIAR(Dataset):
         #     ]
         # )
         # occlusion_masks = torch.swapaxes(occlusion_masks, 0, 1)
-        sl = get_shadow_light_gt(ground_truth, images)
-        oc = get_occlusion_gt(ground_truth, images, sl)
+
+        if self.preprocess:
+            sl = get_shadow_light_gt(ground_truth, images)
+            oc = get_occlusion_gt(ground_truth, images, sl)
+        else:
+            sl = torch.zeros_like(images)
+            oc = torch.zeros_like(images)
+
         return (
             images,
             ground_truth,
@@ -90,7 +97,7 @@ class SIAR(Dataset):
 
     def __len__(self):
         return len(self.df)
-
+    
 
 class SIARDataModule(LightningDataModule):
     """
@@ -100,6 +107,7 @@ class SIARDataModule(LightningDataModule):
     def __init__(
         self,
         batch_size: int,
+        config,
         split_dir: str = "split-1_80_10_10",
         num_workers: int = 0,
         manual_dataset_path=None,
@@ -110,6 +118,7 @@ class SIARDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.split_dir = split_dir
+        self.config = config
 
     def prepare_data(self) -> None:
         return
@@ -118,12 +127,14 @@ class SIARDataModule(LightningDataModule):
         if stage == "test":
             self.siar_test = SIAR(
                 split="test",
+                preprocess = self.config.data.preprocess,
                 sanity_check=sanity_check,
                 manual_dataset_path=self.manual_dataset_path,
             )
         elif stage == "train":
             self.siar_train = SIAR(
                 split="train",
+                preprocess = self.config.data.preprocess,
                 sanity_check=sanity_check,
                 manual_dataset_path=self.manual_dataset_path,
             )
@@ -133,6 +144,7 @@ class SIARDataModule(LightningDataModule):
                 if sanity_check
                 else SIAR(
                     split="val",
+                    preprocess = self.config.data.preprocess,
                     sanity_check=sanity_check,
                     manual_dataset_path=self.manual_dataset_path,
                 )

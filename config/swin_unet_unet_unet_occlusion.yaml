@@ -6,6 +6,7 @@ data:
   # Set validation set equal to train set to provoke overfitting and see if loss works
   sanity_check: False
   num_workers: 0
+  preprocess: True
     
 train:
   debug: False
