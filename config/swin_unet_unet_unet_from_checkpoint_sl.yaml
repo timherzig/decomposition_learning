@@ -44,6 +44,7 @@ model:
     use_checkpoint: True
     patch_size: [2, 4, 4]    
   unet_gt:
+    freeze: False
     checkpoint: False
     decoder:
       output_dim: 3
@@ -59,6 +60,7 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
+    freeze: False
     checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
     decoder:
       output_dim: 2
@@ -74,6 +76,7 @@ model:
         scale_factor: 2
       omit_skip_connections: False
   unet_ob:
+    freeze: False
     checkpoint: False
     decoder:
       output_dim: 4

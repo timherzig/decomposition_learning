@@ -14,6 +14,7 @@ train:
   lr: 1e-4
   max_epochs: 1000
   log_every_n_steps: 15
+    freeze: False
   device: 'cuda'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
   loss_func: 'separate_head_loss'
@@ -44,6 +45,7 @@ model:
     frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
+    freeze: False
     checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
     decoder:
       output_dim: 3
@@ -59,6 +61,7 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
+    freeze: False
     checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
     decoder:
       output_dim: 2
@@ -74,6 +77,7 @@ model:
         scale_factor: 2
       omit_skip_connections: False
   unet_ob:
+    freeze: False
     checkpoint: False
     decoder:
       output_dim: 4
