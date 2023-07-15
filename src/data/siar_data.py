@@ -76,8 +76,10 @@ class SIAR(Dataset):
             ]
         )
         images = torch.swapaxes(images, 0, 1)
+        sl = torch.zeros_like(images)
+        occ = torch.zeros_like(images)
 
-        return (images, ground_truth)
+        return (images, ground_truth, sl, occ)
 
     def __len__(self):
         return len(self.df)
