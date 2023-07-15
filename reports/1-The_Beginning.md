@@ -29,20 +29,22 @@ The second branch ($decoder_{sl}$) is trained to predict the light and shadow ma
 The third branch ($decoder_{oc}$) is trained to predict the occlusions.
 
 ## The Video SWIN architecture
-Video Swin Transformer is a spatiotemporal adaption of Swin transformer, which extends its application into the temporal dimension of videos along with the spatial dimensions of individual frames. The overall architecture can be seen in Figure 3. The input video has a size of T x H x W x 3, consisting of T frames each with H x W x 3 pixels. At the **patch partitioning layer**, it is partitioned into T/2 x H/4 x W/4 3D patches/tokens, each of the size 2 x 4 x 4 x 3, i.e. 96 features. A linear embedding layer projects the features of each token to an arbitrary dimension denoted by C. The output is then passed into a Video Swin Transformer block, which concludes stage 1. 
+Video Swin Transformer is a spatiotemporal adaption of Swin transformer, which extends its application into the temporal dimension of videos along with the spatial dimensions of individual frames. It consists of four stages. The overall architecture can be seen in Figure 3. The input video has a size of T x H x W x 3, consisting of T frames each with H x W x 3 pixels. In the first stage at the **patch partitioning layer**, the input video is partitioned into T/2 x H/4 x W/4 3D patches/tokens, each of the size 2 x 4 x 4 x 3, i.e. 96 features. A linear embedding layer projects the features of each token to an arbitrary dimension denoted by C. The output is then passed into a Video Swin Transformer block. 
 
-Each of the following three stages consists of a **patch merging layer and a Video Swin Transformer block**. In the patch merging layer, each group of 2 x 2 neighbouring patches are concatenated, resulting in a feature size of 4C. The concatenated features are then projected to half of their dimension (2C) by a linear layer. As a result, after each stage, the number of tokens is one fourth the original and the number of features of each token doubled. 
+Each of the following three stages consists of a **patch merging layer and Video Swin Transformer blocks**. In the patch merging layer, each group of 2 x 2 neighbouring patches are concatenated. The concatenated features are then projected to half of their dimension by a linear layer. As a result, after each stage, the number of tokens is one fourth the original and the number of features of each token doubled. 
 
 ![Fig. 3](figures/1-The_Beginning/video_swin.png)
 **Figure 3:** Overall architecture of Video Swin Transformer (tiny version: Swin-T). Other variants differ in the layer numbers and the value of C (number of hidden features in the first stage).
 
-The architecture of two successive **Video Swin Transformer blocks** can be seen in figure 4. Its core resembles the multi-head self-attention layer (MSA) in the standard transformer. However, in the second block, there is a 3D shifted window based multi-head self attention (3D SW-MSA) module, which aims to introduce connections across windows. Self-attention is performed on windows which are composed of tokens. Figure 5 shows how a window is shifted by 2 x 2 x 2 tokens. Other than that, in each block each MSA is followed by a 2-layer MLP, where Layer Normalization (LN) is applied before and residual connection after each module.
+The architecture of two successive **Video Swin Transformer blocks** can be seen in figure 4. Its core resembles the multi-head self-attention layer (MSA) in the standard Transformer. However, in the second block, there is a 3D shifted window based multi-head self attention (3D SW-MSA) module, which aims to introduce connections across windows. Self-attention is performed on windows which are composed of tokens. Figure 5 shows how a window is shifted by 2 x 2 x 2 tokens. Other than that, in each block each MSA is followed by a 2-layer MLP, where Layer Normalization (LN) is applied before and residual connection after each module.
 
-![Fig. 4](figures/1-The_Beginning/vst_blocks.png)
-**Figure 4:** An illustration of two successive Video Swin Transformer blocks. 
+![Fig. 4](figures/1-The_Beginning/vst_blocks.png)\
+**Figure 4:** An illustration of two successive Video Swin Transformer blocks.
+<br/><br/>
 
-![Fig. 5](figures/1-The_Beginning/sw_msa.png)
+![Fig. 5](figures/1-The_Beginning/sw_msa.png)\
 **Figure 5:** An illustrated example of 3D shifted windows.
+<br/><br/>
 
 ## First steps
 
