@@ -22,14 +22,27 @@ The random augmentations are added to the underlying image in the order *shadow*
 To solve this task, we propose a novel model, which we call **Decomposer**.
 Fig 2 shows the model architecture.
 The model consists of two parts: an **encoder** and a **decoder**.
-For the encoder, we use the 3D SWIN architecture that takes a sequence of images as input and encodes each image into a latent representation.
+For the encoder, we use the Video SWIN Transformer that takes a sequence of images as input and encodes each image into a latent representation.
 For the decoder, we use three branches, each a 3D UNet architecture, that all take the same latent representation of the encoder and decodes them into the underlying image and the augmentations.
 One branch ($decoder_{gt}$) is trained to predict the ground truth underlying image.
 The second branch ($decoder_{sl}$) is trained to predict the light and shadow masks.
 The third branch ($decoder_{oc}$) is trained to predict the occlusions.
 
-## The 3DSWIN architecture
-> TODO: WRITE ABOUT 3DSWIN
+## The Video SWIN architecture
+Video Swin Transformer is a spatiotemporal adaption of Swin transformer, which extends its application into the temporal dimension of videos along with the spatial dimensions of individual frames. The overall architecture can be seen in Figure 3. The input video has a size of T x H x W x 3, consisting of T frames each with H x W x 3 pixels. At the **patch partitioning layer**, it is partitioned into T/2 x H/4 x W/4 3D patches/tokens, each of the size 2 x 4 x 4 x 3, i.e. 96 features. A linear embedding layer projects the features of each token to an arbitrary dimension denoted by C. The output is then passed into a Video Swin Transformer block, which concludes stage 1. 
+
+Each of the following three stages consists of a **patch merging layer and a Video Swin Transformer block**. In the patch merging layer, each group of 2 x 2 neighbouring patches are concatenated, resulting in a feature size of 4C. The concatenated features are then projected to half of their dimension (2C) by a linear layer. As a result, after each stage, the number of tokens is one fourth the original and the number of features of each token doubled. 
+
+![Fig. 3](figures/1-The_Beginning/video_swin.png)
+**Figure 3:** Overall architecture of Video Swin Transformer (tiny version: Swin-T). Other variants differ in the layer numbers and the value of C (number of hidden features in the first stage).
+
+The architecture of two successive **Video Swin Transformer blocks** can be seen in figure 4. Its core resembles the multi-head self-attention layer (MSA) in the standard transformer. However, in the second block, there is a 3D shifted window based multi-head self attention (3D SW-MSA) module, which aims to introduce connections across windows. Self-attention is performed on windows which are composed of tokens. Figure 5 shows how a window is shifted by 2 x 2 x 2 tokens. Other than that, in each block each MSA is followed by a 2-layer MLP, where Layer Normalization (LN) is applied before and residual connection after each module.
+
+![Fig. 4](figures/1-The_Beginning/vst_blocks.png)
+**Figure 4:** An illustration of two successive Video Swin Transformer blocks. 
+
+![Fig. 5](figures/1-The_Beginning/sw_msa.png)
+**Figure 5:** An illustrated example of 3D shifted windows.
 
 ## First steps
 
@@ -46,8 +59,8 @@ Fig 3 shows an example output of our model. The model is able to predict the und
 Nevertheless, we observe that only one out of the 10 output images contributes all colors and shapes to the merged output. All other predicted images are a continuos gray color, that is used to desaturate the oversaturated parts of the main output.
 
 **This was not always the case!**
-![Fig 4](figures/1-The_Beginning/epoch20_vs_epoch21.png)
-**Fig 4:** *Comparison between output in epoch 20 (above) and epoch 21 (below)*
+![Fig 6](figures/1-The_Beginning/epoch20_vs_epoch21.png)
+**Fig 6:** *Comparison between output in epoch 20 (above) and epoch 21 (below)*
 
 We can clearly qualitatively observe that our model at epoch 21 fell into a local minimum that it was not able to escape from. We can see that the model at epoch 20 was able to predict the underlying image much better than the model at epoch 21.
 
@@ -57,7 +70,7 @@ Training loss              |  Validation loss
 :-------------------------:|:-------------------------:
 ![](figures/1-The_Beginning/train_loss.png)  |  ![](figures/1-The_Beginning/val_loss.png)
 
-**Fig 5:** *Training and validation plots for 100 epochs.*
+**Fig 7:** *Training and validation plots for 100 epochs.*
 
 We can see that the training loss, but the validation loss even more so, is very unstable. We can see that the validation loss is not decreasing monotonically. This is a clear indicator that our loss function is not smooth and prone to collapse.
 
