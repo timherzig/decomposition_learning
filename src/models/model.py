@@ -59,9 +59,10 @@ class Decomposer(pl.LightningModule):
                         map_location=torch.device(self.train_config.device),
                     ),
                 )
-                if self.model_config.unet_gt.freeze:
-                    for param in self.up_scale_gt.parameters():
-                        param.requires_grad = False
+            if self.model_config.unet_gt.freeze:
+                print("Freezing UNet GT")
+                for param in self.up_scale_gt.parameters():
+                    param.requires_grad = False
 
         elif self.model_config.upsampler_gt == "swin":
             self.decoder_gt_config = self.model_config.swin_gt.decoder
@@ -81,9 +82,10 @@ class Decomposer(pl.LightningModule):
                         map_location=torch.device(self.train_config.device),
                     )
                 )
-                if self.model_config.unet_sl.freeze:
-                    for param in self.up_scale_sl.parameters():
-                        param.requires_grad = False
+            if self.model_config.unet_sl.freeze:
+                print("Freezing UNet SL")
+                for param in self.up_scale_sl.parameters():
+                    param.requires_grad = False
 
         elif self.model_config.upsampler_sl == "swin":
             self.decoder_sl_config = self.model_config.swin_sl.decoder
@@ -103,9 +105,10 @@ class Decomposer(pl.LightningModule):
                         map_location=torch.device(self.train_config.device),
                     )
                 )
-                if self.model_config.unet_ob.freeze:
-                    for param in self.up_scale_ob.parameters():
-                        param.requires_grad = False
+            if self.model_config.unet_ob.freeze:
+                print("Freezing UNet OCC")
+                for param in self.up_scale_ob.parameters():
+                    param.requires_grad = False
 
         elif self.model_config.upsampler_sl == "swin":
             self.decoder_ob_config = self.model_config.swin_ob.decoder
