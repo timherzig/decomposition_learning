@@ -623,7 +623,7 @@ class SwinTransformer3D(nn.Module):
         patch_size=(4, 4, 4),
         in_chans=3,
         embed_dim=96,
-        depths=[1, 1, 1, 1], #[2, 2, 6, 2],
+        depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 24],
         window_size=(2, 7, 7),
         mlp_ratio=4.0,
