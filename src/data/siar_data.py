@@ -179,7 +179,7 @@ class SIARDataModule(LightningDataModule):
     def __init__(
         self,
         batch_size: int,
-        config,
+        dataset,
         split_dir: str = "split-1_80_10_10",
         num_workers: int = 0,
         manual_dataset_path=None,
@@ -190,8 +190,7 @@ class SIARDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.split_dir = split_dir
-        self.config = config
-        self.dataset = get_class(self.data.dataset, ["src.data.siar_data"])
+        self.dataset = get_class(dataset, ["src.data.siar_data"])
 
     def prepare_data(self) -> None:
         return
