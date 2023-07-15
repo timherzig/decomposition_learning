@@ -50,19 +50,19 @@ The architecture of two successive **Video Swin Transformer blocks** can be seen
 
 ### Training only to predict the underlying image
 
-![Fig 3](figures/1-The_Beginning/mergerd_gt_model.png)
-**Fig 3:** *Example output of merged reconstruction model.*
+![Fig 6](figures/1-The_Beginning/mergerd_gt_model.png)
+**Fig 6:** *Example output of merged reconstruction model.*
 
 We first trained a simpler version of the final Decomposer model to predict the underlying image - the *merged reconstruction model*. We here only used one decoder that models a many-to-many pipeline. We predict the original ground truth image 10 times and take the mean as our final output. We compute the MSE loss between that merged output and the ground truth.
 We trained the model for 100 epochs with a batch size of 16 and the Adam optimizer with a learning rate of 0.001.
 
-Fig 3 shows an example output of our model. The model is able to predict the underlying image quite well. However, it is not able to predict the exact shape of the object. It rather predicts a blurry and desaturated version of the object.
+Fig 6 shows an example output of our model. The model is able to predict the underlying image quite well. However, it is not able to predict the exact shape of the object. It rather predicts a blurry and desaturated version of the object.
 
 Nevertheless, we observe that only one out of the 10 output images contributes all colors and shapes to the merged output. All other predicted images are a continuos gray color, that is used to desaturate the oversaturated parts of the main output.
 
 **This was not always the case!**
-![Fig 6](figures/1-The_Beginning/epoch20_vs_epoch21.png)
-**Fig 6:** *Comparison between output in epoch 20 (above) and epoch 21 (below)*
+![Fig 7](figures/1-The_Beginning/epoch20_vs_epoch21.png)
+**Fig 7:** *Comparison between output in epoch 20 (above) and epoch 21 (below)*
 
 We can clearly qualitatively observe that our model at epoch 21 fell into a local minimum that it was not able to escape from. We can see that the model at epoch 20 was able to predict the underlying image much better than the model at epoch 21.
 
@@ -72,7 +72,7 @@ Training loss              |  Validation loss
 :-------------------------:|:-------------------------:
 ![](figures/1-The_Beginning/train_loss.png)  |  ![](figures/1-The_Beginning/val_loss.png)
 
-**Fig 7:** *Training and validation plots for 100 epochs.*
+**Fig 8:** *Training and validation plots for 100 epochs.*
 
 We can see that the training loss, but the validation loss even more so, is very unstable. We can see that the validation loss is not decreasing monotonically. This is a clear indicator that our loss function is not smooth and prone to collapse.
 
