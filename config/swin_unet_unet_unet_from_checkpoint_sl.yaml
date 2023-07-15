@@ -1,6 +1,6 @@
 data:
   # Name of dataset
-  dataset: 'SIAR'
+  dataset: 'SIAR_SL'
   # Split version to use
   split_dir: ''
   # Set validation set equal to train set to provoke overfitting and see if loss works
