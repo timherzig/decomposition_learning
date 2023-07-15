@@ -171,6 +171,7 @@ lightning_logs/
 # Dataset
 SIAR/
 SIAR_128/
+SIAR_OCC/
 SIAR.zip
 
 HTCV/
