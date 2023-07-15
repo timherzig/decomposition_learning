@@ -10,6 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import ToTensor
 
 from src.models.utils.preprocessing import get_shadow_light_gt, get_occlusion_gt
+from src.models.utils.utils import get_class
 
 
 class SIAR(Dataset):
@@ -76,26 +77,98 @@ class SIAR(Dataset):
         )
         images = torch.swapaxes(images, 0, 1)
 
-        # occlusion_masks = torch.stack(
-        #     [
-        #         ToTensor()(Image.open(os.path.join(dir, x)))
-        #         for x in os.listdir(dir)
-        #         if x.split("_")[1] == "occlusion"
-        #     ]
-        # )
-        # occlusion_masks = torch.swapaxes(occlusion_masks, 0, 1)
-
-        if self.preprocess:
-            sl = get_shadow_light_gt(ground_truth, images)
-            oc = get_occlusion_gt(ground_truth, images, sl)
-        else:
-            sl = torch.zeros_like(images)
-            oc = torch.zeros_like(images)
-
-        return (images, ground_truth, sl, oc)
+        return (images, ground_truth)
 
     def __len__(self):
         return len(self.df)
+
+
+class SIAR_SL(SIAR):
+    """
+    SIAR Dataset with shadow and light approximation targets.
+    """
+
+    def __init__(
+        self,
+        split: str,
+        split_version: str = "",
+        sanity_check=False,
+        manual_dataset_path=None,
+    ) -> None:
+        """SIAR Dataset
+
+        Args:
+            split (str): train, val or test
+            split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
+            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
+            manual_dataset_path (str, optional): Path to dataset. Defaults to None.
+        """
+        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+
+    def __getitem__(self, index):
+        dir = self.df.iloc[index]["dir"]
+
+        ground_truth = os.path.join(dir, "gt.png")
+        assert os.path.exists(ground_truth) == True, f"{ground_truth} does not exist"
+        ground_truth = ToTensor()(Image.open(ground_truth))
+
+        images = torch.stack(
+            [
+                ToTensor()(Image.open(os.path.join(dir, x)))
+                for x in os.listdir(dir)
+                if x.split(".")[0].isnumeric()
+            ]
+        )
+        images = torch.swapaxes(images, 0, 1)
+
+        sl = get_shadow_light_gt(ground_truth, images)
+        occ = torch.zeros_like(sl)
+
+        return (images, ground_truth, sl, occ)
+
+
+class SIAR_OCC(SIAR):
+    """
+    SIAR Dataset with occlusion approximation targets.
+    """
+
+    def __init__(
+        self,
+        split: str,
+        split_version: str = "",
+        sanity_check=False,
+        manual_dataset_path=None,
+    ) -> None:
+        """SIAR Dataset
+
+        Args:
+            split (str): train, val or test
+            split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
+            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
+            manual_dataset_path (str, optional): Path to dataset. Defaults to None.
+        """
+        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+
+    def __getitem__(self, index):
+        dir = self.df.iloc[index]["dir"]
+
+        ground_truth = os.path.join(dir, "gt.png")
+        assert os.path.exists(ground_truth) == True, f"{ground_truth} does not exist"
+        ground_truth = ToTensor()(Image.open(ground_truth))
+
+        images = torch.stack(
+            [
+                ToTensor()(Image.open(os.path.join(dir, x)))
+                for x in os.listdir(dir)
+                if x.split(".")[0].isnumeric()
+            ]
+        )
+        images = torch.swapaxes(images, 0, 1)
+
+        occ = get_occlusion_gt(ground_truth, images)
+        sl = torch.zeros_like(occ)
+
+        return (images, ground_truth, sl, occ)
 
 
 class SIARDataModule(LightningDataModule):
@@ -118,22 +191,21 @@ class SIARDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.split_dir = split_dir
         self.config = config
+        self.dataset = get_class(self.data.dataset, ["src.data.siar_data"])
 
     def prepare_data(self) -> None:
         return
 
     def setup(self, stage: str, sanity_check=False) -> None:
         if stage == "test":
-            self.siar_test = SIAR(
+            self.siar_test = self.dataset(
                 split="test",
-                preprocess=self.config.data.preprocess,
                 sanity_check=sanity_check,
                 manual_dataset_path=self.manual_dataset_path,
             )
         elif stage == "train":
-            self.siar_train = SIAR(
+            self.siar_train = self.dataset(
                 split="train",
-                preprocess=self.config.data.preprocess,
                 sanity_check=sanity_check,
                 manual_dataset_path=self.manual_dataset_path,
             )
@@ -141,9 +213,8 @@ class SIARDataModule(LightningDataModule):
             self.siar_val = (
                 deepcopy(self.siar_train)
                 if sanity_check
-                else SIAR(
+                else self.dataset(
                     split="val",
-                    preprocess=self.config.data.preprocess,
                     sanity_check=sanity_check,
                     manual_dataset_path=self.manual_dataset_path,
                 )

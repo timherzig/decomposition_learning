@@ -1,5 +1,5 @@
 data:
-  # Name of dataset
+  # Name of dataset: 'SIAR', 'SIAR_SL', 'SIAR_OCC'
   dataset: 'SIAR'
   # Split version to use
   split_dir: 'split-1_80_10_10'
