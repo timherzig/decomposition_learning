@@ -2,7 +2,7 @@ data:
   # Name of dataset
   dataset: 'SIAR'
   # Split version to use
-  split_dir: 'split-1_80_10_10'
+  split_dir: ''
   # Set validation set equal to train set to provoke overfitting and see if loss works
   sanity_check: False
   num_workers: 0
