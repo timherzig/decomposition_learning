@@ -38,6 +38,7 @@ def setup_training(args):
 
     siar = SIARDataModule(
         config.train.batch_size,
+        config,
         config.data.split_dir,
         config.data.num_workers,
         args.data_dir,
