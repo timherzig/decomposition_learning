@@ -21,7 +21,6 @@ class SIAR(Dataset):
     def __init__(
         self,
         split: str,
-        preprocess,
         split_version: str = "",
         sanity_check=False,
         manual_dataset_path=None,
@@ -34,7 +33,6 @@ class SIAR(Dataset):
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
             sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
         """
-        self.preprocess = preprocess
         if manual_dataset_path:
             path_to_dataset = manual_dataset_path
         else:
