@@ -186,7 +186,9 @@ class SIAR_OCC(SIAR):
         images = torch.swapaxes(images, 0, 1)
 
         # occ = get_occlusion_gt(ground_truth, images)
-        path_to_occ = os.path.join(self.path_to_dataset, f"../SIAR_OCC/{index}.pt")
+        # path_to_occ = os.path.join(self.path_to_dataset, f"../SIAR_OCC/{index}.pt")
+        sample = dir.split("/")[-1]
+        path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
         occ = torch.load(path_to_occ)
         sl = torch.zeros_like(images)
 
