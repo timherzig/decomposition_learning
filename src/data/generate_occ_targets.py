@@ -35,20 +35,32 @@ def main():
     print("Generating occ targets...")
     print("Train...")
     for i in tqdm(range(len(dataset_train))):
-        _, _, _, occ = dataset_train[i]
         sample = dataset_train.df.iloc[i]["dir"].split("/")[-1]
+        if os.path.exists(os.path.join("data/SIAR_OCC", f"{sample}.pt")):
+            print(f"Skipping {sample}")
+            continue
+
+        _, _, _, occ = dataset_train[i]
         torch.save(occ, os.path.join("data/SIAR_OCC", f"{sample}.pt"))
 
     print("Val...")
     for i in tqdm(range(len(dataset_val))):
-        _, _, _, occ = dataset_val[i]
         sample = dataset_val.df.iloc[i]["dir"].split("/")[-1]
+        if os.path.exists(os.path.join("data/SIAR_OCC", f"{sample}.pt")):
+            print(f"Skipping {sample}")
+            continue
+
+        _, _, _, occ = dataset_val[i]
         torch.save(occ, os.path.join("data/SIAR_OCC", f"{sample}.pt"))
 
     print("Test...")
     for i in tqdm(range(len(dataset_test))):
-        _, _, _, occ = dataset_test[i]
         sample = dataset_test.df.iloc[i]["dir"].split("/")[-1]
+        if os.path.exists(os.path.join("data/SIAR_OCC", f"{sample}.pt")):
+            print(f"Skipping {sample}")
+            continue
+
+        _, _, _, occ = dataset_test[i]
         torch.save(occ, os.path.join("data/SIAR_OCC", f"{sample}.pt"))
 
 
