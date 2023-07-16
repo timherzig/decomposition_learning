@@ -33,7 +33,11 @@ def setup_training(args):
         os.makedirs(log_dir, exist_ok=True)
 
     if config.train.stage in ["train_gt", "train_sl", "train_ob"]:
-        log_dir = f"decoder_checkpoints/{wandb_logger.experiment.name}"
+        if not config.train.debug:
+            log_dir = f"decoder_checkpoints/{wandb_logger.experiment.name}"
+        else:
+            log_dir = f"decoder_checkpoints/{args.config.split('/')[-1].split('.')[0]}"
+
         os.makedirs(log_dir, exist_ok=True)
 
     siar = SIARDataModule(
@@ -91,7 +95,8 @@ def parse_arguments():
         type=str,
         help="Path to config.yaml file.",
         # default="config/default.yaml",
-        default="config/occ_pretraining_frozen_gt_and_sl.yaml",
+        # default="config/occ_pretraining_frozen_gt_and_sl.yaml",
+        default="config/occ_pretraining_w_approx_targets.yaml",
     )
 
     parser.add_argument("--data-dir", help="Path to dataset", type=str, default=None)
