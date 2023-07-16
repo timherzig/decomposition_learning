@@ -32,23 +32,29 @@ class SIAR(Dataset):
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
             sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
+            manual_dataset_path ([type], optional): Path to dataset. Defaults to None.
         """
         if manual_dataset_path:
-            path_to_dataset = manual_dataset_path
+            self.path_to_dataset = manual_dataset_path
         else:
-            path_to_dataset = os.path.join(os.getcwd(), "data/SIAR")
+            self.path_to_dataset = os.path.join(os.getcwd(), "data/SIAR")
 
         if split_version == "":
-            path_to_split = os.path.join(path_to_dataset, f"{split}.csv")
+            path_to_split = os.path.join(self.path_to_dataset, f"{split}.csv")
         else:
             path_to_split = os.path.join(
-                f"{path_to_dataset}/..", "data_splits", split_version, f"{split}.csv"
+                f"{self.path_to_dataset}/..",
+                "data_splits",
+                split_version,
+                f"{split}.csv",
             )
 
         # Load ids of current split
         self.df = pd.read_csv(path_to_split, index_col=None)
         # Add directory paths to those ids
-        self.df["dir"] = [os.path.join(path_to_dataset, str(x)) for x in self.df["id"]]
+        self.df["dir"] = [
+            os.path.join(self.path_to_dataset, str(x)) for x in self.df["id"]
+        ]
 
         # For sanity check, we only want to use one entry
         # and want to completely overfit to it
@@ -86,6 +92,14 @@ class SIAR(Dataset):
 class SIAR_SL(SIAR):
     """
     SIAR Dataset with shadow and light approximation targets.
+
+    Returns:
+        images (torch.Tensor): [C, N, H, W] tensor of images. \\
+        ground_truth (torch.Tensor): [C, H, W] tensor of ground truth image. \\
+        sl (torch.Tensor): [C, N, H, W] tensor of shadow and light approximation. Generated on the fly. \\
+        occ (torch.Tensor): [C, N, H, W] tensor of occlusion approximation. In this case we return zeros, as we don't need it in the SL dataset.
+
+    C is number of channels, N is number of images should be 10, H and W are height and width of images.
     """
 
     def __init__(
@@ -95,8 +109,7 @@ class SIAR_SL(SIAR):
         sanity_check=False,
         manual_dataset_path=None,
     ) -> None:
-        """SIAR Dataset
-
+        """
         Args:
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
@@ -130,6 +143,14 @@ class SIAR_SL(SIAR):
 class SIAR_OCC(SIAR):
     """
     SIAR Dataset with occlusion approximation targets.
+
+    Returns:
+        images (torch.Tensor): [C, N, H, W] tensor of images.
+        ground_truth (torch.Tensor): [C, H, W] tensor of ground truth image.
+        sl (torch.Tensor): [C, N, H, W] tensor of shadow and light approximation. In this case we return zeros, as we don't need it in the OCC dataset.
+        occ (torch.Tensor): [C, N, H, W] tensor of occlusion approximation. Loaded from pre-generated files.
+
+    C is number of channels, N is number of images should be 10, H and W are height and width of images.
     """
 
     def __init__(
@@ -139,8 +160,7 @@ class SIAR_OCC(SIAR):
         sanity_check=False,
         manual_dataset_path=None,
     ) -> None:
-        """SIAR Dataset
-
+        """
         Args:
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
@@ -165,8 +185,10 @@ class SIAR_OCC(SIAR):
         )
         images = torch.swapaxes(images, 0, 1)
 
-        occ = get_occlusion_gt(ground_truth, images)
-        sl = torch.zeros_like(occ)
+        # occ = get_occlusion_gt(ground_truth, images)
+        path_to_occ = os.path.join(self.path_to_dataset, f"../SIAR_OCC/{index}.pt")
+        occ = torch.load(path_to_occ)
+        sl = torch.zeros_like(images)
 
         return (images, ground_truth, sl, occ)
 
