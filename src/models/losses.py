@@ -388,7 +388,7 @@ class separate_head_loss:
                 (target * shadow_mask + light_mask),
                 occlusion_rgb,
             )
-            ob_loss = self.metric_ob(ob_reconstruction, input)
+            ob_loss = 1 - self.metric_ob(ob_reconstruction, input)
 
             return (
                 gt_loss
