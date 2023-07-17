@@ -239,9 +239,6 @@ class SIAR_OCC_GENERATION(SIAR):
         images = torch.swapaxes(images, 0, 1)
 
         occ = get_occlusion_gt(ground_truth, images)
-        sample = dir.split("/")[-1]
-        path_to_occ = os.path.join(self.path_to_dataset, f"../SIAR_OCC/{sample}.pt")
-        occ = torch.load(path_to_occ)
         sl = torch.zeros_like(images)
 
         return (images, ground_truth, sl, occ)
