@@ -5,24 +5,24 @@ import pandas as pd
 from tqdm import tqdm
 
 sys.path.append(f"{os.getcwd()}")
-from src.data.siar_data import SIAR_OCC
+from src.data.siar_data import SIAR_OCC_GENERATION
 
 
 def main():
     """Generate the occ targets for the SIAR dataset. Store them in a new folder "data/SIAR_OCC" """
-    dataset_train = SIAR_OCC(
+    dataset_train = SIAR_OCC_GENERATION(
         split="train",
         split_version="split-1_80_10_10",
         sanity_check=False,
         manual_dataset_path=None,
     )
-    dataset_val = SIAR_OCC(
+    dataset_val = SIAR_OCC_GENERATION(
         split="val",
         split_version="split-1_80_10_10",
         sanity_check=False,
         manual_dataset_path=None,
     )
-    dataset_test = SIAR_OCC(
+    dataset_test = SIAR_OCC_GENERATION(
         split="test",
         split_version="split-1_80_10_10",
         sanity_check=False,

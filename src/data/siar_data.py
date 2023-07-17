@@ -185,10 +185,62 @@ class SIAR_OCC(SIAR):
         )
         images = torch.swapaxes(images, 0, 1)
 
-        # occ = get_occlusion_gt(ground_truth, images)
-        # path_to_occ = os.path.join(self.path_to_dataset, f"../SIAR_OCC/{index}.pt")
         sample = dir.split("/")[-1]
         path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
+        occ = torch.load(path_to_occ)
+        sl = torch.zeros_like(images)
+
+        return (images, ground_truth, sl, occ)
+
+
+class SIAR_OCC_GENERATION(SIAR):
+    """
+    SIAR Dataset with occlusion approximation targets.
+
+    Returns:
+        images (torch.Tensor): [C, N, H, W] tensor of images.
+        ground_truth (torch.Tensor): [C, H, W] tensor of ground truth image.
+        sl (torch.Tensor): [C, N, H, W] tensor of shadow and light approximation. In this case we return zeros, as we don't need it in the OCC dataset.
+        occ (torch.Tensor): [C, N, H, W] tensor of occlusion approximation. Loaded from pre-generated files.
+
+    C is number of channels, N is number of images should be 10, H and W are height and width of images.
+    """
+
+    def __init__(
+        self,
+        split: str,
+        split_version: str = "",
+        sanity_check=False,
+        manual_dataset_path=None,
+    ) -> None:
+        """
+        Args:
+            split (str): train, val or test
+            split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
+            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
+            manual_dataset_path (str, optional): Path to dataset. Defaults to None.
+        """
+        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+
+    def __getitem__(self, index):
+        dir = self.df.iloc[index]["dir"]
+
+        ground_truth = os.path.join(dir, "gt.png")
+        assert os.path.exists(ground_truth) == True, f"{ground_truth} does not exist"
+        ground_truth = ToTensor()(Image.open(ground_truth))
+
+        images = torch.stack(
+            [
+                ToTensor()(Image.open(os.path.join(dir, x)))
+                for x in os.listdir(dir)
+                if x.split(".")[0].isnumeric()
+            ]
+        )
+        images = torch.swapaxes(images, 0, 1)
+
+        occ = get_occlusion_gt(ground_truth, images)
+        sample = dir.split("/")[-1]
+        path_to_occ = os.path.join(self.path_to_dataset, f"../SIAR_OCC/{sample}.pt")
         occ = torch.load(path_to_occ)
         sl = torch.zeros_like(images)
 
