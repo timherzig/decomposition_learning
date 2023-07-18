@@ -228,11 +228,10 @@ class SIAR_OCC_GENERATION(SIAR):
         ground_truth = os.path.join(dir, "gt.png")
         assert os.path.exists(ground_truth) == True, f"{ground_truth} does not exist"
         ground_truth = ToTensor()(Image.open(ground_truth))
-
         images = torch.stack(
             [
                 ToTensor()(Image.open(os.path.join(dir, x)))
-                for x in os.listdir(dir)
+                for x in sorted(os.listdir(dir))
                 if x.split(".")[0].isnumeric()
             ]
         )
