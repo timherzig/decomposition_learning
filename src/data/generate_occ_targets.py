@@ -5,6 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 import cv2
 import numpy as np
+import argparse
 
 sys.path.append(f"{os.getcwd()}")
 from src.data.siar_data import SIAR_OCC_GENERATION
@@ -24,7 +25,15 @@ def save_tensor(occlusions, sample):
         occ = occ * 255
         cv2.imwrite(os.path.join(dir, str(name) + ".png"), np.array(occ))
 
+def get_args():
+    argparser = argparser.ArgumentParser(description=__doc__)
+    argparser.add_argument("--data", required = True, type = str)
+    args = argparser.parse_args()
+    return args
+
 def main():
+    args = get_args()
+    manual_dataset_path = args.data
     """Generate the occ targets for the SIAR dataset. Store them in a new folder "data/SIAR_OCC" """
     dataset_train = SIAR_OCC_GENERATION(
         split="train",
