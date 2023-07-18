@@ -10,9 +10,9 @@ import argparse
 sys.path.append(f"{os.getcwd()}")
 from src.data.siar_data import SIAR_OCC_GENERATION
 
-def save_tensor(occlusions, sample):
-    dir = os.path.join("data/SIAR_OCC", f"{sample}")
-    os.makedirs(dir, exist_ok=True)
+def save_tensor(occlusions, sample, dir):
+    dir_sample = os.path.join(dir, f"{sample}")
+    os.makedirs(dir_sample, exist_ok=True)
     for i in range(occlusions.shape[1]):
         if i == 1:
             name = 10
@@ -23,11 +23,13 @@ def save_tensor(occlusions, sample):
         occ = occlusions[:, i, :, :]
         occ = occ.moveaxis(0, 2)
         occ = occ * 255
-        cv2.imwrite(os.path.join(dir, str(name) + ".png"), np.array(occ))
+        cv2.imwrite(os.path.join(dir_sample, str(name) + ".png"), np.array(occ))
 
 def get_args():
-    argparser = argparser.ArgumentParser(description=__doc__)
+    argparser = argparse.ArgumentParser(description=__doc__)
     argparser.add_argument("--data", required = True, type = str)
+    argparser.add_argument("--out", required = True, type = str)
+
     args = argparser.parse_args()
     return args
 
@@ -53,9 +55,8 @@ def main():
         sanity_check=False,
         manual_dataset_path=None,
     )
-
-    if not os.path.exists("data/SIAR_OCC"):
-        os.makedirs("data/SIAR_OCC")
+    #dir = os.path.join(args.out, f"{sample}")
+    os.makedirs(dir, exist_ok=True)
 
     print("Generating occ targets...")
     print("Train...")
@@ -67,7 +68,7 @@ def main():
 
         _, _, _, occ = dataset_train[i]
         print("OCC: ", occ.shape)
-        save_tensor(occ, sample)
+        save_tensor(occ, sample, dir)
 
     print("Val...")
     for i in tqdm(range(len(dataset_val))):
@@ -77,7 +78,7 @@ def main():
             continue
 
         _, _, _, occ = dataset_val[i]
-        save_tensor(occ, sample)
+        save_tensor(occ, sample, dir)
 
     print("Test...")
     for i in tqdm(range(len(dataset_test))):
@@ -87,7 +88,7 @@ def main():
             continue
 
         _, _, _, occ = dataset_test[i]
-        save_tensor(occ, sample)
+        save_tensor(occ, sample, dir)
 
 if __name__ == "__main__":
     main()
