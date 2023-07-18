@@ -52,7 +52,7 @@ def main():
         sanity_check=False,
         manual_dataset_path=manual_dataset_path,
     )
-    #dir = os.path.join(args.out, f"{sample}")
+    dir = args.out
     os.makedirs(dir, exist_ok=True)
 
     print("Generating occ targets...")
