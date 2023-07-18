@@ -73,11 +73,11 @@ def setup_training(args):
         accelerator=config.train.device,
         strategy=config.train.strategy,
         accumulate_grad_batches=config.train.accumulate_grad_batches,
-        callbacks=[
-            EarlyStopping(
-                monitor="val_loss", mode="min", patience=config.train.es_patience
-            )
-        ],
+        # callbacks=[
+        #     EarlyStopping(
+        #         monitor="val_loss", mode="min", patience=config.train.es_patience
+        #     )
+        # ],
     )
 
     print("Model loaded")
