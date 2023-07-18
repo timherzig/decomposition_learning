@@ -41,19 +41,19 @@ def main():
         split="train",
         split_version="split-1_80_10_10",
         sanity_check=False,
-        manual_dataset_path=None,
+        manual_dataset_path=manual_dataset_path,
     )
     dataset_val = SIAR_OCC_GENERATION(
         split="val",
         split_version="split-1_80_10_10",
         sanity_check=False,
-        manual_dataset_path=None,
+        manual_dataset_path=manual_dataset_path,
     )
     dataset_test = SIAR_OCC_GENERATION(
         split="test",
         split_version="split-1_80_10_10",
         sanity_check=False,
-        manual_dataset_path=None,
+        manual_dataset_path=manual_dataset_path,
     )
     #dir = os.path.join(args.out, f"{sample}")
     os.makedirs(dir, exist_ok=True)
