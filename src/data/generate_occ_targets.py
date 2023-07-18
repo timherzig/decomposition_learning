@@ -39,19 +39,19 @@ def main():
     """Generate the occ targets for the SIAR dataset. Store them in a new folder "data/SIAR_OCC" """
     dataset_train = SIAR_OCC_GENERATION(
         split="train",
-        split_version="split-1_80_10_10",
+        split_version="",
         sanity_check=False,
         manual_dataset_path=manual_dataset_path,
     )
     dataset_val = SIAR_OCC_GENERATION(
         split="val",
-        split_version="split-1_80_10_10",
+        split_version="",
         sanity_check=False,
         manual_dataset_path=manual_dataset_path,
     )
     dataset_test = SIAR_OCC_GENERATION(
         split="test",
-        split_version="split-1_80_10_10",
+        split_version="",
         sanity_check=False,
         manual_dataset_path=manual_dataset_path,
     )
