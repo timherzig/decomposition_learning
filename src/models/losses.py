@@ -390,6 +390,10 @@ class separate_head_loss:
             )
             ob_loss = self.metric_ob(ob_reconstruction, input)
 
+            print(f"gt_loss: {gt_loss}")
+            print(f"sl_loss: {sl_loss}")
+            print(f"ob_loss: {ob_loss}")
+
             return (
                 gt_loss
                 + sl_loss
