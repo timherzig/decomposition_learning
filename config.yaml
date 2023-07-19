@@ -1,0 +1,132 @@
+- data:
+    dataset: SIAR_SL
+    split_dir: ''
+    sanity_check: false
+    num_workers: 8
+    preprocess: true
+  train:
+    debug: false
+    pre_train: false
+    batch_size: 16
+    lr: 0.0001
+    max_epochs: 1000
+    log_every_n_steps: 15
+    device: cuda
+    loss_func: separate_head_loss
+    metric_gt: MAE
+    metric_sl: MAE
+    metric_ob: SSIM
+    metric_all: MAE
+    stage: train_all_heads
+    weight_decay: 0.01
+    mask_decay: 0.001
+    lambda_gt_loss: 1.0
+    lambda_decomp_loss: 1.0
+    lambda_occlusion_difference: 0.001
+    strategy: ddp_find_unused_parameters_true
+    accumulate_grad_batches: 4
+    es_patience: 10
+  model:
+    checkpoint: false
+    upsampler_gt: unet
+    upsampler_sl: unet
+    upsampler_ob: unet
+    swin:
+      checkpoint: swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt
+      use_checkpoint: true
+      frozen_stages: 4
+      patch_size:
+      - 2
+      - 4
+      - 4
+    unet_gt:
+      freeze: false
+      checkpoint: /netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt
+      decoder:
+        output_dim: 3
+        f_maps:
+        - 96
+        - 192
+        - 384
+        - 768
+        basic_module: DoubleConv
+        conv_kernel_size: 3
+        conv_padding: 1
+        layer_order: gcr
+        num_groups: 8
+        is3d: true
+        layers_no_skip:
+          size:
+          - - 96
+            - 48
+            - 5
+            - 128
+            - 128
+          - - 48
+            - 24
+            - 1
+            - 256
+            - 256
+          scale_factor: 2
+        omit_skip_connections: false
+    unet_sl:
+      freeze: false
+      checkpoint: /netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt
+      decoder:
+        output_dim: 2
+        f_maps:
+        - 96
+        - 192
+        - 384
+        - 768
+        basic_module: DoubleConv
+        conv_kernel_size: 3
+        conv_padding: 1
+        layer_order: gcr
+        num_groups: 8
+        is3d: true
+        layers_no_skip:
+          size:
+          - - 96
+            - 48
+            - 5
+            - 128
+            - 128
+          - - 48
+            - 24
+            - 10
+            - 256
+            - 256
+          scale_factor: 2
+        omit_skip_connections: false
+    unet_ob:
+      freeze: false
+      checkpoint: false
+      decoder:
+        output_dim: 4
+        f_maps:
+        - 96
+        - 192
+        - 384
+        - 768
+        basic_module: DoubleConv
+        conv_kernel_size: 3
+        conv_padding: 1
+        layer_order: gcr
+        num_groups: 8
+        is3d: true
+        layers_no_skip:
+          size:
+          - - 96
+            - 48
+            - 5
+            - 128
+            - 128
+          - - 48
+            - 24
+            - 10
+            - 256
+            - 256
+          scale_factor: 2
+        omit_skip_connections: false
+- git_commit: test

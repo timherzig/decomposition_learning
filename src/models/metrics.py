@@ -22,7 +22,6 @@ class SSIM:
     def __call__(self, x, y):
         self.metric.to(x.device)
         loss = self.metric(x, y)
-        print(loss)
         return 1.0 - loss
 
 

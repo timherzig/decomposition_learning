@@ -388,11 +388,8 @@ class separate_head_loss:
                 (target * shadow_mask + light_mask),
                 occlusion_rgb,
             )
+            # ob_reconstruction = torch.clip(ob_reconstruction, 0.0, 1.0)
             ob_loss = self.metric_ob(ob_reconstruction, input)
-
-            print(f"gt_loss: {gt_loss}")
-            print(f"sl_loss: {sl_loss}")
-            print(f"ob_loss: {ob_loss}")
 
             return (
                 gt_loss
