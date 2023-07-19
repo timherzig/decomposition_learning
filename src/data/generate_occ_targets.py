@@ -6,10 +6,11 @@ from tqdm import tqdm
 import cv2
 import numpy as np
 import argparse
+from torchvision.transforms import ToPILImage
 
 sys.path.append(f"{os.getcwd()}")
 from src.data.siar_data import SIAR_OCC_GENERATION
-
+to_pil = ToPILImage()
 def save_tensor(occlusions, sample, dir):
     dir_sample = os.path.join(dir, f"{sample}")
     os.makedirs(dir_sample, exist_ok=True)
@@ -20,10 +21,10 @@ def save_tensor(occlusions, sample, dir):
             name = 1
         else:
             name = i
-        occ = occlusions[:, i, :, :]
-        occ = occ.moveaxis(0, 2)
-        occ = occ * 255
-        cv2.imwrite(os.path.join(dir_sample, str(name) + ".png"), np.array(occ))
+        occ = to_pil(occlusions[:, i, :, :])
+
+
+        occ.save(os.path.join(dir_sample, str(name) + ".png"))
 
 def get_args():
     argparser = argparse.ArgumentParser(description=__doc__)
