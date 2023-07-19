@@ -187,7 +187,12 @@ class SIAR_OCC(SIAR):
 
         sample = dir.split("/")[-1]
         path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
+        # path_to_occ = f"/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/data/SIAR_OCC/{sample}.pt"
         occ = torch.load(path_to_occ)
+
+        # Swap elements 1 and 9 in dimension 1
+        occ[:, [1, 9], :, :] = occ[:, [9, 1], :, :]
+
         sl = torch.zeros_like(images)
 
         return (images, ground_truth, sl, occ)
