@@ -17,10 +17,10 @@ class MSE:
 class SSIM:
     def __init__(self):
         super().__init__()
-        self.metric = SSIMLoss()
+        self.metric = SSIMLoss(data_range=1.0)
 
     def __call__(self, x, y):
-        self.metric.to(x.device)
+        # self.metric.to(x.device)
         loss = self.metric(x, y)
         print(loss)
         return 1.0 - loss
