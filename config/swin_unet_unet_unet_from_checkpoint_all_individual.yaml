@@ -21,7 +21,7 @@ train:
   # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
   metric_gt: 'MAE'
   metric_sl: 'MAE'
-  metric_ob: 'SSIM'
+  metric_ob: 'MAE'
   metric_all: 'MAE'
   stage: 'train_all_heads'
   weight_decay: 0.01
