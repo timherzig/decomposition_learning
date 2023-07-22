@@ -1,7 +1,7 @@
 from typing import Any
 import torch
 import torch.nn as nn
-from torch.nn import MSELoss, L1Loss
+from torch.nn import MSELoss, L1Loss, BCELoss, BCEWithLogitsLoss
 from torchmetrics import StructuralSimilarityIndexMeasure as SSIMLoss
 
 
@@ -29,6 +29,26 @@ class MAE:
     def __init__(self):
         super().__init__()
         self.metric = L1Loss()
+
+    def __call__(self, x, y):
+        self.metric.to(x.device)
+        return self.metric(x, y)
+
+
+class BCE:
+    def __init__(self):
+        super().__init__()
+        self.metric = BCELoss()
+
+    def __call__(self, x, y):
+        self.metric.to(x.device)
+        return self.metric(x, y)
+
+
+class BCEWithLogits:
+    def __init__(self, pos_weight=torch.tensor([1.0])):
+        super().__init__()
+        self.metric = BCEWithLogitsLoss(pos_weight=pos_weight)
 
     def __call__(self, x, y):
         self.metric.to(x.device)

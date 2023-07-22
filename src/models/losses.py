@@ -97,7 +97,7 @@ class reconstruction_loss:
 
         self.model = model
         self.config = config
-        metric_class = get_metric(self.config.metric)
+        metric_class = get_metric(self.config.metric_all)
         self.metric = metric_class()
 
     def __call__(
@@ -107,6 +107,7 @@ class reconstruction_loss:
         shadow_mask,
         occlusion_mask,
         occlusion_rgb,
+        target,
         input,
         shadow_light_mask,
         occlusion_mask_gt,
@@ -413,6 +414,96 @@ class separate_head_loss:
             return self.metric_all(ob_reconstruction, input) + weight_decay(
                 self.model, self.config.weight_decay
             )
+
+
+class occ_binary_pretraining_loss:
+    def __init__(self, model, config):
+        super().__init__()
+
+        self.model = model
+        self.config = config
+        self.metric_occ_mask = get_metric(self.config.metric_occ_mask)
+        self.metric_occ_rgb = get_metric(self.config.metric_occ_rgb)
+        self.metric_mask = self.metric_occ_mask()
+        self.metric_rgb = self.metric_occ_rgb()
+
+    def __call__(
+        self,
+        gt_reconstruction,
+        light_mask,
+        shadow_mask,
+        occlusion_mask,
+        occlusion_rgb,
+        target,
+        input,
+        shadow_light_mask,
+        occlusion_mask_gt,
+    ):
+        # compute proportion 0s to 1s in image
+        # #pixels with value 0 / #pixels with value 1
+        factor = (
+            (
+                occlusion_mask_gt.shape[0]
+                * occlusion_mask_gt.shape[1]
+                * occlusion_mask_gt.shape[2]
+                * occlusion_mask_gt.shape[3]
+            )
+            - occlusion_mask_gt.sum()
+        ) / occlusion_mask_gt.sum()
+        # Fill a 256x256 matrix with the factor value
+        pos_weight = (
+            torch.ones([occlusion_mask_gt.shape[2], occlusion_mask_gt.shape[3]]).to(
+                occlusion_mask_gt.device
+            )
+            * factor.item()
+        ).to(occlusion_mask_gt.device)
+
+        # always reinitialize the BCEWithLogitsLoss with new positive weights
+        metric_mask = self.metric_occ_mask(pos_weight=pos_weight)
+
+        loss_mask = metric_mask(occlusion_mask, occlusion_mask_gt)
+
+        return loss_mask  # + weight_decay(self.model, self.config.weight_decay)
+
+
+class occ_pretraining_loss:
+    def __init__(self, model, config):
+        super().__init__()
+
+        self.model = model
+        self.config = config
+        self.metric_occ_mask = get_metric(self.config.metric_occ_mask)
+        self.metric_occ_rgb = get_metric(self.config.metric_occ_rgb)
+        self.metric_mask = self.metric_occ_mask()
+        self.metric_rgb = self.metric_occ_rgb()
+
+    def __call__(
+        self,
+        gt_reconstruction,
+        light_mask,
+        shadow_mask,
+        occlusion_mask,
+        occlusion_rgb,
+        target,
+        input,
+        shadow_light_mask,
+        occlusion_mask_gt,
+    ):
+        # return self.metric(occlusion_rgb, occlusion_mask_gt) + weight_decay(
+        #     self.model, self.config.weight_decay
+        # )
+
+        occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        occ_reconstruction = torch.where(
+            occlusion_mask < 0.5,
+            0.0,
+            occlusion_rgb,
+        )
+        return self.metric_rgb(occ_reconstruction, occlusion_mask_gt)
+
+        # loss_mask = self.metric_mask(occlusion_mask, occlusion_mask_gt)
+
+        # return loss_mask  # + weight_decay(self.model, self.config.weight_decay)
 
 
 class overall_loss:

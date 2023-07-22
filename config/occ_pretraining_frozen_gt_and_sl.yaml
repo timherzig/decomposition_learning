@@ -5,22 +5,23 @@ data:
   split_dir: 'split-1_80_10_10'
   # Set validation set equal to train set to provoke overfitting and see if loss works
   sanity_check: False
-  num_workers: 8
+  num_workers: 16
     
 train:
   debug: True
   pre_train: False
-  batch_size: 2
+  batch_size: 16
   lr: 1e-4
   max_epochs: 1000
   log_every_n_steps: 15
-  device: 'cpu'
+  log_img_every_n_epochs: 1
+  device: 'cuda'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
-  loss_func: 'separate_head_loss'
+  loss_func: 'reconstruction_loss'
   # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
   metric_gt: 'MAE'
   metric_sl: 'MAE'
-  metric_ob: 'SSIM'
+  metric_ob_mask: 'MAE'
   metric_all: 'MAE'
   stage: 'train_all'
   weight_decay: 0.01
@@ -44,7 +45,7 @@ model:
     frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
-    checkpoint: '/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
+    checkpoint: False
     # checkpoint: False
     freeze: True
     decoder:
@@ -61,8 +62,8 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
-    checkpoint: '/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
-    # checkpoint: False
+    # checkpoint: '/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
+    checkpoint: False
     freeze: True
     decoder:
       output_dim: 2

@@ -1,3 +1,5 @@
+import os
+
 import torch
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -38,7 +40,7 @@ class Decomposer(pl.LightningModule):
             self.swin = SwinTransformer3D(patch_size=self.model_config.swin.patch_size)
         else:
             self.swin = SwinTransformer3D(
-                pretrained=config.model.swin.checkpoint,
+                pretrained=f"{os.getcwd()}/{config.model.swin.checkpoint}",
                 patch_size=self.model_config.swin.patch_size,
                 frozen_stages=self.model_config.swin.frozen_stages,
             )
@@ -53,9 +55,10 @@ class Decomposer(pl.LightningModule):
             arguments = dict(self.decoder_gt_config)
             self.up_scale_gt = UpSampler(**arguments)
             if self.model_config.unet_gt.checkpoint is not False:
+                print("Loading UNet GT")
                 self.up_scale_gt.load_state_dict(
                     torch.load(
-                        self.model_config.unet_gt.checkpoint,
+                        f"{os.getcwd()}/{self.model_config.unet_gt.checkpoint}",
                         map_location=torch.device(self.train_config.device),
                     ),
                 )
@@ -76,9 +79,10 @@ class Decomposer(pl.LightningModule):
             arguments = dict(self.decoder_sl_config)
             self.up_scale_sl = UpSampler(**arguments)
             if self.model_config.unet_sl.checkpoint is not False:
+                print("Loading UNet SL")
                 self.up_scale_sl.load_state_dict(
                     torch.load(
-                        self.model_config.unet_sl.checkpoint,
+                        f"{os.getcwd()}/{self.model_config.unet_sl.checkpoint}",
                         map_location=torch.device(self.train_config.device),
                     )
                 )
@@ -99,9 +103,10 @@ class Decomposer(pl.LightningModule):
             arguments = dict(self.decoder_ob_config)
             self.up_scale_ob = UpSampler(**arguments)
             if self.model_config.unet_ob.checkpoint is not False:
+                print("Loading UNet OCC")
                 self.up_scale_ob.load_state_dict(
                     torch.load(
-                        self.model_config.unet_ob.checkpoint,
+                        f"{os.getcwd()}/{self.model_config.unet_ob.checkpoint}",
                         map_location=torch.device(self.train_config.device),
                     )
                 )
@@ -153,14 +158,8 @@ class Decomposer(pl.LightningModule):
 
     def forward_unet(self, x):
         x, encoder_features = self.swin(x)
-        if self.train_config.debug:
-            print(f"swin x shape: {x.shape}")
-            for idx, ef in enumerate(encoder_features):
-                print(f"swin encoder_feature {idx} shape: {ef.shape}")
-
         # Apply Upscaler_1 for reconstruction -> (B, 3, H, W)
         if self.model_config.upsampler_gt == "unet":
-            # Apply sigmoid activation layer
             gt_reconstruction = F.sigmoid(
                 torch.squeeze(self.up_scale_gt(encoder_features[1:], x))
             )
@@ -170,33 +169,28 @@ class Decomposer(pl.LightningModule):
         # Apply Upscaler_2 for shadow mask, light mask -> (B, 2, 10, H, W)
         if self.model_config.upsampler_sl == "unet":
             light_and_shadow_raw = self.up_scale_sl(encoder_features[1:], x)
-            light_mask = F.relu(
-                # self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
-                light_and_shadow_raw[:, 0, :, :, :]
-            )  # ReLU activation
-            shadow_mask = F.sigmoid(
-                # self.up_scale_sl(encoder_features[1:], x)[:, 0, :, :, :]
-                light_and_shadow_raw[:, 1, :, :, :]
-            )  # Sigmoid activation
+            light_mask = torch.clip(
+                F.relu(light_and_shadow_raw[:, 0, :, :, :]), 0.0, 1.0
+            )
+            shadow_mask = F.sigmoid(light_and_shadow_raw[:, 1, :, :, :])
 
         # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 4, 10, H, W)
         if self.model_config.upsampler_ob == "unet":
             occlusion_raw = self.up_scale_ob(encoder_features[1:], x)
-            occlusion_mask = F.relu(
-                # self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
-                occlusion_raw[:, 0, :, :, :]
-            )  # ReLU
-            occlusion_rgb = F.relu(
-                # self.up_scale_ob(encoder_features[1:], x)[:, 1:, :, :, :]
-                occlusion_raw[:, 1:, :, :, :]
-            )  # ReLU
+            # occlusion_mask = F.relu(
+            #     # self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
+            #     occlusion_raw[:, 0, :, :, :]
+            # )  # ReLU
+            occlusion_mask = occlusion_raw[:, 0, :, :, :]
+
+            occlusion_rgb = F.sigmoid(occlusion_raw[:, 1:, :, :, :])
 
         return (
-            torch.clip(gt_reconstruction, 0.0, 1.0),
-            torch.clip(light_mask, 0.0, 1.0),
-            torch.clip(shadow_mask, 0.0, 1.0),
-            torch.relu(occlusion_mask),
-            torch.clip(occlusion_rgb, 0.0, 1.0),
+            gt_reconstruction,
+            light_mask,
+            shadow_mask,
+            occlusion_mask,
+            occlusion_rgb,
         )
 
     def loss_func(
@@ -298,7 +292,7 @@ class Decomposer(pl.LightningModule):
                 self.data_config.sanity_check
                 and self.current_epoch % 100 == 0
                 or not self.data_config.sanity_check
-                and self.current_epoch % 10 == 0
+                and self.current_epoch % self.train_config.log_img_every_n_epochs == 0
             )
         ):
             pre_train_log_images(
@@ -403,7 +397,7 @@ class Decomposer(pl.LightningModule):
             if self.train_config.stage == "train_ob":
                 torch.save(
                     self.up_scale_ob.state_dict(),
-                    f"{self.log_dir}/up_scale_ob_model.pt",
+                    f"{self.log_dir}/up_scale_ob_model_{self.current_epoch}.pt",
                 )
 
         self.validation_step_outputs.clear()

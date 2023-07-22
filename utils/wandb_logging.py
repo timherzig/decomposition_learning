@@ -39,6 +39,9 @@ def log_images(
     shadow_light_mask = shadow_light_mask[idx, :, :, :]
     occlusion_mask_gt = occlusion_mask_gt[idx, :, :, :]
 
+    if occlusion_mask_gt.dim() == 3:
+        occlusion_mask_gt = occlusion_mask_gt.unsqueeze(0)
+
     columns = [
         "org_img",
         "org_occlusion",

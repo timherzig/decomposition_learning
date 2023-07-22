@@ -21,20 +21,20 @@ def setup_training(args):
     if not config.train.debug:
         config_name = os.path.basename(args.config).split(".")[0]
         wandb_logger = WandbLogger(config=config, project="HTCV", name=config_name)
-        print(f"Experiment name: {wandb_logger.experiment.name}")
+        print(f"Experiment name: {wandb_logger._name}")
         print("-----------------")
 
     log_dir = None
     if config.train.pre_train:
         if not config.train.debug:
-            log_dir = f"swin_checkpoints/{wandb_logger.experiment.name}"
+            log_dir = f"swin_checkpoints/{wandb_logger._name}"
         else:
             log_dir = "swin_checkpoints/debug"
         os.makedirs(log_dir, exist_ok=True)
 
     if config.train.stage in ["train_gt", "train_sl", "train_ob"]:
         if not config.train.debug:
-            log_dir = f"decoder_checkpoints/{wandb_logger.experiment.name}"
+            log_dir = f"decoder_checkpoints/{wandb_logger._name}"
         else:
             log_dir = f"decoder_checkpoints/{args.config.split('/')[-1].split('.')[0]}"
 
@@ -97,6 +97,7 @@ def parse_arguments():
         # default="config/default.yaml",
         # default="config/occ_pretraining_frozen_gt_and_sl.yaml",
         default="config/occ_pretraining_w_approx_targets.yaml",
+        # default="config/occ_pretraining_frozen_gt_and_sl.yaml",
     )
 
     parser.add_argument("--data-dir", help="Path to dataset", type=str, default=None)

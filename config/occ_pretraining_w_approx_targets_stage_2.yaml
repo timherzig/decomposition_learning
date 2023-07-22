@@ -1,6 +1,6 @@
 data:
   # Name of dataset: 'SIAR', 'SIAR_SL', 'SIAR_OCC', 'SIAR_OCC_Binary'
-  dataset: 'SIAR_OCC_Binary'
+  dataset: 'SIAR_OCC'
   # Split version to use
   split_dir: 'split-1_80_10_10'
   # Set validation set equal to train set to provoke overfitting and see if loss works
@@ -18,8 +18,7 @@ train:
   device: 'cuda'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
   # loss_func: 'separate_head_loss'
-  # loss_func: 'occ_pretraining_loss'
-  loss_func: 'occ_binary_pretraining_loss'
+  loss_func: 'occ_pretraining_loss'
   # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
   metric_gt: 'MAE'
   metric_sl: 'MAE'
@@ -81,8 +80,8 @@ model:
         scale_factor: 2
       omit_skip_connections: False
   unet_ob:
-    freeze: False
-    checkpoint: False
+    freeze: True
+    checkpoint: 'decoder_checkpoints/occ_pretraining_w_approx_targets_Binary_mask/up_scale_ob_model.pt'
     decoder:
       output_dim: 4
       f_maps: [96, 192, 384, 768]
