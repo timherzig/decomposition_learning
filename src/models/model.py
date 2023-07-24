@@ -397,7 +397,7 @@ class Decomposer(pl.LightningModule):
             if self.train_config.stage == "train_ob":
                 torch.save(
                     self.up_scale_ob.state_dict(),
-                    f"{self.log_dir}/up_scale_ob_model_{self.current_epoch}.pt",
+                    f"{self.log_dir}/up_scale_ob_model.pt",
                 )
 
         self.validation_step_outputs.clear()

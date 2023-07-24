@@ -298,6 +298,89 @@ class SIAR_OCC_Binary(SIAR):
         return (images, ground_truth, sl, occ)
 
 
+class SIAR_BINARY_OCC_AND_SL(SIAR):
+    """
+    SIAR Dataset with occlusion approximation targets.
+
+    Returns:
+        images (torch.Tensor): [C, N, H, W] tensor of images.
+        ground_truth (torch.Tensor): [C, H, W] tensor of ground truth image.
+        sl (torch.Tensor): [C, N, H, W] tensor of shadow and light approximation. In this case we return zeros, as we don't need it in the OCC dataset.
+        occ (torch.Tensor): [C, N, H, W] tensor of occlusion approximation. Loaded from pre-generated files.
+
+    C is number of channels, N is number of images should be 10, H and W are height and width of images.
+    """
+
+    def __init__(
+        self,
+        split: str,
+        split_version: str = "",
+        sanity_check=False,
+        manual_dataset_path=None,
+    ) -> None:
+        """
+        Args:
+            split (str): train, val or test
+            split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
+            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
+            manual_dataset_path (str, optional): Path to dataset. Defaults to None.
+        """
+        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+
+    def rearrange_targets(self, targets):
+        rearranged_targets = torch.zeros_like(targets)
+        rearranged_targets[:, 0, :, :] = targets[:, 9, :, :]
+        rearranged_targets[:, 1, :, :] = targets[:, 2, :, :]
+        rearranged_targets[:, 2, :, :] = targets[:, 7, :, :]
+        rearranged_targets[:, 3, :, :] = targets[:, 8, :, :]
+        rearranged_targets[:, 4, :, :] = targets[:, 3, :, :]
+        rearranged_targets[:, 5, :, :] = targets[:, 4, :, :]
+        rearranged_targets[:, 6, :, :] = targets[:, 6, :, :]
+        rearranged_targets[:, 7, :, :] = targets[:, 5, :, :]
+        rearranged_targets[:, 8, :, :] = targets[:, 0, :, :]
+        rearranged_targets[:, 9, :, :] = targets[:, 1, :, :]
+
+        return rearranged_targets
+
+    def __getitem__(self, index):
+        dir = self.df.iloc[index]["dir"]
+
+        ground_truth = os.path.join(dir, "gt.png")
+        assert os.path.exists(ground_truth) == True, f"{ground_truth} does not exist"
+        ground_truth = ToTensor()(Image.open(ground_truth))
+
+        images = os.listdir(dir)
+        images.sort()
+        # print(images)
+
+        images = torch.stack(
+            [
+                ToTensor()(Image.open(os.path.join(dir, x)))
+                for x in images
+                if x.split(".")[0].isnumeric()
+            ]
+        )
+        images = torch.swapaxes(images, 0, 1)
+
+        sample = dir.split("/")[-1]
+        path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
+        # path_to_occ = f"/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/data/SIAR_OCC/{sample}.pt"
+        occ = torch.load(path_to_occ)
+        occ = self.rearrange_targets(occ)
+
+        # Turn into binary mask
+        occ = occ.sum(dim=0)
+        occ = torch.where(
+            occ > 0.5,
+            1.0,
+            0.0,
+        ).to(occ.device)
+
+        sl = get_shadow_light_gt(ground_truth, images)
+
+        return (images, ground_truth, sl, occ)
+
+
 class SIAR_OCC_GENERATION(SIAR):
     """
     SIAR Dataset with occlusion approximation targets.

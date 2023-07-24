@@ -35,6 +35,19 @@ class MAE:
         return self.metric(x, y)
 
 
+class MAE_weighted:
+    def __init__(self):
+        super().__init__()
+        self.weight_factor = 50.0
+
+    def __call__(self, x, y):
+        # weight is whever there is a non zero value in y (i.e. the ground truth)
+        weight_matrix = torch.ones_like(y) * self.weight_factor
+        weight = torch.where(y != 0, weight_matrix, torch.ones_like(y))
+        loss = torch.mean(torch.abs(x - y) * weight)
+        return loss
+
+
 class BCE:
     def __init__(self):
         super().__init__()

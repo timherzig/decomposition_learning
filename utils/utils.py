@@ -36,7 +36,9 @@ def setup_training(args):
         if not config.train.debug:
             log_dir = f"decoder_checkpoints/{wandb_logger._name}"
         else:
-            log_dir = f"decoder_checkpoints/{args.config.split('/')[-1].split('.')[0]}"
+            log_dir = (
+                f"decoder_checkpoints/{args.config.split('/')[-1].split('.')[0]}_debug"
+            )
 
         os.makedirs(log_dir, exist_ok=True)
 
@@ -96,7 +98,9 @@ def parse_arguments():
         help="Path to config.yaml file.",
         # default="config/default.yaml",
         # default="config/occ_pretraining_frozen_gt_and_sl.yaml",
-        default="config/occ_pretraining_w_approx_targets.yaml",
+        # default="config/occ_pretraining_w_approx_targets.yaml",
+        # default="config/occ_pretraining_w_approx_targets_stage_2.yaml",
+        default="config/occ_pretraining_reconstruction.yaml",
         # default="config/occ_pretraining_frozen_gt_and_sl.yaml",
     )
 

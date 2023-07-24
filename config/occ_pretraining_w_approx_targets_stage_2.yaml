@@ -5,6 +5,7 @@ data:
   split_dir: 'split-1_80_10_10'
   # Set validation set equal to train set to provoke overfitting and see if loss works
   sanity_check: False
+  # Number of workers for dataloader
   num_workers: 16
     
 train:
@@ -12,7 +13,7 @@ train:
   pre_train: False
   batch_size: 16
   lr: 1e-3
-  max_epochs: 500
+  max_epochs: 100
   log_every_n_steps: 15
   log_img_every_n_epochs: 5
   device: 'cuda'
@@ -24,7 +25,7 @@ train:
   metric_sl: 'MAE'
   # metric_occ_mask: 'BCE'  # 'MAE'
   metric_occ_mask: 'BCEWithLogits'
-  metric_occ_rgb: 'MAE'  # 'MAE'
+  metric_occ_rgb: 'MAE_weighted'  # 'MAE'
   metric_all: 'MAE'
   stage: 'train_ob'
   weight_decay: 0.01
@@ -80,8 +81,8 @@ model:
         scale_factor: 2
       omit_skip_connections: False
   unet_ob:
-    freeze: True
-    checkpoint: 'decoder_checkpoints/occ_pretraining_w_approx_targets_Binary_mask/up_scale_ob_model.pt'
+    freeze: False
+    checkpoint: 'decoder_checkpoints/occ_pretraining_w_approx_targets_binary/up_scale_ob_model_24.pt'
     decoder:
       output_dim: 4
       f_maps: [96, 192, 384, 768]

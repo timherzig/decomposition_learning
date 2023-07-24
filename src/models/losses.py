@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import MSELoss
 
-from src.models.utils.utils import get_class
+from src.models.utils.utils import get_class, get_pos_weight
 from src.models.metrics import MSE, SSIM
 
 
@@ -18,8 +18,9 @@ def weight_decay(model, weight_decay):
     """
 
     decay = 0.0
-    for name, param in model.named_parameters():
-        if name in ["weights"]:
+    for _, param in model.named_parameters():
+        # if parameter ist trainable
+        if param.requires_grad:
             decay += torch.sum(param**2)
     return decay * weight_decay
 
@@ -98,7 +99,7 @@ class reconstruction_loss:
         self.model = model
         self.config = config
         metric_class = get_metric(self.config.metric_all)
-        self.metric = metric_class()
+        self.metric_rec = metric_class()
 
     def __call__(
         self,
@@ -123,9 +124,76 @@ class reconstruction_loss:
             occlusion_rgb,
         )
 
-        reconstruction_loss = self.metric(reconstruction, input)
+        reconstruction_loss = self.metric_rec(reconstruction, input)
 
         return reconstruction_loss + weight_decay(self.model, self.config.weight_decay)
+
+
+class occlusion_reconstruction_loss:
+    """Reconstruction loss. MSE between reconstructed occluded image and input."""
+
+    def __init__(self, model, config):
+        super().__init__()
+
+        self.model = model
+        self.config = config
+        metric_class = get_metric(self.config.metric_all)
+        self.metric_rec = metric_class()
+        self.metric_class_occ = get_metric(self.config.metric_occ_mask)
+
+    def __call__(
+        self,
+        gt_reconstruction,
+        light_mask,
+        shadow_mask,
+        occlusion_mask,
+        occlusion_rgb,
+        target,
+        input,
+        shadow_light_mask,
+        occlusion_mask_gt,
+    ):
+        # gt_reconstruction = gt_reconstruction.unsqueeze(2).repeat(1, 1, 10, 1, 1)
+        # shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        # light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+
+        # Occlusion mask loss
+        if self.config.lambda_binary_occ:
+            pos_weight = get_pos_weight(occlusion_mask_gt)
+            metric_occ = self.metric_class_occ(pos_weight=pos_weight)
+            binary_occ_mask_loss = self.config.lambda_binary_occ * metric_occ(
+                occlusion_mask, occlusion_mask_gt
+            )
+        else:
+            binary_occ_mask_loss = 0
+
+        # mask decay
+        if self.config.mask_decay:
+            md = mask_decay(occlusion_mask, self.config.mask_decay)
+        else:
+            md = 0
+
+        if self.config.weight_decay:
+            wd = weight_decay(self.model, self.config.weight_decay)
+        else:
+            wd = 0
+
+        # Reconstruction loss
+        occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+
+        reconstruction = torch.where(
+            occlusion_mask < 0.9,
+            shadow_light_mask,
+            occlusion_rgb,
+        )
+        reconstruction_loss = self.metric_rec(reconstruction, input)
+
+        # reconstruction = torch.where(
+        #     occlusion_mask < 0.5,
+        #     (gt_reconstruction * shadow_mask + light_mask),
+        #     occlusion_rgb,
+        # )
+        return reconstruction_loss + binary_occ_mask_loss + md + wd
 
 
 class pre_train_loss:
@@ -439,24 +507,7 @@ class occ_binary_pretraining_loss:
         shadow_light_mask,
         occlusion_mask_gt,
     ):
-        # compute proportion 0s to 1s in image
-        # #pixels with value 0 / #pixels with value 1
-        factor = (
-            (
-                occlusion_mask_gt.shape[0]
-                * occlusion_mask_gt.shape[1]
-                * occlusion_mask_gt.shape[2]
-                * occlusion_mask_gt.shape[3]
-            )
-            - occlusion_mask_gt.sum()
-        ) / occlusion_mask_gt.sum()
-        # Fill a 256x256 matrix with the factor value
-        pos_weight = (
-            torch.ones([occlusion_mask_gt.shape[2], occlusion_mask_gt.shape[3]]).to(
-                occlusion_mask_gt.device
-            )
-            * factor.item()
-        ).to(occlusion_mask_gt.device)
+        pos_weight = get_pos_weight(occlusion_mask_gt)
 
         # always reinitialize the BCEWithLogitsLoss with new positive weights
         metric_mask = self.metric_occ_mask(pos_weight=pos_weight)

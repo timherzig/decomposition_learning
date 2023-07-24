@@ -1,31 +1,36 @@
 data:
-  # Name of dataset
-  dataset: 'SIAR'
+  # Name of dataset: 'SIAR', 'SIAR_SL', 'SIAR_OCC', 'SIAR_OCC_Binary', 'SIAR_OCC_AND_SL'
+  dataset: 'SIAR_BINARY_OCC_AND_SL'
   # Split version to use
   split_dir: 'split-1_80_10_10'
   # Set validation set equal to train set to provoke overfitting and see if loss works
   sanity_check: False
+  # Number of workers for dataloader
   num_workers: 16
     
 train:
   debug: True
   pre_train: False
   batch_size: 16
-  lr: 1e-4
-  max_epochs: 1000
+  lr: 1e-3
+  max_epochs: 100
   log_every_n_steps: 15
-  log_img_every_n_epochs: 1
+  log_img_every_n_epochs: 5
   device: 'cuda'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
-  loss_func: 'reconstruction_loss'
-  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
+  # loss_func: 'separate_head_loss'
+  loss_func: 'occlusion_reconstruction_loss'
+  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE', 'BCE', 'BCEWithLogits', 'MAE_weighted'
   metric_gt: 'MAE'
   metric_sl: 'MAE'
-  metric_ob_mask: 'MAE'
-  metric_all: 'MAE'
-  stage: 'train_all'
-  weight_decay: 0.01
-  mask_decay: 1e-4 # 1e-5
+  # metric_occ_mask: 'BCE'  # 'MAE'
+  metric_occ_mask: 'BCEWithLogits'
+  metric_occ_rgb: 'MAE_weighted'  # 'MAE'
+  metric_all: 'MAE' # used for reconstruction_loss
+  stage: 'train_ob'
+  weight_decay: False # 1e-5
+  mask_decay: False # 1e-10
+  lambda_binary_occ: 0.01
   lambda_gt_loss: 1.0
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
@@ -45,9 +50,8 @@ model:
     frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
-    checkpoint: False
-    # checkpoint: False
     freeze: True
+    checkpoint: False
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
@@ -62,7 +66,6 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
-    # checkpoint: '/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
     freeze: True
     checkpoint: False
     decoder:
