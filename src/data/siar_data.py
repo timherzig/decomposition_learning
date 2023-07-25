@@ -363,7 +363,8 @@ class SIAR_BINARY_OCC_AND_SL(SIAR):
         images = torch.swapaxes(images, 0, 1)
 
         sample = dir.split("/")[-1]
-        path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
+        #path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
+        path_to_occ = os.path.join(self.path_to_dataset, f"/SIAR_OCC/{sample}.pt")
         # path_to_occ = f"/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/data/SIAR_OCC/{sample}.pt"
         occ = torch.load(path_to_occ)
         occ = self.rearrange_targets(occ)
