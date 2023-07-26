@@ -78,7 +78,7 @@ model:
       omit_skip_connections: False
   unet_ob:
     freeze: False
-    checkpoint: False
+    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_ob/up_scale_ob_model.pt'
     decoder:
       output_dim: 4
       f_maps: [96, 192, 384, 768]

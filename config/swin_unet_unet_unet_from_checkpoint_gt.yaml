@@ -32,6 +32,7 @@ train:
   strategy: 'ddp_find_unused_parameters_true'
   accumulate_grad_batches: 4
   es_patience: 10
+  log_img_every_n_epochs: 5
 
 
 model:
@@ -46,7 +47,7 @@ model:
     patch_size: [2, 4, 4]    
   unet_gt:
     freeze: False
-    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint/up_scale_gt_model.pt'
+    checkpoint: False
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
