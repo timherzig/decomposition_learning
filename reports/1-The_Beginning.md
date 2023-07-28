@@ -4,7 +4,7 @@
 
 *Can a model learn to deliberately decompose an augmented image into the main contents of the image and added light, shadows, and occlusions?*
 
-![Fig 1](figures/Example_Sequence.png)
+![Fig 1](figures/1-The_Beginning/Example_Sequence.png)
 **Fig 1:** *Example sequence of images with added augmentations and ground truth.*
 
 Given a sequence of images (see. Fig 1), can a model learn to predict the single underlying image and the added augmentations for each sequence element?

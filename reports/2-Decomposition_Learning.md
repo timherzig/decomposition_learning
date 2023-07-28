@@ -50,13 +50,11 @@ Architecture with skip connections              |  Architecture without skip con
 
 **Fig 3:** *Pre-training architectures.*
 
-## Improving stability
-We assume that those collapses are due to exploding gradients and introduce regularizations to improve training stability. We use gradient clipping and weight decay to achieve this.
-
 ## Exploration
 > TODO: Brief summary of exploration. -> Diffusion and reverse SWIN. \
 Refer to specific reports for more details.
 
 ## One step back
-> TODO: Write about taking a step back and staged training. GT model, then SL model, then OC model, then all together. \
-Latter two are for future report (?)
+We assume that those collapses are due to exploding gradients.
+Our loss landscape is very unsmooth and the loss function is very unstable. The definition of our task is very ambiguous and it is difficult to enforce certrain features to be learned by certain branches.
+To enforce each branch to learn what it is intended to learn (gt reconstruction, shadow and light, and occlusions) we decide to not only pretrain our encoder, but also all of our decoders seperately.
