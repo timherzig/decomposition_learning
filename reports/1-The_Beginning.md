@@ -2,17 +2,17 @@
 
 ## Introduction
 
-*Can a model learn to deliberately decompose an augmented image into the main contents of the image and added light, shadows, and occlusions?*
+*Can a model learn to decompose an augmented image into the original image and the augmented components--light, shadow and occlusion?*
 
 ![Fig 1](figures/1-The_Beginning/Example_Sequence.png)
-**Fig 1:** *Example sequence of images with added augmentations and ground truth.*
+**Fig 1:** *Example sequence of images with added augmentations, the first one being the original image.*
 
-Given a sequence of images (see. Fig 1), can a model learn to predict the single underlying image and the added augmentations for each sequence element?
+Given a sequence of augmented images (see Fig 1), can a model learn to predict the original image and the added augmentations for each sequence element?
 
 We propose a novel dataset, called **SIAR** (S... I... A... R...), to investigate this question.
 The dataset consists of 15618 sequences of 11 256x256 resolution images each.
-Each sequence contains a single underlying image and 10 augmented views.
-The random augmentations are added to the underlying image in the order *shadow*, *occlusion*, and *light*.
+Each sequence contains an original image and 10 augmented images.
+The random augmentations are added to the original image in the order *shadow*, *occlusion*, and *light*.
 
 > TODO: CREATE FIGURE FOR ARCHITECTURE
 
@@ -23,15 +23,15 @@ To solve this task, we propose a novel model, which we call **Decomposer**.
 Fig 2 shows the model architecture.
 The model consists of two parts: an **encoder** and a **decoder**.
 For the encoder, we use the Video SWIN Transformer that takes a sequence of images as input and encodes each image into a latent representation.
-For the decoder, we use three branches, each a 3D UNet architecture, that all take the same latent representation of the encoder and decodes them into the underlying image and the augmentations.
-One branch ($decoder_{gt}$) is trained to predict the ground truth underlying image.
+For the decoder, we use three branches, each a 3D UNet architecture, that all take the same latent representation of the encoder and decodes them into the original image and the augmentations.
+One branch ($decoder_{gt}$) is trained to predict the original image.
 The second branch ($decoder_{sl}$) is trained to predict the light and shadow masks.
 The third branch ($decoder_{oc}$) is trained to predict the occlusions.
 
 ## The Video SWIN architecture
 Video Swin Transformer is a spatiotemporal adaption of Swin transformer, which extends its application into the temporal dimension of videos along with the spatial dimensions of individual frames. It consists of four stages. The overall architecture can be seen in Figure 3. The input video has a size of T x H x W x 3, consisting of T frames each with H x W x 3 pixels. In the first stage at the **patch partitioning layer**, the input video is partitioned into T/2 x H/4 x W/4 3D patches/tokens, each of the size 2 x 4 x 4 x 3, i.e. 96 features. A linear embedding layer projects the features of each token to an arbitrary dimension denoted by C. The output is then passed into a Video Swin Transformer block. 
 
-Each of the following three stages consists of a **patch merging layer and Video Swin Transformer blocks**. In the patch merging layer, each group of 2 x 2 neighbouring patches are concatenated. The concatenated features are then projected to half of their dimension by a linear layer. As a result, after each stage, the number of tokens is one fourth the original and the number of features of each token doubled. 
+Each of the following three stages consists of a **patch merging layer** and **Video Swin Transformer blocks**. In the patch merging layer, each group of 2 x 2 neighbouring patches are concatenated. The concatenated features are then projected to half of their dimension by a linear layer. As a result, after each stage, the number of tokens is one fourth the original and the number of features of each token doubled. 
 
 ![Fig. 3](figures/1-The_Beginning/video_swin.png)
 **Figure 3:** Overall architecture of Video Swin Transformer (tiny version: Swin-T). Other variants differ in the layer numbers and the value of C (number of hidden features in the first stage).
