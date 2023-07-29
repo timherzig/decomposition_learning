@@ -1,9 +1,7 @@
 # HTCV: The final advances to the Decomposer model
 
 Guiding the decomposition learning process to reduce ambiguity.
-
-> TODO: Write about all the preprocessing done to specifically extract light and shadow masks and eventually leave only the occlusions to be learned without specific mask. \
-```Always Good to have as many images as possible!```
+After multiple runs of training the model with our naive loss function approach, we realized that without any ground truths for occlusion, shadow, and light masks, the self-supervised model struggled to distinguish between individual distortions. In many cases, the shadow mask dominated in extracting all distortions + background artifacts from the distorted image. Therefore, to guide the model in the right direction, we made the decision to create pseudo-labels for shadow, light, and occlusion masks. Finally, we split the training into multiple stages, where the goal is to pretrain each head for a specific task separately, based on the pseudo-labels.
 
 ## Table of contents
 1. [Source Image Reconstruction ](#source-image-reconstruction) \
