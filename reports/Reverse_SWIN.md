@@ -3,7 +3,10 @@ We construct a reverse Video SWIN Transformer, which basically reverses the step
 
 Each of the first three stages consists of Video SWIN Tranformer blocks and a patch splitting layer. As a reversal of the patch merging layer in the original Video SWIN Transformer, the patch splitting layer doubles the number of features of each patch by a linear layer and and splits them into 4 patches. As a result, after each stage, the number of patches is four times the original and the number of features of each patch halved. 
 
-Eventually, transposed convolution is applied to project the patches back to the desired dimensions of the masks. 
+Eventually, transposed convolution is applied to project the patches back to the desired dimensions of the reconstructed images or masks.
+
+![Fig. 1](figures/reverse_swin.png)\
+**Figure 1:** An illustration of the reverse Video SWIN Transformer.
 
 ## Discussion
 We only ran some preliminary experiments on this novel decoder and the results looked noisy and far from satisfatory. For future work, we hope to finetune the architecture and parameters more strategically, e.g. adding skip connections like the ones in the UNet model, reducing the number of layers in each stage to see if a lighter architecture can capture useful information more effectively, etc.
