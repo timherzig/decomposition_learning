@@ -1,7 +1,7 @@
 # HTCV: The final advances to the Decomposer model
 
 Guiding the decomposition learning process to reduce ambiguity.
-After multiple runs of training the model with our naive loss function approach, we realized that without any ground truths for occlusion, shadow, and light masks, the self-supervised model struggled to distinguish between individual distortions. In many cases, the shadow mask dominated in extracting all distortions + background artifacts from the distorted image. Therefore, to guide the model in the right direction, we made the decision to create pseudo-labels for shadow, light, and occlusion masks. Finally, we split the training into multiple stages, where the goal is to pretrain each head for a specific task separately, based on the pseudo-labels.
+After multiple runs of training the model with our naive loss function approach, we realized that without any ground truths for occlusion, shadow, and light masks, the self-supervised model struggled to distinguish between individual distortions. In many cases, the shadow mask dominated in extracting all distortions + background artifacts from the distorted image. Therefore, to guide the model in the right direction, we made the decision to create pseudo-labels for shadow, light, and occlusion masks. Finally, we split the training into multiple stages, where the goal is to pretrain each head for a specific task separately, based on the pseudo-labels. Note, that each stage is trained on pretrained swin encoder.
 
 ## Table of contents
 1. [Source Image Reconstruction ](#source-image-reconstruction) \
@@ -17,14 +17,15 @@ After multiple runs of training the model with our naive loss function approach,
 
 ## Source Image Reconstruction
 ### Loss function
-
+The first head is designed to reconstruct ground truth for a given sequence of images. For this task we propose a very simple loss, which is MSE between the ground truth and our reconstructed ground truth.
 ## Light and Shadow Mask Reconstruction
 ### Generating Pseudo Labels
+To compute psedue-label for light, we subtract the distorted image from gt and clip all values below 0. The resulting image is then blurred with a Gaussian filter to remove the remaining artifacts. For the shadow mask, we perform the same operation, however, we first invert the image. 
 ### Loss function
-
+We train shadow and light extraction together as one stage. For the loss function, we first multiply gt with the shadow pseudo label and add the light pseudo label. We then compare (on MSE) it with gt_reconstruction * predicted_shadow + predicted_light.
 ## Occlusion Mask Reconstruction
 ### Generating Pseudo Labels
-
+To generate pseudo labels for the occlusion, we calculate ssim loss between our shadow_light pseudo labels and distorted image. The goal is that regions of the distorted images with occlusion will produce higher loss than regions without occlusion. Finally, we apply adaptive thresholding to calculate the best threshold value for occlusion/non-occlusion regions.
 ![Fig 3.1](figures/3-Advanced_Decomposition_Learning/Occ_input_and_target.png)
 **Fig 3.1:** *Input images (top) and generated occlusion pseudo targets (bottom).*
 ### Loss function
