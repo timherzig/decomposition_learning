@@ -14,6 +14,7 @@ Now that we saw how our model was capable of reconstructing the underlying image
 ## First attempts
 ### Loss function
 > TODO: Write about complete loss function (base_loss)
+Our first loss function was built based on properties where a distorted image can be reconstructed as follows: distorted image = (original image * shadow + light) x occlusion. Thus, the model learns a mask for shadow, a mask for light, and two masks for occlusion. The first one is a binary mask that indicates where an occlusion occurs in an image, and the second mask learns the RGB values of the occlusion. To create the distorted image, we first multiply the ground truth reconstruction with the shadow mask and then add the light mask to it. In the areas where the occlusion binary mask predicts an occlusion, we copy the content of the occlusion RGB mask into that place. Finally, the loss is computed as MSE between our reconstructed distorted image and the input image.
 
 ### Results
 We trained our Decomposer model on our base (decomposition) loss for 30 epochs.
