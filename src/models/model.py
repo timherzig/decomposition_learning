@@ -44,6 +44,9 @@ class Decomposer(pl.LightningModule):
                 patch_size=self.model_config.swin.patch_size,
                 frozen_stages=self.model_config.swin.frozen_stages,
             )
+            # freeze SWIN
+            for param in self.swin.parameters():
+                param.requires_grad = False
             print("Loaded SWIN checkpoint")
             print("-----------------")
         # ----------------
@@ -181,7 +184,10 @@ class Decomposer(pl.LightningModule):
             #     # self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
             #     occlusion_raw[:, 0, :, :, :]
             # )  # ReLU
-            occlusion_mask = occlusion_raw[:, 0, :, :, :]
+            if not self.train_config.lambda_binary_occ:
+                occlusion_mask = F.sigmoid(occlusion_raw[:, 0, :, :, :])
+            else:
+                occlusion_mask = occlusion_raw[:, 0, :, :, :]
 
             occlusion_rgb = F.sigmoid(occlusion_raw[:, 1:, :, :, :])
 
