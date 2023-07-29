@@ -41,7 +41,7 @@ To make the latent representation more meaningful, improve training stability an
 
 
 ### Version two: without skip connections
-> TODO: write about pre-training the encoder as an autoencoder without skip connections
+Throughout the process of training the model with skip connections, we realized that reconstructing the same image using skip connections might prevent the training of deeper layers. The model might learn to simply propagate the input  through the first skip connection, leading to limited learning in the deeper layers. To fix that problem, we trained the same model as before but we removed the skip connections.
 
 > TODO: CREATE FIGURE FOR ARCHITECTURE INCLUDING SKIP CONNECTIONS
 
