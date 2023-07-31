@@ -37,7 +37,7 @@ Training loss              |  Validation loss
 ### Version one: with skip connections
 > TODO: write about pre-training the encoder as an autoencoder
 
-To make the latent representation more meaningful, improve training stability and speed, we pretrain the encoder as an autoencoder. We use the same 3DSWIN-encoder and UNET-decoder architecture as before, but now we use the UNET as a many-to-many decoder that predicts the original input images. To do this we use skip connections between the encoder and decoder as shown in fig 3. We train the model for ```xxx``` epochs on the base (reconstruction) loss and eventually only save the encoder weights.
+To make the latent representation more meaningful, improve training stability and speed, we pretrain the encoder as an autoencoder. We use the same 3DSWIN-encoder and UNET-decoder architecture as before, but now we use the UNET as a many-to-many decoder that predicts the original input images. Training the encoder to produce a latent representation that can be decoded to recover the original input images assures that the latent representation includes all important information of all the input images. To do this we use skip connections between the encoder and decoder as shown in fig 3. We train the model for ```80``` epochs on the base (reconstruction) loss and eventually only save the encoder weights.
 
 
 ### Version two: without skip connections
