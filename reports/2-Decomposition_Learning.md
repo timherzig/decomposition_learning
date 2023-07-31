@@ -47,7 +47,7 @@ Throughout the process of training the model with skip connections, we realized 
 
 Architecture with skip connections              |  Architecture without skip connections
 :-------------------------:|:-------------------------:
-![](figures/2-Decomposition_Learning/Pre_training/with_skip_connections.png)  |  ![](figures/2-Decomposition_Learning/Pre_training/without_skip_connections.png)
+![](figures/2-Decomposition_Learning/Pre_training/swin_unet_skip_c.png)  |  ![](figures/2-Decomposition_Learning/Pre_training/swin_unet_no_skip_c.png)
 
 **Fig 3:** *Pre-training architectures.*
 
