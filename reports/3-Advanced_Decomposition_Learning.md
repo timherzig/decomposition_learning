@@ -15,6 +15,9 @@ After multiple runs of training the model with our naive loss function approach,
 3.2.1 [Binary Mask](#binary-mask) \
 3.2.2 [RGB Mask](#rgb-mask)
 
+## Proposed Architecture
+![Fig 1](figures/3-Advanced_Decomposition_Learning/network.png)
+
 ## Source Image Reconstruction
 ### Loss function
 The first head is designed to reconstruct ground truth for a given sequence of images. For this task we propose a very simple loss, which is MSE between the ground truth and our reconstructed ground truth.
