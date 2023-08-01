@@ -26,6 +26,7 @@ train:
   stage: 'train_all'
   weight_decay: 0.0
   mask_decay: 1e-4 # 1e-5
+  lambda_binary_occ: 0.01
   lambda_gt_loss: 1.0
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
