@@ -11,7 +11,7 @@ data:
 train:
   debug: False
   pre_train: False
-  batch_size: 16
+  batch_size: 8
   lr: 1e-4
   max_epochs: 1000
   log_every_n_steps: 15
@@ -24,7 +24,7 @@ train:
   metric_ob: 'SSIM'
   metric_all: 'MAE'
   stage: 'train_all'
-  weight_decay: 0.01
+  weight_decay: 0.0
   mask_decay: 1e-4 # 1e-5
   lambda_gt_loss: 1.0
   lambda_decomp_loss: 1.0
@@ -32,7 +32,7 @@ train:
   strategy: 'ddp_find_unused_parameters_true'
   accumulate_grad_batches: 4
   es_patience: 10
-
+  log_img_every_n_epochs: 5
 
 model:
   checkpoint: False
@@ -46,7 +46,7 @@ model:
     patch_size: [2, 4, 4]    
   unet_gt:
     freeze: False
-    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
+    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
@@ -62,7 +62,7 @@ model:
       omit_skip_connections: False
   unet_sl:
     freeze: False
-    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
+    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
     decoder:
       output_dim: 2
       f_maps: [96, 192, 384, 768]
@@ -78,7 +78,7 @@ model:
       omit_skip_connections: False
   unet_ob:
     freeze: False
-    checkpoint: '/netscratch/herzig/uni_projects/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_ob/up_scale_ob_model.pt'
+    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_ob/up_scale_ob_model.pt'
     decoder:
       output_dim: 4
       f_maps: [96, 192, 384, 768]
