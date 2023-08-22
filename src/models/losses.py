@@ -482,7 +482,7 @@ class separate_head_loss:
 
             return (
                 self.metric_all(ob_reconstruction, input)
-                + gt_loss  # tmp
+                + gt_loss * self.config.lambda_gt_loss  # tmp
                 + weight_decay(self.model, self.config.weight_decay)
             )
 

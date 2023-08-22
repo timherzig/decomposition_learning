@@ -11,8 +11,8 @@ data:
 train:
   debug: False
   pre_train: False
-  batch_size: 8
-  lr: 1e-4
+  batch_size: 20
+  lr: 1e-3
   max_epochs: 1000
   log_every_n_steps: 15
   device: 'cuda'
@@ -27,11 +27,11 @@ train:
   weight_decay: 0.0
   mask_decay: 1e-4 # 1e-5
   lambda_binary_occ: 0.01
-  lambda_gt_loss: 1.0
+  lambda_gt_loss: 0.3
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
   strategy: 'ddp_find_unused_parameters_true'
-  accumulate_grad_batches: 4
+  accumulate_grad_batches: 2
   es_patience: 10
   log_img_every_n_epochs: 5
 

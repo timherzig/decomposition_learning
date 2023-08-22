@@ -46,7 +46,7 @@ def setup_training(args):
         config.train.batch_size,
         config.data.dataset,
         config.data.split_dir,
-        config.data.num_workers,
+        args.num_workers,
         args.data_dir,
     )
 
@@ -105,6 +105,7 @@ def parse_arguments():
     )
 
     parser.add_argument("--data-dir", help="Path to dataset", type=str, default=None)
+    parser.add_argument("--num-workers", type=int, default=8)
 
     return parser.parse_args()
 
