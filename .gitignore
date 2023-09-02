@@ -173,6 +173,8 @@ SIAR/
 SIAR_128/
 SIAR_OCC/
 SIAR.zip
+data/eval
+data/
 
 HTCV/
 
@@ -186,3 +188,4 @@ utils/helper/
 **/.DS_Store
 
 .code-server/
+
