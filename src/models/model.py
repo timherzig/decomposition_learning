@@ -15,17 +15,20 @@ from utils.wandb_logging import (
     log_images,
     pre_train_log_images,
 )
+
+from utils.logging import evaluation_log_images
 from einops import rearrange
 
 
 class Decomposer(pl.LightningModule):
-    def __init__(self, config, log_dir: str = None):
+    def __init__(self, config, log_dir: str = None, eval_output: str = None):
         super().__init__()
 
         self.data_config = config.data
         self.model_config = config.model
         self.train_config = config.train
         self.log_dir = log_dir
+        self.eval_output = eval_output
 
         self.validation_step_outputs = []
         self.best_val_loss = float("inf")
@@ -276,7 +279,7 @@ class Decomposer(pl.LightningModule):
         else:
             gt_reconstruction = self(x)
 
-        loss = self.loss_func(
+        loss, ob_recon = self.loss_func(
             gt_reconstruction,
             light_mask,
             shadow_mask,
@@ -287,6 +290,8 @@ class Decomposer(pl.LightningModule):
             sl,
             ob,
         )
+
+
 
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
@@ -319,13 +324,21 @@ class Decomposer(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        (
-            x,
-            y,
-            sl,
-            ob,
-        ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
-
+        if len(batch) > 4:
+            (
+                x,
+                y,
+                sl,
+                ob,
+                dir,
+            ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
+        else:
+            (
+                x,
+                y,
+                sl,
+                ob
+            ) = batch 
         if not self.train_config.pre_train:
             (
                 gt_reconstruction,
@@ -349,25 +362,23 @@ class Decomposer(pl.LightningModule):
             ob,
         )
 
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("test_loss", loss, prog_bar=True)
 
-        # Log images on the first test step
-        if batch_idx == 0 and not self.train_config.debug:
-            pre_train_log_images(
-                self.logger, gt_reconstruction, x
-            ) if self.train_config.pre_train else log_images(
-                self.logger,
-                y,
-                x,
-                gt_reconstruction,
-                light_mask,
-                shadow_mask,
-                occlusion_mask,
-                occlusion_rgb,
-                sl,
-                ob,
-            )
-        return loss
+        # Log evaluation images
+        target = y.unsqueeze(2).repeat(1, 1, 10, 1, 1)  # tmp
+        shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+        occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
+
+        ob_reconstruction = torch.where(
+            occlusion_mask < 0.5,
+            (target * 0),  # tmp
+            occlusion_rgb,
+        )
+
+        if(len(batch) > 4):
+            evaluation_log_images(gt_reconstruction, ob_reconstruction, light_mask, shadow_mask, x, dir, self.eval_output)
+
 
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=self.train_config.lr)

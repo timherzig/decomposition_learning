@@ -2,6 +2,7 @@ import os
 import torch
 
 import pandas as pd
+import numpy as np
 
 from PIL import Image
 from copy import deepcopy
@@ -87,6 +88,67 @@ class SIAR(Dataset):
 
     def __len__(self):
         return len(self.df)
+
+class SIAR_EVAL(SIAR):
+    """
+    SIAR Dataset desigend for inference on the evaluation dataset (Not the same dataset as initial SIAR!).
+
+    Returns:
+        images (torch.Tensor): [C, N, H, W] tensor of images. \\
+        ground_truth (torch.Tensor): [C, H, W] tensor of ground truth image. \\
+        sl (torch.Tensor): [C, N, H, W] tensor of shadow and light approximation. Generated on the fly. \\
+        occ (torch.Tensor): [C, N, H, W] tensor of occlusion approximation. In this case we return zeros, as we don't need it in the SL dataset.
+        dir (string): Name of the sequence (sequencde id). \\
+
+    C is number of channels, N is number of images should be 10, H and W are height and width of images.
+    """
+
+    def __init__(
+        self,
+        split: str,
+        split_version: str = "",
+        sanity_check=False,
+        manual_dataset_path=None,
+    ) -> None:
+        """
+        Args:
+            split (str): train, val or test
+            split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
+            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
+            manual_dataset_path (str, optional): Path to dataset. Defaults to None.
+        """
+        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+
+    def __getitem__(self, index):
+        dir = self.df.iloc[index]["dir"]
+
+        ground_truth = os.path.join(dir, "gt.png")
+        assert os.path.exists(ground_truth) == True, f"{ground_truth} does not exist"
+
+        # Scale gt and remove alpha channel
+        ground_truth = ToTensor()(Image.open(ground_truth).resize((256, 256)))[:3, :, :]
+
+        # Read images, resize to 256 x 256, remove alpha channel and remove 0th image.
+        images = torch.zeros((10, 3, 256, 256))
+
+        for x in os.listdir(dir):
+            if x.split(".")[0].isnumeric() and x.split(".")[0] != "0":
+                file_i = int(x.split(".")[0])
+                img = (Image.open(os.path.join(dir, x)))
+                img = img.resize((256, 256))
+                img = ToTensor()(img)
+
+                img = img[:3, :, :]
+                images[file_i-1] = img   
+
+        images = torch.swapaxes(images, 0, 1)
+
+        sl = torch.zeros_like(images)
+        occ = torch.zeros_like(images)
+
+        # get sequence id
+        dir_name = dir.split("/")[-1]
+        return (images, ground_truth, sl, occ, dir_name)
 
 
 class SIAR_SL(SIAR):

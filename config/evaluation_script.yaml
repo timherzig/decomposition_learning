@@ -7,27 +7,16 @@ data:
   sanity_check: False
   num_workers: 8
   preprocess: True
-<<<<<<< HEAD
-=======
   eval_output: evaluation_output_no_pretrain
->>>>>>> evaluation
     
 train:
   debug: False
   pre_train: False
-<<<<<<< HEAD
-  batch_size: 8
-  lr: 1e-4
-  max_epochs: 1000
-  log_every_n_steps: 15
-  device: 'cuda'
-=======
   batch_size: 2
   lr: 1e-4
   max_epochs: 1000
   log_every_n_steps: 15
   device: 'cpu'
->>>>>>> evaluation
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
   loss_func: 'separate_head_loss'
   # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
@@ -48,31 +37,18 @@ train:
   log_img_every_n_epochs: 5
 
 model:
-<<<<<<< HEAD
-  checkpoint: False
-=======
   checkpoint: 'checkpoints/final/swin_unet_unet_unet_from_checkpoint_all_epoch614.ckpt'
->>>>>>> evaluation
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
-<<<<<<< HEAD
-    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
-    use_checkpoint: True
-=======
     checkpoint: False
     use_checkpoint: False
->>>>>>> evaluation
     frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
     freeze: False
-<<<<<<< HEAD
-    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
-=======
     checkpoint: False
->>>>>>> evaluation
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
@@ -88,11 +64,7 @@ model:
       omit_skip_connections: False
   unet_sl:
     freeze: False
-<<<<<<< HEAD
-    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
-=======
     checkpoint: False
->>>>>>> evaluation
     decoder:
       output_dim: 2
       f_maps: [96, 192, 384, 768]
@@ -108,11 +80,7 @@ model:
       omit_skip_connections: False
   unet_ob:
     freeze: False
-<<<<<<< HEAD
-    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_ob/up_scale_ob_model.pt'
-=======
     checkpoint: False
->>>>>>> evaluation
     decoder:
       output_dim: 4
       f_maps: [96, 192, 384, 768]
