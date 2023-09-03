@@ -2,7 +2,7 @@
 We propose **Decomposer**, a novel approach to learn a decomposition of an input sequence into (i) reconstructed original image (ii) light masks (iii) shadow masks (iv) occlusion masks.
 
 <!-- inster image -->
-![Decomposer ](/reports/figures/3-Advanced_Decomposition_Learning/network.png)
+![Decomposer ](/reports/figures/3-Advanced_Decomposition_Learning/network_w_bg.png)
 
 ## 💡 Installation
 In root folder:
