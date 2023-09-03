@@ -1,7 +1,8 @@
 # 🚀 Decomposition learning 
-We propose a novel approach to learn a decomposition of an input sequence into (i) reconstructed base image (ii) light masks (iii) shadow masks (iv) occlusion masks.
+We propose **Decomposer**, a novel approach to learn a decomposition of an input sequence into (i) reconstructed original image (ii) light masks (iii) shadow masks (iv) occlusion masks.
 
-[Insert image of framework here]
+<!-- inster image -->
+![Decomposer ](/reports/figures/3-Advanced_Decomposition_Learning/network.png)
 
 ## 💡 Installation
 In root folder:
