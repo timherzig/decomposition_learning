@@ -38,7 +38,7 @@ We propose to pretrain all individual part of our model separately.\
 `Run the following commands to train the individual parts:`
 ### Enocder pretraining
 ```bash
-python train.py --config "config/swin_pretrain.yaml"
+python train.py --config "config/swin_pretraining.yaml"
 ```
 
 ### Original image reconstruction branch pretraining
