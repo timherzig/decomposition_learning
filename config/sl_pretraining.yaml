@@ -1,33 +1,42 @@
 data:
-  # Name of dataset: 'SIAR', 'SIAR_SL', 'SIAR_OCC'
+  # Name of dataset: 'SIAR', 'SIAR_SL', 'SIAR_OCC', 'SIAR_OCC_Binary', 'SIAR_OCC_AND_SL', 'SIAR_EVAL'
   dataset: 'SIAR_SL'
   # Split version to use
   split_dir: 'split-1_80_10_10'
-  # Set validation set equal to train set to provoke overfitting and see if loss works
-  sanity_check: False
-  num_workers: 16
-    
+  # Number of workers for dataloader
+  num_workers: 1
+  # Path to dataset directory that includes SIAR data (path/SIAR), generated occlusion masks (path/SIAR_OCC). If False, expects data to be in data directory of project
+  path_to_data: False
+  # Path where to save evaluation output (Only used for evaluation script)
+  eval_output: evaluation_output
+  
 train:
-  debug: False
+  debug: True
   pre_train: False
-  batch_size: 16
+  batch_size: 2
   lr: 1e-3
-  max_epochs: 500
+  max_epochs: 100
   log_every_n_steps: 15
-  device: 'cuda'
+  log_img_every_n_epochs: 5
+  device: 'mps'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
+  # loss_func: 'separate_head_loss'
   loss_func: 'separate_head_loss'
-  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
+  stage: 'train_sl'
+  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE', 'BCE', 'BCEWithLogits', 'MAE_weighted'
+  metric_all: 'MAE' # used for reconstruction_loss
   metric_gt: 'MAE'
   metric_sl: 'MAE'
   metric_ob: 'SSIM'
-  metric_all: 'MAE'
-  stage: 'train_sl'
-  weight_decay: 0.01
-  mask_decay: 1e-4 # 1e-5
+  # metric_occ_mask: 'BCE'  # 'MAE'
+  metric_occ_mask: 'BCEWithLogits'
+  metric_occ_rgb: 'MAE_weighted'  # 'MAE'
+  lambda_binary_occ: False
   lambda_gt_loss: 1.0
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
+  mask_decay: False # 1e-10
+  weight_decay: False # 1e-5
   strategy: 'ddp_find_unused_parameters_true'
   accumulate_grad_batches: 4
   es_patience: 10

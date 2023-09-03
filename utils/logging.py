@@ -3,15 +3,23 @@ import os
 import numpy as np
 from torchvision.transforms import ToPILImage
 
-def evaluation_log_images(gt_reconstruction, occlusion_mask, light_mask, shadow_mask, x, sequence_dirs, output_folder):
-    
+
+def evaluation_log_images(
+    gt_reconstruction,
+    occlusion_mask,
+    light_mask,
+    shadow_mask,
+    x,
+    sequence_dirs,
+    output_folder,
+):
     to_pil = ToPILImage()
 
     os.makedirs(output_folder, exist_ok=True)
     for idx, dir_name in enumerate(sequence_dirs):
         sequence_path = os.path.join(output_folder, dir_name)
         gt_recon = gt_reconstruction[idx, :, :, :].to("cpu")
-        occ_bin_masks = occlusion_mask[idx,:, :, :, :].to("cpu")
+        occ_bin_masks = occlusion_mask[idx, :, :, :, :].to("cpu")
         light_masks = light_mask[idx, :, :, :, :].to("cpu")
         shadow_masks = shadow_mask[idx, :, :, :, :].to("cpu")
         occ_gt = x[idx, :, :, :, :].to("cpu")
@@ -29,7 +37,7 @@ def evaluation_log_images(gt_reconstruction, occlusion_mask, light_mask, shadow_
             light = light_masks[:, i, :, :].squeeze()
             light_path = os.path.join(sequence_path, "light_" + str(i + 1) + ".png")
             to_pil(light).save(light_path)
-    
+
             shadow = shadow_masks[:, i, :, :].squeeze()
             shadow_path = os.path.join(sequence_path, "shadow_" + str(i + 1) + ".png")
             to_pil(shadow).save(shadow_path)

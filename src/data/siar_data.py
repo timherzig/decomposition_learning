@@ -22,8 +22,7 @@ class SIAR(Dataset):
     def __init__(
         self,
         split: str,
-        split_version: str = "",
-        sanity_check=False,
+        split_version: str = "split-1_80_10_10",
         manual_dataset_path=None,
     ) -> None:
         super().__init__()
@@ -32,39 +31,26 @@ class SIAR(Dataset):
         Args:
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
-            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
             manual_dataset_path ([type], optional): Path to dataset. Defaults to None.
         """
         if manual_dataset_path:
             self.path_to_dataset = manual_dataset_path
         else:
-            self.path_to_dataset = os.path.join(os.getcwd(), "data/SIAR")
+            self.path_to_dataset = os.path.join(os.getcwd(), "data")
 
-        if split_version == "":
-            path_to_split = os.path.join(self.path_to_dataset, f"{split}.csv")
-        else:
-            path_to_split = os.path.join(
-                f"{self.path_to_dataset}/..",
-                "data_splits",
-                split_version,
-                f"{split}.csv",
-            )
+        path_to_split = os.path.join(
+            f"{self.path_to_dataset}",
+            "data_splits",
+            split_version,
+            f"{split}.csv",
+        )
 
         # Load ids of current split
         self.df = pd.read_csv(path_to_split, index_col=None)
         # Add directory paths to those ids
         self.df["dir"] = [
-            os.path.join(self.path_to_dataset, str(x)) for x in self.df["id"]
+            os.path.join(self.path_to_dataset, "SIAR", str(x)) for x in self.df["id"]
         ]
-
-        # For sanity check, we only want to use one entry
-        # and want to completely overfit to it
-        if sanity_check:
-            self.df = self.df.sample(frac=1).reset_index(drop=True)
-            self.df = self.df[:1]
-            self.df = pd.concat(
-                [self.df, self.df], ignore_index=True
-            )  # Now we can batches but they will all be the same entry
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
@@ -89,7 +75,8 @@ class SIAR(Dataset):
     def __len__(self):
         return len(self.df)
 
-class SIAR_EVAL(SIAR):
+
+class SIAR_EVAL(Dataset):
     """
     SIAR Dataset desigend for inference on the evaluation dataset (Not the same dataset as initial SIAR!).
 
@@ -106,18 +93,28 @@ class SIAR_EVAL(SIAR):
     def __init__(
         self,
         split: str,
-        split_version: str = "",
-        sanity_check=False,
         manual_dataset_path=None,
     ) -> None:
         """
         Args:
-            split (str): train, val or test
-            split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
-            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
             manual_dataset_path (str, optional): Path to dataset. Defaults to None.
         """
-        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+        super().__init__()
+
+        if manual_dataset_path:
+            self.path_to_dataset = os.path.join(manual_dataset_path, "Eval")
+        else:
+            self.path_to_dataset = os.path.join(os.getcwd(), "data", "Eval")
+
+        # Load names of all sequences into dataframe with column name "id"
+        self.df = pd.DataFrame(
+            [int(x) for x in os.listdir(self.path_to_dataset) if x.isnumeric()],
+            columns=["id"],
+        )
+        # Add directory paths to those ids
+        self.df["dir"] = [
+            os.path.join(self.path_to_dataset, str(x)) for x in self.df["id"]
+        ]
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
@@ -134,12 +131,12 @@ class SIAR_EVAL(SIAR):
         for x in os.listdir(dir):
             if x.split(".")[0].isnumeric() and x.split(".")[0] != "0":
                 file_i = int(x.split(".")[0])
-                img = (Image.open(os.path.join(dir, x)))
+                img = Image.open(os.path.join(dir, x))
                 img = img.resize((256, 256))
                 img = ToTensor()(img)
 
                 img = img[:3, :, :]
-                images[file_i-1] = img   
+                images[file_i - 1] = img
 
         images = torch.swapaxes(images, 0, 1)
 
@@ -149,6 +146,9 @@ class SIAR_EVAL(SIAR):
         # get sequence id
         dir_name = dir.split("/")[-1]
         return (images, ground_truth, sl, occ, dir_name)
+
+    def __len__(self):
+        return len(self.df)
 
 
 class SIAR_SL(SIAR):
@@ -167,18 +167,16 @@ class SIAR_SL(SIAR):
     def __init__(
         self,
         split: str,
-        split_version: str = "",
-        sanity_check=False,
+        split_version: str = "split-1_80_10_10",
         manual_dataset_path=None,
     ) -> None:
         """
         Args:
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
-            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
             manual_dataset_path (str, optional): Path to dataset. Defaults to None.
         """
-        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+        super().__init__(split, split_version, manual_dataset_path)
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
@@ -218,18 +216,16 @@ class SIAR_OCC(SIAR):
     def __init__(
         self,
         split: str,
-        split_version: str = "",
-        sanity_check=False,
+        split_version: str = "split-1_80_10_10",
         manual_dataset_path=None,
     ) -> None:
         """
         Args:
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
-            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
             manual_dataset_path (str, optional): Path to dataset. Defaults to None.
         """
-        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+        super().__init__(split, split_version, manual_dataset_path)
 
     def rearrange_targets(self, targets):
         rearranged_targets = torch.zeros_like(targets)
@@ -267,8 +263,7 @@ class SIAR_OCC(SIAR):
         images = torch.swapaxes(images, 0, 1)
 
         sample = dir.split("/")[-1]
-        path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
-        # path_to_occ = f"/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/data/SIAR_OCC/{sample}.pt"
+        path_to_occ = f"{self.path_to_dataset}/SIAR_OCC/{sample}.pt"
         occ = torch.load(path_to_occ)
         occ = self.rearrange_targets(occ)
 
@@ -279,7 +274,7 @@ class SIAR_OCC(SIAR):
 
 class SIAR_OCC_Binary(SIAR):
     """
-    SIAR Dataset with occlusion approximation targets.
+    SIAR Dataset with binary occlusion approximation targets.
 
     Returns:
         images (torch.Tensor): [C, N, H, W] tensor of images.
@@ -293,18 +288,16 @@ class SIAR_OCC_Binary(SIAR):
     def __init__(
         self,
         split: str,
-        split_version: str = "",
-        sanity_check=False,
+        split_version: str = "split-1_80_10_10",
         manual_dataset_path=None,
     ) -> None:
         """
         Args:
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
-            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
             manual_dataset_path (str, optional): Path to dataset. Defaults to None.
         """
-        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+        super().__init__(split, split_version, manual_dataset_path)
 
     def rearrange_targets(self, targets):
         rearranged_targets = torch.zeros_like(targets)
@@ -342,8 +335,7 @@ class SIAR_OCC_Binary(SIAR):
         images = torch.swapaxes(images, 0, 1)
 
         sample = dir.split("/")[-1]
-        path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
-        # path_to_occ = f"/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/data/SIAR_OCC/{sample}.pt"
+        path_to_occ = f"{self.path_to_dataset}/SIAR_OCC/{sample}.pt"
         occ = torch.load(path_to_occ)
         occ = self.rearrange_targets(occ)
 
@@ -362,7 +354,7 @@ class SIAR_OCC_Binary(SIAR):
 
 class SIAR_BINARY_OCC_AND_SL(SIAR):
     """
-    SIAR Dataset with occlusion approximation targets.
+    SIAR Dataset with binary occlusion targets and shadow and light targets.
 
     Returns:
         images (torch.Tensor): [C, N, H, W] tensor of images.
@@ -376,18 +368,16 @@ class SIAR_BINARY_OCC_AND_SL(SIAR):
     def __init__(
         self,
         split: str,
-        split_version: str = "",
-        sanity_check=False,
+        split_version: str = "split-1_80_10_10",
         manual_dataset_path=None,
     ) -> None:
         """
         Args:
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
-            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
             manual_dataset_path (str, optional): Path to dataset. Defaults to None.
         """
-        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+        super().__init__(split, split_version, manual_dataset_path)
 
     def rearrange_targets(self, targets):
         rearranged_targets = torch.zeros_like(targets)
@@ -425,8 +415,7 @@ class SIAR_BINARY_OCC_AND_SL(SIAR):
         images = torch.swapaxes(images, 0, 1)
 
         sample = dir.split("/")[-1]
-        path_to_occ = f"/srv/data/SOLP/nextBillion/SIAR_OCC/SIAR_OCC/{sample}.pt"
-        # path_to_occ = f"/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/data/SIAR_OCC/{sample}.pt"
+        path_to_occ = f"{self.path_to_dataset}/SIAR_OCC/{sample}.pt"
         occ = torch.load(path_to_occ)
         occ = self.rearrange_targets(occ)
 
@@ -459,18 +448,16 @@ class SIAR_OCC_GENERATION(SIAR):
     def __init__(
         self,
         split: str,
-        split_version: str = "",
-        sanity_check=False,
+        split_version: str = "split-1_80_10_10",
         manual_dataset_path=None,
     ) -> None:
         """
         Args:
             split (str): train, val or test
             split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
-            sanity_check (bool, optional): Whether to use only one entry and overfit to it. Defaults to False.
             manual_dataset_path (str, optional): Path to dataset. Defaults to None.
         """
-        super().__init__(split, split_version, sanity_check, manual_dataset_path)
+        super().__init__(split, split_version, manual_dataset_path)
 
     def __getitem__(self, index):
         dir = self.df.iloc[index]["dir"]
@@ -517,45 +504,38 @@ class SIARDataModule(LightningDataModule):
     def prepare_data(self) -> None:
         return
 
-    def setup(self, stage: str, sanity_check=False) -> None:
+    def setup(self, stage: str) -> None:
         if stage == "test":
             self.siar_test = self.dataset(
                 split="test",
-                sanity_check=sanity_check,
                 manual_dataset_path=self.manual_dataset_path,
             )
         elif stage == "train":
             self.siar_train = self.dataset(
                 split="train",
-                sanity_check=sanity_check,
                 manual_dataset_path=self.manual_dataset_path,
             )
-            # If we are doing a sanity check, we want to use the same data for validation and overfit to it
-            self.siar_val = (
-                deepcopy(self.siar_train)
-                if sanity_check
-                else self.dataset(
-                    split="val",
-                    sanity_check=sanity_check,
-                    manual_dataset_path=self.manual_dataset_path,
-                )
+            self.siar_val = self.dataset(
+                split="val",
+                manual_dataset_path=self.manual_dataset_path,
             )
 
     def train_dataloader(self):
         return DataLoader(
             self.siar_train,
             batch_size=self.batch_size,
-            # num_workers=self.num_workers,
+            num_workers=self.num_workers,
         )
+        # return DataLoader(self.siar_train, batch_size=self.batch_size)
 
     def test_dataloader(self):
         return DataLoader(
-            self.siar_test,
-            batch_size=self.batch_size,
-        )  # num_workers=self.num_workers)
+            self.siar_test, batch_size=self.batch_size, num_workers=self.num_workers
+        )
+        # return DataLoader(self.siar_test, batch_size=self.batch_size)
 
     def val_dataloader(self):
         return DataLoader(
-            self.siar_val,
-            batch_size=self.batch_size,
-        )  # num_workers=self.num_workers)
+            self.siar_val, batch_size=self.batch_size, num_workers=self.num_workers
+        )
+        # return DataLoader(self.siar_val, batch_size=self.batch_size)

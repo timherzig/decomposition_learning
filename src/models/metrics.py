@@ -2,7 +2,7 @@ from typing import Any
 import torch
 import torch.nn as nn
 from torch.nn import MSELoss, L1Loss, BCELoss, BCEWithLogitsLoss
-from torchmetrics import StructuralSimilarityIndexMeasure as SSIMLoss
+from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIMLoss
 
 
 class MSE:

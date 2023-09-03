@@ -3,14 +3,12 @@ data:
   dataset: 'SIAR_EVAL'
   # Split version to use
   split_dir: ''
-  # Set validation set equal to train set to provoke overfitting and see if loss works
-  sanity_check: False
   num_workers: 8
-  preprocess: True
-  eval_output: evaluation_output_no_pretrain
+  # preprocess: True
+  eval_output: evaluation_output
     
 train:
-  debug: False
+  debug: True
   pre_train: False
   batch_size: 2
   lr: 1e-4
@@ -37,7 +35,7 @@ train:
   log_img_every_n_epochs: 5
 
 model:
-  checkpoint: 'checkpoints/final/swin_unet_unet_unet_from_checkpoint_all_epoch614.ckpt'
+  checkpoint: 'checkpoints/final_model/swin_unet_unet_unet_from_checkpoint_all_epoch614.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)

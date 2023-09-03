@@ -5,7 +5,7 @@ from PIL import Image, ImageChops, ImageFilter
 from torchvision.transforms import ToPILImage
 import cv2
 import os
-from torchmetrics import StructuralSimilarityIndexMeasure as SSIM
+from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIM
 import torchvision.transforms as transforms
 
 ssim_metric = SSIM(return_full_image=True)

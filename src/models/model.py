@@ -7,7 +7,6 @@ import lightning.pytorch as pl
 import torch.nn.functional as F
 
 from src.models.transformer.swin_transformer import SwinTransformer3D
-from src.models.up_scaling.swin.upsampling import SwinTransformer3D_up
 from src.models.up_scaling.unet.up_scale import UpSampler
 from src.models.utils.utils import get_class
 
@@ -73,12 +72,6 @@ class Decomposer(pl.LightningModule):
                 for param in self.up_scale_gt.parameters():
                     param.requires_grad = False
 
-        elif self.model_config.upsampler_gt == "swin":
-            self.decoder_gt_config = self.model_config.swin_gt.decoder
-            arguments = dict(self.decoder_gt_config)
-            self.up_scale_gt = SwinTransformer3D_up(**arguments)
-            # self.up_scale_gt = SwinTransformer3D_up(out_chans=3, patch_size=self.model_config.swin.patch_size)
-
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
             self.decoder_sl_config = self.model_config.unet_sl.decoder
@@ -96,12 +89,6 @@ class Decomposer(pl.LightningModule):
                 print("Freezing UNet SL")
                 for param in self.up_scale_sl.parameters():
                     param.requires_grad = False
-
-        elif self.model_config.upsampler_sl == "swin":
-            self.decoder_sl_config = self.model_config.swin_sl.decoder
-            arguments = dict(self.decoder_sl_config)
-            self.up_scale_sl = SwinTransformer3D_up(**arguments)
-            # self.up_scale_sl = SwinTransformer3D_up(out_chans=2, patch_size=self.model_config.swin.patch_size)
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
@@ -121,46 +108,8 @@ class Decomposer(pl.LightningModule):
                 for param in self.up_scale_ob.parameters():
                     param.requires_grad = False
 
-        elif self.model_config.upsampler_sl == "swin":
-            self.decoder_ob_config = self.model_config.swin_ob.decoder
-            arguments = dict(self.decoder_ob_config)
-            self.up_scale_ob = SwinTransformer3D_up(**arguments)
-            # self.up_scale_ob = SwinTransformer3D_up(out_chans=4, patch_size=self.model_config.swin.patch_size)
-
     def forward(self, x):
-        if self.model_config.upsampler_gt == "swin":
-            return self.forward_swin(x)
-        else:
-            return self.forward_unet(x)
-
-    def forward_swin(self, x):
-        x = self.swin.patch_embed(x)
-        x = self.swin.pos_drop(x)
-
-        for idx, layer in enumerate(self.swin.layers):
-            x, _ = layer(x.contiguous())
-        x = rearrange(x, "n c d h w -> n d h w c")
-        x = self.swin.norm(x)
-        x = rearrange(x, "n d h w c -> n c d h w")
-        # print(x.shape)
-
-        # Perform upsampling
-        gt_reconstruction = self.up_scale_gt.forward(x)
-        gt_reconstruction = torch.squeeze(gt_reconstruction)
-        masks = self.up_scale_sl.forward(x)
-        light_mask = masks[:, 0, :, :, :]
-        shadow_mask = masks[:, 1, :, :, :]
-        occlusion = self.up_scale_ob.forward(x)
-        occlusion_mask = occlusion[:, 0, :, :, :]
-        occlusion_rgb = occlusion[:, 1:, :, :, :]
-
-        return (
-            torch.clip(gt_reconstruction, -1.0, 1.0),
-            torch.clip(light_mask, -1.0, 1.0),
-            torch.clip(shadow_mask, -1.0, 1.0),
-            torch.clip(occlusion_mask, -1.0, 1.0),
-            torch.clip(occlusion_rgb, -1.0, 1.0),
-        )
+        return self.forward_unet(x)
 
     def forward_unet(self, x):
         x, encoder_features = self.swin(x)
@@ -183,10 +132,6 @@ class Decomposer(pl.LightningModule):
         # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 4, 10, H, W)
         if self.model_config.upsampler_ob == "unet":
             occlusion_raw = self.up_scale_ob(encoder_features[1:], x)
-            # occlusion_mask = F.relu(
-            #     # self.up_scale_ob(encoder_features[1:], x)[:, 0, :, :, :]
-            #     occlusion_raw[:, 0, :, :, :]
-            # )  # ReLU
             if not self.train_config.lambda_binary_occ:
                 occlusion_mask = F.sigmoid(occlusion_raw[:, 0, :, :, :])
             else:
@@ -244,6 +189,10 @@ class Decomposer(pl.LightningModule):
             ) = self(x)
         else:
             gt_reconstruction = self(x)
+            light_mask = None
+            shadow_mask = None
+            occlusion_mask = None
+            occlusion_rgb = None
 
         loss = self.loss_func(
             gt_reconstruction,
@@ -278,8 +227,13 @@ class Decomposer(pl.LightningModule):
             ) = self(x)
         else:
             gt_reconstruction = self(x)
+            light_mask = None
+            shadow_mask = None
+            occlusion_mask = None
+            occlusion_rgb = None
 
-        loss, ob_recon = self.loss_func(
+        # loss, ob_recon = self.loss_func(
+        loss = self.loss_func(
             gt_reconstruction,
             light_mask,
             shadow_mask,
@@ -291,20 +245,13 @@ class Decomposer(pl.LightningModule):
             ob,
         )
 
-
-
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
         # Log images on the first validation step
         if (
             batch_idx == 0
             and not self.train_config.debug
-            and (
-                self.data_config.sanity_check
-                and self.current_epoch % 100 == 0
-                or not self.data_config.sanity_check
-                and self.current_epoch % self.train_config.log_img_every_n_epochs == 0
-            )
+            and self.current_epoch % self.train_config.log_img_every_n_epochs == 0
         ):
             pre_train_log_images(
                 self.logger, gt_reconstruction, x
@@ -333,12 +280,7 @@ class Decomposer(pl.LightningModule):
                 dir,
             ) = batch  # --- x: (B, N, C, H, W), y: (B, C, H, W) | N: number of images in sequence
         else:
-            (
-                x,
-                y,
-                sl,
-                ob
-            ) = batch 
+            (x, y, sl, ob) = batch
         if not self.train_config.pre_train:
             (
                 gt_reconstruction,
@@ -376,9 +318,16 @@ class Decomposer(pl.LightningModule):
             occlusion_rgb,
         )
 
-        if(len(batch) > 4):
-            evaluation_log_images(gt_reconstruction, ob_reconstruction, light_mask, shadow_mask, x, dir, self.eval_output)
-
+        if len(batch) > 4:
+            evaluation_log_images(
+                gt_reconstruction,
+                ob_reconstruction,
+                light_mask,
+                shadow_mask,
+                x,
+                dir,
+                self.eval_output,
+            )
 
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=self.train_config.lr)

@@ -1,53 +1,61 @@
 data:
-  # Name of dataset
+  # Name of dataset: 'SIAR', 'SIAR_SL', 'SIAR_OCC', 'SIAR_OCC_Binary', 'SIAR_OCC_AND_SL', 'SIAR_EVAL'
   dataset: 'SIAR'
   # Split version to use
-  split_dir: ''
+  split_dir: 'split-1_80_10_10'
   # Set validation set equal to train set to provoke overfitting and see if loss works
   sanity_check: False
-  num_workers: 8
-  preprocess: True
+  # Number of workers for dataloader
+  num_workers: 1
+  # Path to dataset directory that includes SIAR data (path/SIAR), generated occlusion masks (path/SIAR_OCC). If False, expects data to be in data directory of project
+  path_to_data: False
+  # Path where to save evaluation output (Only used for evaluation script)
+  eval_output: evaluation_output
     
 train:
-  debug: False
-  pre_train: False
-  batch_size: 20
+  debug: True
+  pre_train: True
+  batch_size: 2
   lr: 1e-3
-  max_epochs: 1000
+  max_epochs: 100
   log_every_n_steps: 15
-  device: 'cuda'
+  log_img_every_n_epochs: 5
+  device: 'cpu'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
-  loss_func: 'separate_head_loss'
-  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
+  # loss_func: 'separate_head_loss'
+  loss_func: 'pre_train_loss'
+  stage: 'train_all'
+  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE', 'BCE', 'BCEWithLogits', 'MAE_weighted'
+  metric_all: 'MAE' # used for reconstruction_loss
   metric_gt: 'MAE'
   metric_sl: 'MAE'
   metric_ob: 'SSIM'
-  metric_all: 'MAE'
-  stage: 'train_all'
-  weight_decay: 0.0
-  mask_decay: 1e-4 # 1e-5
-  lambda_binary_occ: 0.01
-  lambda_gt_loss: 0.3
+  # metric_occ_mask: 'BCE'  # 'MAE'
+  metric_occ_mask: 'BCEWithLogits'
+  metric_occ_rgb: 'MAE_weighted'  # 'MAE'
+  lambda_binary_occ: False
+  lambda_gt_loss: 1.0
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
+  mask_decay: False # 1e-10
+  weight_decay: False # 1e-5
   strategy: 'ddp_find_unused_parameters_true'
-  accumulate_grad_batches: 2
+  accumulate_grad_batches: 4
   es_patience: 10
-  log_img_every_n_epochs: 5
+
 
 model:
   checkpoint: False
-  upsampler_gt: 'unet' # upsampler for ground truth
-  upsampler_sl: 'unet' # upsampler for shadow and light
-  upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
+  upsampler_gt: 'unet' # upsampler for ground truth (in this case 10 images)
+  upsampler_sl: None # upsampler for shadow and light
+  upsampler_ob: None # upsampler for objects (masks + rgb)
   swin:
-    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
-    use_checkpoint: True
-    frozen_stages: 4
+    checkpoint: ''
+    use_checkpoint: False
     patch_size: [2, 4, 4]    
   unet_gt:
     freeze: False
-    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_gt/up_scale_gt_model.pt'
+    checkpoint: False
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
@@ -58,12 +66,12 @@ model:
       num_groups: 8
       is3d: True
       layers_no_skip:
-        size: [[96, 48, 5, 128, 128], [48, 24, 1, 256, 256]]
+        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2 
-      omit_skip_connections: False
+      omit_skip_connections: True
   unet_sl:
     freeze: False
-    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
+    checkpoint: False
     decoder:
       output_dim: 2
       f_maps: [96, 192, 384, 768]
@@ -76,10 +84,10 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2
-      omit_skip_connections: False
+      omit_skip_connections: True
   unet_ob:
     freeze: False
-    checkpoint: 'decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_ob/up_scale_ob_model.pt'
+    checkpoint: False
     decoder:
       output_dim: 4
       f_maps: [96, 192, 384, 768]
@@ -92,4 +100,4 @@ model:
       layers_no_skip:
         size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
         scale_factor: 2 
-      omit_skip_connections: False
+      omit_skip_connections: True

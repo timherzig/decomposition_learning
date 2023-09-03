@@ -1,38 +1,46 @@
 data:
-  # Name of dataset
+  # Name of dataset: 'SIAR', 'SIAR_SL', 'SIAR_OCC', 'SIAR_OCC_Binary', 'SIAR_OCC_AND_SL', 'SIAR_EVAL'
   dataset: 'SIAR'
   # Split version to use
   split_dir: 'split-1_80_10_10'
-  # Set validation set equal to train set to provoke overfitting and see if loss works
-  sanity_check: False
-  num_workers: 16
+  # Number of workers for dataloader
+  num_workers: 1
+  # Path to dataset directory that includes SIAR data (path/SIAR), generated occlusion masks (path/SIAR_OCC). If False, expects data to be in data directory of project
+  path_to_data: False
+  # Path where to save evaluation output (Only used for evaluation script)
+  eval_output: evaluation_output
     
+
 train:
   debug: True
   pre_train: False
-  batch_size: 16
-  lr: 1e-4
-  max_epochs: 1000
+  batch_size: 2
+  lr: 1e-3
+  max_epochs: 100
   log_every_n_steps: 15
-  log_img_every_n_epochs: 1
-  device: 'cuda'
+  log_img_every_n_epochs: 5
+  device: 'gpu'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
-  loss_func: 'reconstruction_loss'
-  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE'
+  # loss_func: 'separate_head_loss'
+  loss_func: 'separate_head_loss'
+  stage: 'train_gt'
+  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE', 'BCE', 'BCEWithLogits', 'MAE_weighted'
+  metric_all: 'MAE' # used for reconstruction_loss
   metric_gt: 'MAE'
   metric_sl: 'MAE'
-  metric_ob_mask: 'MAE'
-  metric_all: 'MAE'
-  stage: 'train_all'
-  weight_decay: 0.01
-  mask_decay: 1e-4 # 1e-5
+  metric_ob: 'SSIM'
+  # metric_occ_mask: 'BCE'  # 'MAE'
+  metric_occ_mask: 'BCEWithLogits'
+  metric_occ_rgb: 'MAE_weighted'  # 'MAE'
+  lambda_binary_occ: False
   lambda_gt_loss: 1.0
   lambda_decomp_loss: 1.0
   lambda_occlusion_difference: 1e-3
+  mask_decay: False # 1e-10
+  weight_decay: False # 1e-5
   strategy: 'ddp_find_unused_parameters_true'
   accumulate_grad_batches: 4
   es_patience: 10
-
 
 model:
   checkpoint: False
@@ -40,14 +48,13 @@ model:
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
-    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
+    checkpoint: 'checkpoints/swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
     use_checkpoint: True
     frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
+    freeze: False
     checkpoint: False
-    # checkpoint: False
-    freeze: True
     decoder:
       output_dim: 3
       f_maps: [96, 192, 384, 768]
@@ -62,7 +69,6 @@ model:
         scale_factor: 2 
       omit_skip_connections: False
   unet_sl:
-    # checkpoint: '/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/decoder_checkpoints/swin_unet_unet_unet_from_checkpoint_sl/up_scale_sl_model.pt'
     freeze: True
     checkpoint: False
     decoder:
@@ -79,8 +85,8 @@ model:
         scale_factor: 2
       omit_skip_connections: False
   unet_ob:
-    freeze: False
-    checkpoint: 'decoder_checkpoints/occ_pretraining_w_approx_targets_binary/up_scale_ob_model_24.pt'
+    freeze: True
+    checkpoint: False
     decoder:
       output_dim: 4
       f_maps: [96, 192, 384, 768]
