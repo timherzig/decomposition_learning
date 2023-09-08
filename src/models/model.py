@@ -350,10 +350,10 @@ class Decomposer(pl.LightningModule):
 
         if loss < self.best_val_loss:
             self.best_val_loss = loss
-            if self.train_config.stage == "train_gt":
+            if self.train_config.stage == "train_oi":
                 torch.save(
                     self.up_scale_gt.state_dict(),
-                    f"{self.log_dir}/up_scale_gt_model.pt",
+                    f"{self.log_dir}/up_scale_oi_model.pt",
                 )
             if self.train_config.stage == "train_sl":
                 torch.save(

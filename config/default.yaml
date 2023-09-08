@@ -19,7 +19,7 @@ train:
   log_every_n_steps: 15
   log_img_every_n_epochs: 5
   device: 'gpu'
-  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
+  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'separate_head_loss', 'occ_binary_pretraining_loss'
   loss_func: 'separate_head_loss'
   stage: 'train_all'
   # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE', 'BCE', 'BCEWithLogits', 'MAE_weighted'

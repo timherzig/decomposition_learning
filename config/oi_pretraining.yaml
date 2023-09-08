@@ -23,7 +23,7 @@ train:
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
   # loss_func: 'separate_head_loss'
   loss_func: 'separate_head_loss'
-  stage: 'train_gt'
+  stage: 'train_oi'
   # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE', 'BCE', 'BCEWithLogits', 'MAE_weighted'
   metric_all: 'MAE' # used for reconstruction_loss
   metric_gt: 'MAE'
