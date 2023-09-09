@@ -7,7 +7,7 @@ data:
   # preprocess: True
   eval_output: evaluation_output
   # manual path to dataset
-  path_to_data: False
+  path_to_data: "/Users/boris/Library/Mobile Documents/com~apple~CloudDocs/Uni/Master/4. Semester/CV_Project/decomposition_learning/data"
     
 train:
   debug: True
@@ -37,7 +37,7 @@ train:
   log_img_every_n_epochs: 5
 
 model:
-  checkpoint: 'checkpoints/final_model/swin_unet_unet_unet_from_checkpoint_all_epoch614.ckpt'
+  checkpoint: '../checkpoints/final_model/swin_unet_unet_unet_from_checkpoint_all_epoch614.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)

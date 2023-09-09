@@ -182,7 +182,6 @@ HTCV/
 checkpoints/
 swin_checkpoints/
 decoder_checkpoints/
-notebooks/
 
 utils/helper/
 
