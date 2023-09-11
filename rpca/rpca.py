@@ -108,7 +108,7 @@ def run_rpca(dir, th=0.3):
     print(f"Found {len(sequences)} sequences")
 
     for sequence in sequences:
-        imgs, names = get_sequence(os.path.join(dir, sequence))  # .cuda()
+        imgs, names = get_sequence(os.path.join(dir, sequence)).cuda()
         # print(f"names: {names}")
         rpca = RPCA(tol=1e-15, max_iter=500)
         L, Sp = rpca(imgs.unsqueeze(0))
