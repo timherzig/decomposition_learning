@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import PIL
 import cv2
 from argparse import ArgumentParser
+from tqdm import tqdm
 from torchvision.transforms import ToPILImage, Grayscale
 from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIM
 import torch
@@ -94,7 +95,7 @@ def main(args):
     ssim_threshold = args.ssim_threshold
     subtraction_threshold = args.subtraction_threshold
 
-    for sample_idx in range(len(dataset)):
+    for sample_idx in tqdm(range(len(dataset))):
         input_images, _, _, _ = dataset[sample_idx]
         input_images = input_images.to(device)
 
