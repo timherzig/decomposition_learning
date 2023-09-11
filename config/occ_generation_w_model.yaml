@@ -37,7 +37,7 @@ train:
   log_img_every_n_epochs: 5
 
 model:
-  checkpoint: '../checkpoints/final_model/swin_unet_unet_unet_from_checkpoint_all_epoch614.ckpt'
+  checkpoint: 'checkpoints/final_model/swin_unet_unet_unet_from_checkpoint_all_epoch614.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
