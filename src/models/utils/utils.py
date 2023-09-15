@@ -1,5 +1,8 @@
 import importlib
 import torch
+import os
+from PIL import Image
+from torchvision.transforms import ToTensor
 
 
 def get_class(class_name, modules):
@@ -28,3 +31,17 @@ def get_pos_weight(x):
     return (torch.ones([x.shape[2], x.shape[3]]).to(x.device) * factor.item()).to(
         x.device
     )
+
+
+def images_to_tensor(path_to_sequence):
+    images = os.listdir(path_to_sequence)
+    images.sort()
+    images = torch.stack(
+        [
+            ToTensor()(Image.open(os.path.join(path_to_sequence, x)))
+            for x in images
+            if x.split(".")[0].isnumeric()
+        ]
+    )
+    images = torch.swapaxes(images, 0, 1)
+    return images

@@ -2,7 +2,6 @@ import os
 import sys
 
 from omegaconf import OmegaConf
-from matplotlib import pyplot as plt
 import PIL
 import cv2
 from argparse import ArgumentParser
@@ -13,13 +12,17 @@ import torch
 
 to_pil = ToPILImage()
 to_gray = Grayscale()
-ssim_metric = SSIM(return_full_image=True)
+ssim_metric = (
+    SSIM(return_full_image=True).to("cuda")
+    if torch.cuda.is_available()
+    else SSIM(return_full_image=True)
+)
 
 sys.path.append(os.getcwd())
 # print(sys.path)
 
 from src.models.model import Decomposer
-from src.data.siar_data import SIAR
+from src.models.utils.utils import images_to_tensor
 
 
 def get_X_SL(input_sequence, model):
@@ -29,6 +32,10 @@ def get_X_SL(input_sequence, model):
     oi_reconstruction_repeated = oi_reconstruction.unsqueeze(1).repeat(1, 10, 1, 1)
     X_SL = (oi_reconstruction_repeated * shadow_mask) + light_mask
     X_SL = X_SL.swapaxes(0, 1)
+    del oi_reconstruction_repeated
+    del oi_reconstruction
+    del light_mask
+    del shadow_mask
     return X_SL
 
 
@@ -86,67 +93,90 @@ def main(args):
         if config.train.device is None
         else config.train.device
     )
-    model = Decomposer.load_from_checkpoint(
-        config.model.checkpoint, config=config, log_dir=None, map_location=device
-    )
 
-    dataset = SIAR(split="train", manual_dataset_path=config.data.path_to_data)
-
-    ssim_threshold = args.ssim_threshold
-    subtraction_threshold = args.subtraction_threshold
-
-    for sample_idx in tqdm(range(len(dataset))):
-        input_images, _, _, _ = dataset[sample_idx]
-        input_images = input_images.to(device)
-
-        # Get all X_SL for one sample sequence of dataset from model
-        X_SL = get_X_SL(input_images, model)  # X_SL.shape = (10, 3, 256, 256)
-        input_images = input_images.swapaxes(
-            0, 1
-        )  # input_images.shape = (10, 3, 256, 256)
-
-        # Get masks
-        ssim_img = get_mask_ssim(input_images, X_SL, ssim_threshold)
-        subtraction_img = get_mask_subtraction(
-            input_images, X_SL, subtraction_threshold
+    with torch.no_grad():
+        model = Decomposer.load_from_checkpoint(
+            config.model.checkpoint, config=config, log_dir=None, map_location=device
         )
 
-        sample_name = dataset.df.iloc[sample_idx]["id"]
+        model.eval()
 
-        # save masks as png
-        for elem_idx, (img_ssim, img_subtraction) in enumerate(
-            zip(ssim_img, subtraction_img)
-        ):
-            # save ssim mask using PIL
-            img_ssim = img_ssim.detach().cpu().numpy()
-            img_ssim = img_ssim.swapaxes(0, 1).swapaxes(1, 2)
-            img_ssim = img_ssim * 255
-            img_ssim = img_ssim.astype("uint8")
-            img_ssim = to_gray(PIL.Image.fromarray(img_ssim))
-            # create folder if not exists
-            os.makedirs(
-                f"{config.data.path_to_data}/SIAR_OCC_SSIM/{sample_name}",
-                exist_ok=True,
+        dataset = os.listdir(f"{config.data.path_to_data}/SIAR")
+        # remove non-numeric elements
+        dataset = [x for x in dataset if x.split(".")[0].isnumeric()]
+
+        ssim_threshold = args.ssim_threshold
+        subtraction_threshold = args.subtraction_threshold
+
+        for sample_name in tqdm(dataset):
+            if os.path.exists(
+                f"{config.data.path_to_data}/SIAR_OCC_SSIM/{sample_name}"
+            ) and os.path.exists(
+                f"{config.data.path_to_data}/SIAR_OCC_SUB/{sample_name}"
+            ):
+                continue
+
+            input_images = images_to_tensor(
+                f"{config.data.path_to_data}/SIAR/{sample_name}"
             )
-            img_ssim.save(
-                f"{config.data.path_to_data}/SIAR_OCC_SSIM/{sample_name}/{elem_idx}.png",
-                "PNG",
+            input_images = input_images.to(device)
+            # Get names for sequence elements
+            sequence_elements = os.listdir(
+                f"{config.data.path_to_data}/SIAR/{sample_name}"
+            )
+            sequence_elements.sort()
+            # remove non-numeric elements
+            sequence_elements = [
+                x for x in sequence_elements if x.split(".")[0].isnumeric()
+            ]
+
+            # Get all X_SL for one sample sequence of dataset from model
+            X_SL = get_X_SL(input_images, model)  # X_SL.shape = (10, 3, 256, 256)
+            input_images = input_images.swapaxes(
+                0, 1
+            )  # input_images.shape = (10, 3, 256, 256)
+
+            # Get masks
+            ssim_img = get_mask_ssim(input_images, X_SL, ssim_threshold)
+            subtraction_img = get_mask_subtraction(
+                input_images, X_SL, subtraction_threshold
             )
 
-            # save subtraction mask using PIL
-            img_subtraction = img_subtraction.detach().cpu().numpy()
-            img_subtraction = img_subtraction.swapaxes(0, 1).swapaxes(1, 2)
-            img_subtraction = img_subtraction * 255
-            img_subtraction = img_subtraction.astype("uint8")
-            img_subtraction = to_gray(PIL.Image.fromarray(img_subtraction))
-            # create folder if not exists
-            os.makedirs(
-                f"{config.data.path_to_data}/SIAR_OCC_SUB/{sample_name}", exist_ok=True
-            )
-            img_subtraction.save(
-                f"{config.data.path_to_data}/SIAR_OCC_SUB/{sample_name}/{elem_idx}.png",
-                "PNG",
-            )
+            # save masks as png
+            for elem_name, img_ssim, img_subtraction in zip(
+                sequence_elements, ssim_img, subtraction_img
+            ):
+                # save ssim mask using PIL
+                img_ssim = img_ssim.detach().cpu().numpy()
+                img_ssim = img_ssim.swapaxes(0, 1).swapaxes(1, 2)
+                img_ssim = img_ssim * 255
+                img_ssim = img_ssim.astype("uint8")
+                img_ssim = to_gray(PIL.Image.fromarray(img_ssim))
+                # create folder if not exists
+                os.makedirs(
+                    f"{config.data.path_to_data}/SIAR_OCC_SSIM/{sample_name}",
+                    exist_ok=True,
+                )
+                img_ssim.save(
+                    f"{config.data.path_to_data}/SIAR_OCC_SSIM/{sample_name}/{elem_name}",
+                    "PNG",
+                )
+
+                # save subtraction mask using PIL
+                img_subtraction = img_subtraction.detach().cpu().numpy()
+                img_subtraction = img_subtraction.swapaxes(0, 1).swapaxes(1, 2)
+                img_subtraction = img_subtraction * 255
+                img_subtraction = img_subtraction.astype("uint8")
+                img_subtraction = to_gray(PIL.Image.fromarray(img_subtraction))
+                # create folder if not exists
+                os.makedirs(
+                    f"{config.data.path_to_data}/SIAR_OCC_SUB/{sample_name}",
+                    exist_ok=True,
+                )
+                img_subtraction.save(
+                    f"{config.data.path_to_data}/SIAR_OCC_SUB/{sample_name}/{elem_name}",
+                    "PNG",
+                )
 
 
 if __name__ == "__main__":
@@ -170,7 +200,7 @@ if __name__ == "__main__":
         "--subtraction_threshold",
         type=int,
         help="Threshold for setting subtraction mask to 0 or 1. AbsDifference above threshold is set to 1, AbsDifference below threshold is set to 0.",
-        default=0.15,
+        default=0.1,
     )
 
     args = parser.parse_args()
