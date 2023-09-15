@@ -11,7 +11,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import ToTensor
 
 from src.models.utils.preprocessing import get_shadow_light_gt, get_occlusion_gt
-from src.models.utils.utils import get_class
+from src.models.utils.utils import get_class, images_to_tensor
 
 
 class SIAR(Dataset):
@@ -346,6 +346,59 @@ class SIAR_OCC_Binary(SIAR):
             1.0,
             0.0,
         ).to(occ.device)
+
+        sl = torch.zeros_like(images)
+
+        return (images, ground_truth, sl, occ)
+
+
+class SIAR_OCC_Binary_SUB(SIAR):
+    """
+    SIAR Dataset with binary occlusion approximation targets.
+
+    Returns:
+        images (torch.Tensor): [C, N, H, W] tensor of images.
+        ground_truth (torch.Tensor): [C, H, W] tensor of ground truth image.
+        sl (torch.Tensor): [C, N, H, W] tensor of shadow and light approximation. In this case we return zeros, as we don't need it in the OCC dataset.
+        occ (torch.Tensor): [N, H, W] tensor of occlusion approximation. Loaded from pre-generated files.
+
+    C is number of channels, N is number of images should be 10, H and W are height and width of images.
+    """
+
+    def __init__(
+        self,
+        split: str,
+        split_version: str = "split-1_80_10_10",
+        manual_dataset_path=None,
+    ) -> None:
+        """
+        Args:
+            split (str): train, val or test
+            split_version (str, optional): Which split to use. Defaults to "split-1_80_10_10".
+            manual_dataset_path (str, optional): Path to dataset. Defaults to None.
+        """
+        super().__init__(split, split_version, manual_dataset_path)
+
+    def __getitem__(self, index):
+        dir = self.df.iloc[index]["dir"]
+
+        ground_truth = os.path.join(dir, "gt.png")
+        assert os.path.exists(ground_truth) == True, f"{ground_truth} does not exist"
+        ground_truth = ToTensor()(Image.open(ground_truth))
+
+        images = images_to_tensor(dir)
+
+        sample = dir.split("/")[-1]
+        path_to_occ = f"{self.path_to_dataset}/SIAR_OCC_SUB/{sample}"
+        occ = images_to_tensor(path_to_occ)
+
+        # Turn into binary mask
+        occ = occ.squeeze(0)
+        # occ = torch.where(
+        #     occ > 0.5,
+        #     1.0,
+        #     0.0,
+        # ).to(occ.device)
 
         sl = torch.zeros_like(images)
 
