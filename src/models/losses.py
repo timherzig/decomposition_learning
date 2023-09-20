@@ -306,22 +306,24 @@ class separate_head_loss:
             )
 
         if self.config.stage == "train_all":
-            gt_loss = self.metric_gt(gt_reconstruction, target)  # tmp
-            target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)  # tmp
+            gt_loss = self.metric_gt(gt_reconstruction, target)
+            target = target.unsqueeze(2).repeat(1, 1, 10, 1, 1)
             shadow_mask = shadow_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
             light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
             occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
 
-            ob_reconstruction = torch.where(
+            decomp_reconstruction = torch.where(
                 occlusion_mask < 0.5,
-                (target * shadow_mask + light_mask),  # tmp
-                occlusion_rgb,
+                (target * shadow_mask + light_mask),
+                input,
             )
 
             return (
-                self.metric_all(ob_reconstruction, input)
-                + gt_loss * self.config.lambda_gt_loss  # tmp
+                self.metric_all(decomp_reconstruction, input)
+                * self.config.lambda_decomp_loss
+                + gt_loss * self.config.lambda_gt_loss
                 + weight_decay(self.model, self.config.weight_decay)
+                + mask_decay(occlusion_mask, self.config.mask_decay)
             )
 
 
