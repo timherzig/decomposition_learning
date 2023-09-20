@@ -4,21 +4,21 @@ data:
   # Split version to use
   split_dir: 'split-1_80_10_10'
   # Number of workers for dataloader
-  num_workers: 1
+  num_workers: 12
   # Path to dataset directory that includes SIAR data (path/SIAR), generated occlusion masks (path/SIAR_OCC). If False, expects data to be in data directory of project
   path_to_data: False
   # Path where to save evaluation output (Only used for evaluation script)
   eval_output: evaluation_output
   
 train:
-  debug: True
+  debug: False
   pre_train: False
-  batch_size: 2
+  batch_size: 16
   lr: 1e-3
-  max_epochs: 100
+  max_epochs: 300
   log_every_n_steps: 15
   log_img_every_n_epochs: 5
-  device: 'mps'
+  device: 'cuda'
   # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'regularized_loss', 'stage_loss', 'light_and_shadow_loss', 'separate_head_loss'
   # loss_func: 'separate_head_loss'
   loss_func: 'separate_head_loss'
@@ -43,13 +43,13 @@ train:
 
 
 model:
-  checkpoint: False
+  checkpoint: 'checkpoints/final_model/one_for_all/model_oi.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
-    checkpoint: 'swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
-    use_checkpoint: True
+    checkpoint: False
+    use_checkpoint: False
     frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:

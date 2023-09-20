@@ -15,7 +15,7 @@ train:
   pre_train: False
   batch_size: 16
   lr: 1e-3
-  max_epochs: 100
+  max_epochs: 300
   log_every_n_steps: 15
   log_img_every_n_epochs: 5
   device: 'cuda'
@@ -41,13 +41,13 @@ train:
   es_patience: 10
 
 model:
-  checkpoint: False
+  checkpoint: 'checkpoints/final_model/one_for_all/model_oi_sl.ckpt'
   upsampler_gt: 'unet' # upsampler for ground truth
   upsampler_sl: 'unet' # upsampler for shadow and light
   upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
   swin:
-    checkpoint: 'checkpoints/swin_checkpoints/swin_pretrain_from_ckpt/swin_encoder.pt'
-    use_checkpoint: True
+    checkpoint: False
+    use_checkpoint: False
     frozen_stages: 4
     patch_size: [2, 4, 4]    
   unet_gt:
