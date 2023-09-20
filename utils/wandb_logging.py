@@ -64,7 +64,8 @@ def log_images(
             )
             * shadow_mask.unsqueeze(0).repeat(3, 1, 1, 1)
         ),
-        occlusion_rgb,
+        # occlusion_rgb,
+        x,
     )
 
     to_pil = ToPILImage()
