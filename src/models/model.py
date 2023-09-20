@@ -1,11 +1,15 @@
 import os
 
+# import sys
+
 import torch
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import lightning.pytorch as pl
 import torch.nn.functional as F
 
+
+# sys.path.append(os.getcwd())
 from src.models.transformer.swin_transformer import SwinTransformer3D
 from src.models.up_scaling.unet.up_scale import UpSampler
 from src.models.utils.utils import get_class
@@ -46,11 +50,12 @@ class Decomposer(pl.LightningModule):
                 patch_size=self.model_config.swin.patch_size,
                 frozen_stages=self.model_config.swin.frozen_stages,
             )
+
+        if self.model_config.swin.frozen_stages:
             # freeze SWIN
+            print("Freezing SWIN")
             for param in self.swin.parameters():
                 param.requires_grad = False
-            print("Loaded SWIN checkpoint")
-            print("-----------------")
         # ----------------
 
         # --- Upscaler ---
@@ -67,10 +72,10 @@ class Decomposer(pl.LightningModule):
                         map_location=torch.device(self.train_config.device),
                     ),
                 )
-            if self.model_config.unet_gt.freeze:
-                print("Freezing UNet GT")
-                for param in self.up_scale_gt.parameters():
-                    param.requires_grad = False
+        if self.model_config.unet_gt.freeze:
+            print("Freezing UNet GT")
+            for param in self.up_scale_gt.parameters():
+                param.requires_grad = False
 
         # Shadow and light upsampling
         if self.model_config.upsampler_sl == "unet":
@@ -85,10 +90,10 @@ class Decomposer(pl.LightningModule):
                         map_location=torch.device(self.train_config.device),
                     )
                 )
-            if self.model_config.unet_sl.freeze:
-                print("Freezing UNet SL")
-                for param in self.up_scale_sl.parameters():
-                    param.requires_grad = False
+        if self.model_config.unet_sl.freeze:
+            print("Freezing UNet SL")
+            for param in self.up_scale_sl.parameters():
+                param.requires_grad = False
 
         # Object upsampling
         if self.model_config.upsampler_ob == "unet":
@@ -103,10 +108,10 @@ class Decomposer(pl.LightningModule):
                         map_location=torch.device(self.train_config.device),
                     )
                 )
-            if self.model_config.unet_ob.freeze:
-                print("Freezing UNet OCC")
-                for param in self.up_scale_ob.parameters():
-                    param.requires_grad = False
+        if self.model_config.unet_ob.freeze:
+            print("Freezing UNet OCC")
+            for param in self.up_scale_ob.parameters():
+                param.requires_grad = False
 
     def forward(self, x):
         return self.forward_unet(x)
@@ -132,7 +137,7 @@ class Decomposer(pl.LightningModule):
         # Apply Upscaler_3 for occlusion mask, occlusion rgb -> (B, 4, 10, H, W)
         if self.model_config.upsampler_ob == "unet":
             occlusion_raw = self.up_scale_ob(encoder_features[1:], x)
-            if not self.train_config.lambda_binary_occ:
+            if not self.train_config.metric_occ_mask:
                 occlusion_mask = F.sigmoid(occlusion_raw[:, 0, :, :, :])
             else:
                 occlusion_mask = occlusion_raw[:, 0, :, :, :]
