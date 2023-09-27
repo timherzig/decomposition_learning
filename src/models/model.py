@@ -317,16 +317,22 @@ class Decomposer(pl.LightningModule):
         light_mask = light_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
         occlusion_mask = occlusion_mask.unsqueeze(1).repeat(1, 3, 1, 1, 1)
 
-        ob_reconstruction = torch.where(
+        occ_reconstruction = torch.where(
             occlusion_mask < 0.5,
             (target * 0),  # tmp
-            occlusion_rgb,
+            x,
+        )
+        decomp_reconstruction = torch.where(
+            occlusion_mask < 0.5,
+            (target * shadow_mask + light_mask),
+            x,
         )
 
         if len(batch) > 4:
             evaluation_log_images(
+                occ_reconstruction,
                 gt_reconstruction,
-                ob_reconstruction,
+                decomp_reconstruction,
                 light_mask,
                 shadow_mask,
                 x,

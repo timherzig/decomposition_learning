@@ -1,0 +1,103 @@
+data:
+  # Name of dataset: 'SIAR', 'SIAR_SL', 'SIAR_OCC', 'SIAR_OCC_Binary', 'SIAR_OCC_AND_SL', 'SIAR_EVAL'
+  dataset: 'SIAR_EVAL'
+  # Split version to use
+  split_dir: ''
+  sanity_check: False
+  # Number of workers for dataloader
+  num_workers: 12
+  # Path to dataset directory that includes SIAR data (path/SIAR), generated occlusion masks (path/SIAR_OCC). If False, expects data to be in data directory of project
+  path_to_data: False
+  preprocess: True
+  # Path where to save evaluation output (Only used for evaluation script)
+  eval_output: evaluation_output_old_pretrained
+    
+train:
+  debug: False
+  pre_train: False
+  batch_size: 2
+  lr: 1e-4
+  max_epochs: 100
+  log_every_n_steps: 15
+  log_img_every_n_epochs: 5
+  device: 'cpu'
+  # Select loss function: 'base_loss', 'reconstruction_loss', 'pre_train_loss', 'separate_head_loss', 'occ_binary_pretraining_loss'
+  loss_func: 'separate_head_loss'
+  stage: 'train_all'
+  # Select metric to use for comparison: 'MSE', 'SSIM', 'MAE', 'BCE', 'BCEWithLogits', 'MAE_weighted'
+  metric_all: 'MAE' # used for reconstruction_loss and separate_head_loss (stage: 'train_all')
+  metric_gt: 'MAE'
+  metric_sl: 'MAE' # Use when stage: 'train_sl', 'train_all_heads'
+  metric_ob: 'MAE' # Use when stage: 'train_ob', 'train_all_heads'
+  # Metric for binary occlusion mask pretraining. Set to False when fine-tuning to automatically apply sigmoid to occlusion output
+  metric_occ_mask: False # 'BCEWithLogits', 'BCE', 'MAE'
+  metric_occ_rgb: False  # 'MAE'
+  lambda_binary_occ: False # Set to false to automatically apply sigmoid to occlusion output
+  lambda_gt_loss: 0.7 # 1.0
+  lambda_decomp_loss: 1.0
+  lambda_occlusion_difference: 1e-3
+  mask_decay: 1e-15 # 1e-10
+  weight_decay: False # 1e-5
+  strategy: 'ddp_find_unused_parameters_true'
+  accumulate_grad_batches: 4
+  es_patience: 10
+
+
+model:
+  checkpoint: 'checkpoints/final_model/swin_unet_unet_unet_from_checkpoint_all_epoch614.ckpt'
+  upsampler_gt: 'unet' # upsampler for ground truth
+  upsampler_sl: 'unet' # upsampler for shadow and light
+  upsampler_ob: 'unet' # upsampler for objects (masks + rgb)
+  swin:
+    checkpoint: False
+    use_checkpoint: False
+    frozen_stages: 4
+    patch_size: [2, 4, 4]    
+  unet_gt:
+    freeze: False
+    checkpoint: False
+    decoder:
+      output_dim: 3
+      f_maps: [96, 192, 384, 768]
+      basic_module: 'DoubleConv'
+      conv_kernel_size: 3
+      conv_padding: 1
+      layer_order: 'gcr'
+      num_groups: 8
+      is3d: True
+      layers_no_skip:
+        size: [[96, 48, 5, 128, 128], [48, 24, 1, 256, 256]]
+        scale_factor: 2 
+      omit_skip_connections: False
+  unet_sl:
+    freeze: False
+    checkpoint: False
+    decoder:
+      output_dim: 2
+      f_maps: [96, 192, 384, 768]
+      basic_module: 'DoubleConv'
+      conv_kernel_size: 3
+      conv_padding: 1
+      layer_order: 'gcr'
+      num_groups: 8
+      is3d: True
+      layers_no_skip:
+        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
+        scale_factor: 2
+      omit_skip_connections: False
+  unet_ob:
+    freeze: False
+    checkpoint: False
+    decoder:
+      output_dim: 4
+      f_maps: [96, 192, 384, 768]
+      basic_module: 'DoubleConv'
+      conv_kernel_size: 3
+      conv_padding: 1
+      layer_order: 'gcr'
+      num_groups: 8
+      is3d: True
+      layers_no_skip:
+        size: [[96, 48, 5, 128, 128], [48, 24, 10, 256, 256]]
+        scale_factor: 2 
+      omit_skip_connections: False

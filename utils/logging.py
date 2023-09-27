@@ -5,8 +5,9 @@ from torchvision.transforms import ToPILImage
 
 
 def evaluation_log_images(
+    occ_reconstruction,
     gt_reconstruction,
-    occlusion_mask,
+    decomp_reconstruction,
     light_mask,
     shadow_mask,
     x,
@@ -19,10 +20,11 @@ def evaluation_log_images(
     for idx, dir_name in enumerate(sequence_dirs):
         sequence_path = os.path.join(output_folder, dir_name)
         gt_recon = gt_reconstruction[idx, :, :, :].to("cpu")
-        occ_bin_masks = occlusion_mask[idx, :, :, :, :].to("cpu")
+        occ_bin_masks = occ_reconstruction[idx, :, :, :, :].to("cpu")
         light_masks = light_mask[idx, :, :, :, :].to("cpu")
         shadow_masks = shadow_mask[idx, :, :, :, :].to("cpu")
         occ_gt = x[idx, :, :, :, :].to("cpu")
+        decomp = decomp_reconstruction[idx, :, :, :, :].to("cpu")
 
         gt_recon_path = os.path.join(sequence_path, "gt_reconstruction.png")
         os.makedirs(sequence_path, exist_ok=True)
@@ -45,3 +47,10 @@ def evaluation_log_images(
             mult = gt_occluded * shadow
             mult_path = os.path.join(sequence_path, "mult_" + str(i + 1) + ".png")
             to_pil(mult).save(mult_path)
+
+            decomp_path = os.path.join(sequence_path, "decomp_" + str(i + 1) + ".png")
+            decomp_i = decomp[:, i, :, :].squeeze().clip(max=1)
+
+            to_pil(decomp_i).save(decomp_path)
+
+
